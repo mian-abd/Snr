@@ -38,7 +38,7 @@ Transition: “First, I will show the live comparison surface.”
 
 ## Slide 4: Promise 1, dual-model comparison
 
-“This slide uses placeholder model names. In the implementation, I pinned Gemma and Nemotron to exact OpenRouter IDs. The same prompt goes to both models concurrently. Each result has its own response text, latency, token count, cost when available, and status.
+“In the implementation, I have pinned Gemma and Nemotron to exact OpenRouter IDs. The same prompt goes to both models concurrently. Each result has its own response text, latency, token count, cost when available, and status.
 
 Pinning matters because the app must never label one model while a different model actually answered. The system also does not silently replace a failed model with another one.”
 
