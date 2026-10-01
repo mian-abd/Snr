@@ -1,0 +1,1312 @@
+{
+  "components": {
+    "schemas": {
+      "BenchmarkManifest": {
+        "additionalProperties": false,
+        "properties": {
+          "completed_cells": {
+            "default": 0,
+            "title": "Completed Cells",
+            "type": "integer"
+          },
+          "created_at_utc": {
+            "format": "date-time",
+            "title": "Created At Utc",
+            "type": "string"
+          },
+          "dataset": {
+            "title": "Dataset",
+            "type": "string"
+          },
+          "dataset_revision": {
+            "title": "Dataset Revision",
+            "type": "string"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          },
+          "failed_cells": {
+            "default": 0,
+            "title": "Failed Cells",
+            "type": "integer"
+          },
+          "generation_config": {
+            "additionalProperties": true,
+            "title": "Generation Config",
+            "type": "object"
+          },
+          "generation_config_hash": {
+            "title": "Generation Config Hash",
+            "type": "string"
+          },
+          "git_commit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Git Commit"
+          },
+          "mode": {
+            "$ref": "#/components/schemas/BenchmarkMode"
+          },
+          "model_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Model Ids",
+            "type": "array"
+          },
+          "registry_models_sha256": {
+            "title": "Registry Models Sha256",
+            "type": "string"
+          },
+          "registry_snapshot_id": {
+            "title": "Registry Snapshot Id",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/BenchmarkStatus"
+          },
+          "successful_cells": {
+            "default": 0,
+            "title": "Successful Cells",
+            "type": "integer"
+          },
+          "total_cells": {
+            "title": "Total Cells",
+            "type": "integer"
+          },
+          "updated_at_utc": {
+            "format": "date-time",
+            "title": "Updated At Utc",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "mode",
+          "status",
+          "dataset",
+          "dataset_revision",
+          "registry_snapshot_id",
+          "registry_models_sha256",
+          "model_ids",
+          "generation_config",
+          "generation_config_hash",
+          "git_commit",
+          "total_cells",
+          "created_at_utc",
+          "updated_at_utc"
+        ],
+        "title": "BenchmarkManifest",
+        "type": "object"
+      },
+      "BenchmarkMode": {
+        "enum": [
+          "pilot",
+          "full"
+        ],
+        "title": "BenchmarkMode",
+        "type": "string"
+      },
+      "BenchmarkRecord": {
+        "additionalProperties": false,
+        "properties": {
+          "configuration": {
+            "title": "Configuration",
+            "type": "string"
+          },
+          "dataset": {
+            "title": "Dataset",
+            "type": "string"
+          },
+          "exact_match": {
+            "title": "Exact Match",
+            "type": "integer"
+          },
+          "expected_answer": {
+            "title": "Expected Answer",
+            "type": "string"
+          },
+          "extracted_answer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extracted Answer"
+          },
+          "extraction_method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extraction Method"
+          },
+          "generation_config_hash": {
+            "title": "Generation Config Hash",
+            "type": "string"
+          },
+          "mode": {
+            "$ref": "#/components/schemas/BenchmarkMode"
+          },
+          "model_snapshot_id": {
+            "title": "Model Snapshot Id",
+            "type": "string"
+          },
+          "prompt_template_version": {
+            "title": "Prompt Template Version",
+            "type": "string"
+          },
+          "rendered_prompt": {
+            "title": "Rendered Prompt",
+            "type": "string"
+          },
+          "result": {
+            "$ref": "#/components/schemas/GenerationResult"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "sample_id": {
+            "title": "Sample Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source_index": {
+            "title": "Source Index",
+            "type": "integer"
+          },
+          "split": {
+            "title": "Split",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "mode",
+          "dataset",
+          "configuration",
+          "revision",
+          "split",
+          "source_index",
+          "sample_id",
+          "prompt_template_version",
+          "rendered_prompt",
+          "expected_answer",
+          "extracted_answer",
+          "extraction_method",
+          "exact_match",
+          "result",
+          "model_snapshot_id",
+          "generation_config_hash"
+        ],
+        "title": "BenchmarkRecord",
+        "type": "object"
+      },
+      "BenchmarkRunView": {
+        "additionalProperties": false,
+        "properties": {
+          "manifest": {
+            "$ref": "#/components/schemas/BenchmarkManifest"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BenchmarkSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "manifest"
+        ],
+        "title": "BenchmarkRunView",
+        "type": "object"
+      },
+      "BenchmarkStartRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "$ref": "#/components/schemas/BenchmarkMode",
+            "default": "full"
+          }
+        },
+        "title": "BenchmarkStartRequest",
+        "type": "object"
+      },
+      "BenchmarkStatus": {
+        "enum": [
+          "pending",
+          "running",
+          "budget_paused",
+          "interrupted",
+          "completed",
+          "completed_with_errors",
+          "failed"
+        ],
+        "title": "BenchmarkStatus",
+        "type": "string"
+      },
+      "BenchmarkSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "generated_at_utc": {
+            "format": "date-time",
+            "title": "Generated At Utc",
+            "type": "string"
+          },
+          "models": {
+            "items": {
+              "$ref": "#/components/schemas/ModelBenchmarkSummary"
+            },
+            "title": "Models",
+            "type": "array"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "generated_at_utc",
+          "models"
+        ],
+        "title": "BenchmarkSummary",
+        "type": "object"
+      },
+      "CapabilitySpec": {
+        "additionalProperties": false,
+        "properties": {
+          "structured_output": {
+            "default": false,
+            "title": "Structured Output",
+            "type": "boolean"
+          },
+          "tools": {
+            "default": false,
+            "title": "Tools",
+            "type": "boolean"
+          }
+        },
+        "title": "CapabilitySpec",
+        "type": "object"
+      },
+      "ComparisonRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "prompt": {
+            "maxLength": 50000,
+            "minLength": 1,
+            "title": "Prompt",
+            "type": "string"
+          },
+          "save": {
+            "default": false,
+            "title": "Save",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "prompt"
+        ],
+        "title": "ComparisonRequest",
+        "type": "object"
+      },
+      "ComparisonResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "comparison_id": {
+            "format": "uuid",
+            "title": "Comparison Id",
+            "type": "string"
+          },
+          "created_at_utc": {
+            "format": "date-time",
+            "title": "Created At Utc",
+            "type": "string"
+          },
+          "prompt": {
+            "title": "Prompt",
+            "type": "string"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/GenerationResult"
+            },
+            "title": "Results",
+            "type": "array"
+          },
+          "saved": {
+            "title": "Saved",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "prompt",
+          "saved",
+          "results"
+        ],
+        "title": "ComparisonResponse",
+        "type": "object"
+      },
+      "CostSource": {
+        "enum": [
+          "provider",
+          "registry_calculation",
+          "unavailable"
+        ],
+        "title": "CostSource",
+        "type": "string"
+      },
+      "EligibilityRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "min_context_tokens": {
+            "default": 500000,
+            "minimum": 1.0,
+            "title": "Min Context Tokens",
+            "type": "integer"
+          }
+        },
+        "title": "EligibilityRequest",
+        "type": "object"
+      },
+      "EligibilityResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/EligibilityResult"
+            },
+            "title": "Results",
+            "type": "array"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "title": "EligibilityResponse",
+        "type": "object"
+      },
+      "EligibilityResult": {
+        "additionalProperties": false,
+        "properties": {
+          "eligible": {
+            "title": "Eligible",
+            "type": "boolean"
+          },
+          "evaluated_requirements": {
+            "$ref": "#/components/schemas/EligibilityRequest"
+          },
+          "model_id": {
+            "title": "Model Id",
+            "type": "string"
+          },
+          "model_snapshot_id": {
+            "title": "Model Snapshot Id",
+            "type": "string"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons",
+            "type": "array"
+          }
+        },
+        "required": [
+          "model_id",
+          "eligible",
+          "reasons",
+          "evaluated_requirements",
+          "model_snapshot_id"
+        ],
+        "title": "EligibilityResult",
+        "type": "object"
+      },
+      "GenerationResult": {
+        "additionalProperties": false,
+        "properties": {
+          "attempt_number": {
+            "maximum": 2.0,
+            "minimum": 1.0,
+            "title": "Attempt Number",
+            "type": "integer"
+          },
+          "completed_at_utc": {
+            "format": "date-time",
+            "title": "Completed At Utc",
+            "type": "string"
+          },
+          "completion_tokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completion Tokens"
+          },
+          "cost_source": {
+            "$ref": "#/components/schemas/CostSource",
+            "default": "unavailable"
+          },
+          "cost_usd": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Usd"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          },
+          "latency_ms": {
+            "minimum": 0.0,
+            "title": "Latency Ms",
+            "type": "number"
+          },
+          "prompt_tokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prompt Tokens"
+          },
+          "provider": {
+            "default": "openrouter",
+            "title": "Provider",
+            "type": "string"
+          },
+          "provider_request_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Request Id"
+          },
+          "request_id": {
+            "format": "uuid",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "requested_model_id": {
+            "title": "Requested Model Id",
+            "type": "string"
+          },
+          "served_model_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Served Model Id"
+          },
+          "started_at_utc": {
+            "format": "date-time",
+            "title": "Started At Utc",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/GenerationStatus"
+          },
+          "text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text"
+          },
+          "total_tokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Tokens"
+          }
+        },
+        "required": [
+          "request_id",
+          "requested_model_id",
+          "status",
+          "latency_ms",
+          "started_at_utc",
+          "completed_at_utc",
+          "attempt_number"
+        ],
+        "title": "GenerationResult",
+        "type": "object"
+      },
+      "GenerationStatus": {
+        "enum": [
+          "success",
+          "provider_error",
+          "timeout",
+          "rate_limited",
+          "invalid_response",
+          "model_mismatch"
+        ],
+        "title": "GenerationStatus",
+        "type": "string"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HealthResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "active_benchmark_run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active Benchmark Run Id"
+          },
+          "credential_configured": {
+            "title": "Credential Configured",
+            "type": "boolean"
+          },
+          "registry_loaded": {
+            "title": "Registry Loaded",
+            "type": "boolean"
+          },
+          "registry_snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registry Snapshot Id"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "version",
+          "registry_loaded",
+          "registry_snapshot_id",
+          "credential_configured",
+          "active_benchmark_run_id"
+        ],
+        "title": "HealthResponse",
+        "type": "object"
+      },
+      "ModelBenchmarkSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "accuracy": {
+            "title": "Accuracy",
+            "type": "number"
+          },
+          "attempted": {
+            "title": "Attempted",
+            "type": "integer"
+          },
+          "completion_tokens": {
+            "title": "Completion Tokens",
+            "type": "integer"
+          },
+          "correct": {
+            "title": "Correct",
+            "type": "integer"
+          },
+          "error_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Error Counts",
+            "type": "object"
+          },
+          "failed": {
+            "title": "Failed",
+            "type": "integer"
+          },
+          "mean_latency_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Latency Ms"
+          },
+          "median_latency_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median Latency Ms"
+          },
+          "model_id": {
+            "title": "Model Id",
+            "type": "string"
+          },
+          "prompt_tokens": {
+            "title": "Prompt Tokens",
+            "type": "integer"
+          },
+          "successful": {
+            "title": "Successful",
+            "type": "integer"
+          },
+          "total_cost_usd": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Cost Usd"
+          },
+          "total_tokens": {
+            "title": "Total Tokens",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "model_id",
+          "attempted",
+          "successful",
+          "failed",
+          "correct",
+          "accuracy",
+          "mean_latency_ms",
+          "median_latency_ms",
+          "prompt_tokens",
+          "completion_tokens",
+          "total_tokens",
+          "total_cost_usd",
+          "error_counts"
+        ],
+        "title": "ModelBenchmarkSummary",
+        "type": "object"
+      },
+      "ModelSpec": {
+        "additionalProperties": false,
+        "properties": {
+          "capabilities": {
+            "$ref": "#/components/schemas/CapabilitySpec"
+          },
+          "context_length": {
+            "exclusiveMinimum": 0.0,
+            "title": "Context Length",
+            "type": "integer"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "enabled": {
+            "default": true,
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "input_modalities": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Input Modalities",
+            "type": "array"
+          },
+          "metadata_as_of": {
+            "format": "date-time",
+            "title": "Metadata As Of",
+            "type": "string"
+          },
+          "output_modalities": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Output Modalities",
+            "type": "array"
+          },
+          "pricing": {
+            "$ref": "#/components/schemas/PricingSpec"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "snapshot_id": {
+            "title": "Snapshot Id",
+            "type": "string"
+          },
+          "source_url": {
+            "title": "Source Url",
+            "type": "string"
+          },
+          "supported_parameters": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Supported Parameters",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "display_name",
+          "provider",
+          "context_length",
+          "pricing",
+          "input_modalities",
+          "output_modalities",
+          "supported_parameters",
+          "capabilities",
+          "snapshot_id",
+          "metadata_as_of",
+          "source_url"
+        ],
+        "title": "ModelSpec",
+        "type": "object"
+      },
+      "PaginatedRecords": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/BenchmarkRecord"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "offset",
+          "limit"
+        ],
+        "title": "PaginatedRecords",
+        "type": "object"
+      },
+      "PricingSpec": {
+        "additionalProperties": false,
+        "properties": {
+          "completion_per_token": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completion Per Token"
+          },
+          "prompt_per_token": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prompt Per Token"
+          }
+        },
+        "title": "PricingSpec",
+        "type": "object"
+      },
+      "RegistrySnapshot": {
+        "additionalProperties": false,
+        "properties": {
+          "metadata_as_of": {
+            "format": "date-time",
+            "title": "Metadata As Of",
+            "type": "string"
+          },
+          "models": {
+            "items": {
+              "$ref": "#/components/schemas/ModelSpec"
+            },
+            "title": "Models",
+            "type": "array"
+          },
+          "models_sha256": {
+            "title": "Models Sha256",
+            "type": "string"
+          },
+          "schema_version": {
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "snapshot_id": {
+            "title": "Snapshot Id",
+            "type": "string"
+          },
+          "source_url": {
+            "title": "Source Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "snapshot_id",
+          "metadata_as_of",
+          "source_url",
+          "models_sha256",
+          "models"
+        ],
+        "title": "RegistrySnapshot",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "Checkpoint 1 dual-model comparison and GSM8K benchmark API",
+    "title": "Adaptive LLM Router",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/benchmarks/gsm8k/runs": {
+      "post": {
+        "operationId": "start_benchmark_api_v1_benchmarks_gsm8k_runs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BenchmarkStartRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BenchmarkRunView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Benchmark"
+      }
+    },
+    "/api/v1/benchmarks/runs/latest": {
+      "get": {
+        "operationId": "latest_benchmark_api_v1_benchmarks_runs_latest_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BenchmarkRunView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Latest Benchmark"
+      }
+    },
+    "/api/v1/benchmarks/runs/{run_id}": {
+      "get": {
+        "operationId": "benchmark_run_api_v1_benchmarks_runs__run_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BenchmarkRunView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Benchmark Run"
+      }
+    },
+    "/api/v1/benchmarks/runs/{run_id}/records": {
+      "get": {
+        "operationId": "benchmark_records_api_v1_benchmarks_runs__run_id__records_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedRecords"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Benchmark Records"
+      }
+    },
+    "/api/v1/comparisons": {
+      "post": {
+        "operationId": "compare_api_v1_comparisons_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComparisonRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComparisonResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Compare"
+      }
+    },
+    "/api/v1/eligibility": {
+      "post": {
+        "operationId": "eligibility_api_v1_eligibility_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EligibilityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EligibilityResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Eligibility"
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "operationId": "health_api_v1_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health"
+      }
+    },
+    "/api/v1/models": {
+      "get": {
+        "operationId": "models_api_v1_models_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrySnapshot"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Models"
+      }
+    }
+  }
+}
