@@ -1,0 +1,30 @@
+{
+  "completed_cells": 24,
+  "created_at_utc": "2026-10-01T13:49:08.329692Z",
+  "dataset": "openai/gsm8k",
+  "dataset_revision": "b0bb162abedc65e1fdd8e93ed090fd7598ee68bc",
+  "error_message": null,
+  "failed_cells": 9,
+  "generation_config": {
+    "max_tokens": 512,
+    "prompt_template_version": "gsm8k-cp1-v1",
+    "stream": false,
+    "temperature": 0,
+    "timeout_seconds": 90
+  },
+  "generation_config_hash": "5cc562efc6aa30e17db754760976df78ccf9f3406c5275299e970d0b822d57e6",
+  "git_commit": "680c20d934b959a2d5c12c616e29b60fa22603b8",
+  "mode": "full",
+  "model_ids": [
+    "google/gemma-4-26b-a4b-it:free",
+    "nvidia/nemotron-3-ultra-550b-a55b:free"
+  ],
+  "registry_models_sha256": "a2f09bc81d9a95295c6492438c1b414ffe8bb6c7c332eb9408d21422cb7a22d9",
+  "registry_snapshot_id": "openrouter-2026-09-30-cp1",
+  "run_id": "gsm8k-full-20261001T134908Z-0b94a2ed",
+  "schema_version": "1.0",
+  "status": "completed_with_errors",
+  "successful_cells": 15,
+  "total_cells": 24,
+  "updated_at_utc": "2026-10-01T13:59:19.241893Z"
+}

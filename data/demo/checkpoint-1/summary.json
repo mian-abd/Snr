@@ -1,0 +1,38 @@
+{
+  "generated_at_utc": "2026-10-01T13:59:27.564884Z",
+  "models": [
+    {
+      "accuracy": 0.25,
+      "attempted": 12,
+      "completion_tokens": 750,
+      "correct": 3,
+      "error_counts": {
+        "rate_limited": 9
+      },
+      "failed": 9,
+      "mean_latency_ms": 5646.549966651946,
+      "median_latency_ms": 6046.334499958903,
+      "model_id": "google/gemma-4-26b-a4b-it:free",
+      "prompt_tokens": 308,
+      "successful": 3,
+      "total_cost_usd": "0",
+      "total_tokens": 1058
+    },
+    {
+      "accuracy": 0.6666666666666666,
+      "attempted": 12,
+      "completion_tokens": 4589,
+      "correct": 8,
+      "error_counts": {},
+      "failed": 0,
+      "mean_latency_ms": 19858.77435830965,
+      "median_latency_ms": 11432.27884999942,
+      "model_id": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "prompt_tokens": 1526,
+      "successful": 12,
+      "total_cost_usd": "0",
+      "total_tokens": 6115
+    }
+  ],
+  "run_id": "gsm8k-full-20261001T134908Z-0b94a2ed"
+}
