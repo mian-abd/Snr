@@ -60,3 +60,17 @@ Expand one result record. Explain that the view displays persisted evidence and 
 - Do not click **Run benchmark** during the presentation.
 - If a live comparison fails, move directly to Benchmark and explain the recorded failure state.
 - If the UI will not start, use the published release and attached video: <https://github.com/mian-abd/Snr/releases/tag/checkpoint-1>.
+
+## Capacity note for the presenter
+
+The application cap is 200 calls per day. It does not change OpenRouter or provider rate limits.
+
+If Gemma shows **Shared free capacity is busy**, treat the card as the intended independent-failure demonstration and continue to Eligibility and Benchmark. Do not keep retrying during the presentation.
+
+For a future live comparison with more capacity, use OpenRouter's account settings:
+
+1. Adding at least $10 in OpenRouter credits raises the account's free-model allowance from 50 to 1,000 daily requests. It does not guarantee an upstream provider's shared free capacity.
+2. Add a Google AI Studio provider key through OpenRouter's **Settings → Integrations** page if the account offers that integration. This uses the provider account's capacity and may incur provider charges.
+3. Do not paste any provider key into this application or the browser UI. `OPENROUTER_API_KEY` stays only in the ignored `backend/.env` file.
+
+For a guaranteed demo, replacing Gemma with a paid pinned model requires a new registry snapshot and a new benchmark version. Do not mix that result with the Checkpoint 1 baseline.

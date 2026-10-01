@@ -1,111 +1,123 @@
 # Presentation script for Checkpoint 1
 
-This script follows `Adaptive LLM Router.pptx` and uses the implementation that is actually released. It is written for a presentation of about five to seven minutes.
+This script follows `Adaptive LLM Router.pptx` and the live application as it stands today. It is designed for six minutes, plus questions.
 
-## Before you present
+## The one idea to keep in mind
 
-1. Start the app with `./scripts/demo.ps1` from the repository root.
-2. Open `http://127.0.0.1:8000`.
-3. Keep the Benchmark tab open once before the presentation so you know the saved run loads.
-4. Do not run the full benchmark live. Use the saved result. A live manual comparison is optional.
+Checkpoint 1 does **not** claim that it has already built a smart router. It builds the measurement layer a router needs: fixed model identities, comparable response fields, hard capability filtering, an objective scorer, saved evidence, and visible provider failures.
 
-Important correction: Slide 4 still uses `gpt-4o` and `claude-3-5-sonnet` as visual placeholders. The application actually compares **Gemma 4 26B** and **Nemotron 3 Ultra 550B**, through OpenRouter. Say that clearly when you reach the slide. Slide 6 also spells “Nemotron” incorrectly as “Nemetron.”
+The current Compare screen is a valid demonstration when Gemma is rate-limited and Nemotron succeeds. Say that the screen records two independent provider outcomes. Do not say that Gemma gave a bad answer. It did not return an answer at all.
+
+## Before presenting
+
+1. Keep the local app open at `http://127.0.0.1:8000` and leave the current Compare result visible.
+2. Do not submit another prompt unless you have already confirmed both providers are available. The visible screen already demonstrates the feature.
+3. Open the Benchmark tab once before presenting, then return to Compare.
+4. Keep the release page open in another tab as a backup.
+
+Important corrections to the slides:
+
+- Slide 4 contains placeholder names, `gpt-4o` and `claude-3-5-sonnet`. The live application compares **Google Gemma 4 26B A4B** and **NVIDIA Nemotron 3 Ultra 550B** through OpenRouter.
+- Slide 6 spells **Nemotron** incorrectly as “Nemetron.” Say the correct name aloud.
 
 ## Slide 1: Title
 
-“Hi, I’m Mian Abdullah. This is Checkpoint 1 of my Adaptive LLM Router project. The long-term goal is to choose an appropriate model for a request. This checkpoint is earlier than that: I built the evidence and measurement layer that a future router needs.”
+“Hi, I’m Mian Abdullah. This is Checkpoint 1 of my Adaptive LLM Router. The long-term project will choose an appropriate language model for each request. Before building that policy, I needed a reliable way to collect evidence about models.”
 
 ## Slide 2: Agenda
 
-“I’ll give the problem in thirty seconds, show the two-model comparison interface, explain the GSM8K benchmark, show the eligibility filter, and then close with what I learned from running it.”
+“I will briefly explain the problem, show the live comparison console, explain the fixed GSM8K experiment, show the context-window filter, and then summarize what the first run taught me.”
 
 ## Slide 3: What I am building
 
-“The core question is simple: when one prompt could go to several models, which model should answer? A real router cannot answer that responsibly without knowing which models are available, what they cost, how fast they respond, and how they perform on a defined task.
+“One prompt can be handled by many models, but they differ in latency, cost, context capacity, quality, and availability. A router should not make a choice based only on a model name.
 
-Checkpoint 1 does not make the final model choice. It collects reliable evidence first. The flow on this slide is: receive a prompt, eliminate models that cannot meet hard requirements, later choose an eligible model, and return a response.”
+This checkpoint builds the layer underneath the router. It stores model metadata, rejects models that fail a hard requirement, calls fixed model identities through one interface, and records the result of an objective benchmark. Choosing the best model is deliberately deferred to the next checkpoint.”
 
-Transition: “Now I’ll show the first piece of that evidence layer.”
+Transition: “First, I will show the live comparison surface.”
 
 ## Slide 4: Promise 1, dual-model comparison
 
-“The first promise is one prompt, one interface, and two independent model calls. The slide uses placeholder model names, but the live system uses Gemma and Nemotron. I pinned those exact IDs so every result stays attributable to a known model.
+“This slide uses placeholder model names. In the implementation, I pinned Gemma and Nemotron to exact OpenRouter IDs. The same prompt goes to both models concurrently. Each result has its own response text, latency, token count, cost when available, and status.
 
-For each model, the app shows the answer, latency, token usage, cost when the provider reports it, and a failure state. The system does not silently fall back to a different model. That matters because a comparison would be misleading if the label said one model but another model actually answered.”
+Pinning matters because the app must never label one model while a different model actually answered. The system also does not silently replace a failed model with another one.”
 
 ### Live demo: Compare tab
 
-Say: “Here is the live Compare screen. I can enter one prompt and the server sends it to both fixed models at the same time. The save option is off by default so ordinary prompts remain local.”
+Point to the two cards and say:
 
-Type a harmless prompt, such as: `Explain in two sentences why reproducible model IDs matter in an experiment.`
+“Here is the live Compare screen. Both cards show the same request, but their results remain independent. Nemotron completed this request, so the response, latency, tokens, and zero cost are visible on the right.
 
-If both return: “These are two separate results with their own timing and usage fields.”
+Gemma returned a provider rate limit. The application preserves that as a capacity event. It does not hide the error, call a different model, or turn the failure into a quality score. This is important because a future router needs honest reliability data before it can make a decision.”
 
-If Gemma rate-limits: “This is useful behavior to see. The application keeps Nemotron’s independent result visible and reports Gemma’s provider failure instead of hiding it or substituting another model.”
+If both models happen to return successfully on a later attempt, say:
+
+“Each card contains a separate answer, latency, usage, and cost record. They are two independent calls under the same prompt.”
+
+Do not say “Gemma is worse” or “the rate limit proves anything about reasoning quality.”
 
 ## Slide 5: Promise 2, objective benchmark
 
-“The second promise is an objective benchmark. I used twelve fixed questions from GSM8K, a grade-school math benchmark. Each question went to both pinned models under the same settings, giving twenty-four logical cells.
+“For quality measurement, I used twelve fixed GSM8K grade-school math questions. Both pinned models received the same prompt template, temperature zero, and a maximum of 512 output tokens. That creates 24 model-question cells.
 
-The saved result shows that Nemotron completed all twelve calls and got eight exact numeric answers. Gemma completed three calls and got three exact answers. Nine Gemma calls hit upstream shared-pool rate limits on the free endpoint.
+The saved run has 24 final records. Nemotron completed 12 calls and answered 8 correctly by exact numeric match. Gemma completed 3 calls and answered all 3 correctly. The remaining 9 Gemma cells ended in upstream rate limits.
 
-I preserve those rate limits as provider failures. I do not count them as wrong math answers, and I do not claim this twelve-question sample proves one model is generally better. It proves that the system can capture success, quality, cost, speed, and operational failure honestly.”
+I keep those nine cells as provider failures. I do not call them wrong answers, and I do not claim that twelve questions prove a general ranking. The purpose is to demonstrate a reproducible collection, scoring, and evidence pipeline.”
 
 ### Live demo: Benchmark tab
 
-Say: “This is the saved run. It loads without making new model calls. The protocol is locked: GSM8K test questions, two fixed models, twenty-four cells, temperature zero, and exact numeric matching.”
+“This tab loads saved evidence. It does not send a new provider request. The protocol is locked: GSM8K test data, 12 questions, two fixed models, 24 cells, temperature zero, and exact numeric matching.
 
-Point to:
-
-- `24 / 24` completion
-- the two model summary rows
-- the Gemma failure count
-- one expandable saved result record
-
-Say: “Each expandable record shows the original question, expected answer, extracted answer, model response or normalized error, and score. The underlying sanitized JSON is committed with the release, so the demo remains inspectable offline.”
+The summary separates quality from availability. Expanding a record shows the question, expected answer, extracted answer, response or normalized provider error, and score. The sanitized JSON evidence is committed with the project so this run can be inspected offline.”
 
 ## Slide 6: Promise 3, eligibility before inference
 
-“The third promise is a hard eligibility filter. Before a future router spends money or time on a model, it should remove models that cannot meet a non-negotiable requirement.
+“The third piece is a hard eligibility filter. I set a minimum context requirement of 500,000 tokens. Gemma has 262,144 tokens, so the filter excludes it. Nemotron has one million tokens, so it remains eligible.
 
-Here the requirement is at least 500,000 context tokens. Gemma has 262,144, so it is excluded. Nemotron has one million, so it remains eligible. This is deterministic metadata filtering, not a subjective model-quality judgment.”
+This is deterministic. It is not a judgment that Nemotron is smarter. It simply proves that a future router can remove models that cannot meet a non-negotiable requirement before spending money or waiting for inference.”
 
 ### Live demo: Eligibility tab
 
-Say: “I set the minimum context to 500,000 and click Evaluate. The reason appears next to each model. This function is deliberately simple and pure so a future router can reuse it.”
+“I keep the requirement at 500,000 and evaluate it. The app shows both the decision and the exact numerical reason beside the model.”
 
-## Slide 7: Above and beyond
+## Slide 7: Reproducibility and engineering work
 
-“I also made the checkpoint reproducible. The benchmark can resume rather than duplicate finished work. It records append-only attempts and final results. It sanitizes evidence before committing it. Tests and GitHub Actions check the backend, frontend, generated API schema, production build, and secret patterns. I tagged the release as `checkpoint-1` and attached a short backup walkthrough.”
+“I made the experiment recoverable and inspectable. Each provider attempt is append-only. The runner can resume interrupted work without repeating completed cells. It writes a manifest, attempt log, canonical results, and summary.
 
-## Slide 8: What I learned
+I also versioned the model registry and fail the live preflight if the catalog changes. Tests cover the registry, scoring, retries, resume behavior, sanitization, API behavior, frontend states, and the production build. Secrets remain server-side.”
 
-“The important lesson was operational rather than theoretical: free shared model endpoints can fail for reasons unrelated to the model’s reasoning ability. The system must make that visible. If a provider rate-limits a model, replacing it silently or treating the failure as a wrong answer would distort the evidence.
+## Slide 8: What I learned and what comes next
 
-My next step is to build an actual routing policy on top of this evidence layer, rather than guessing from model names or a single benchmark.”
+“The key lesson is that model quality and model availability are different measurements. A free endpoint can be temporarily unavailable even when the model itself is capable. The system needs to record that fact rather than hide it.
+
+The next checkpoint will add a routing policy on top of this evidence. It can then decide among eligible models using quality, latency, cost, and operational reliability.”
 
 ## Questions you may get
 
+### “Why is Gemma rate-limited even after several hours?”
+
+“This is a provider-side shared-capacity limit from Google AI Studio through OpenRouter. It is separate from the app’s local request budget and does not evaluate Gemma’s reasoning quality. The app exposes that distinction clearly.”
+
+### “Why did you keep that failure on the screen?”
+
+“Because hiding it would make the comparison misleading. A future router needs to know when a model cannot currently serve a request. The next checkpoint can use reliability as one routing input.”
+
+### “Why not add a third free model right now?”
+
+“A third free model would still depend on shared provider capacity and would change the fixed two-model baseline. I tested current alternatives before the presentation; they were not reliable enough to make the demo stronger. A deliberate paid-model replacement is the proper next step if the goal is guaranteed live availability.”
+
 ### “Why only 12 questions?”
 
-“Twelve questions are enough to demonstrate the full collection and scoring pipeline within the checkpoint. They are not enough for a statistically strong model ranking. A later checkpoint will expand the evaluation.”
+“Twelve questions demonstrate the entire pipeline within the checkpoint. They do not support a statistically strong general ranking. The saved records make expansion straightforward in the next stage.”
 
-### “Why did you use free endpoints?”
+### “Why do you use exact match?”
 
-“The checkpoint needed a low-cost reproducible baseline. The rate limits became a useful test of whether the system can record operational failures honestly.”
+“GSM8K has a canonical numeric answer. The scorer extracts the final number, parses it as a decimal, and compares it exactly. It gives no partial credit and does not use another model to judge the answer.”
 
-### “Why not route automatically already?”
+### “What would you change for a production version?”
 
-“Automatic routing would be premature. First I needed pinned model identities, hard constraints, comparable result fields, a scorer, evidence storage, and failure handling.”
-
-### “What does exact match mean here?”
-
-“The scorer extracts a final numeric answer, parses it as a decimal, and compares it to GSM8K’s canonical answer. It gives no partial credit and does not use another model as a judge.”
-
-### “What happens if a model changes?”
-
-“Before any live comparison or benchmark, the system checks the current OpenRouter catalog against the committed registry snapshot. It fails closed on metadata drift instead of silently switching models.”
+“I would use a paid, pinned provider route or a configured provider key, measure a larger evaluation set, and add an explicit routing policy. I would version every change so results stay comparable.”
 
 ## Last-minute fallback
 
-If the local server or an API call fails, open the published release and say: “The saved benchmark evidence and recording are attached to the tagged release.” Then walk through the result summary in the release notes. Do not attempt a full re-run during the presentation.
+If the local server stops or both providers fail, open the Benchmark tab or the published release. Say: “The saved checkpoint evidence is part of the release, so the evaluation remains inspectable even when a live free endpoint is busy.” Do not start the full benchmark during the presentation.
