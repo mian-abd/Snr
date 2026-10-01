@@ -52,3 +52,24 @@ async def test_adapter_handles_rate_limit_without_leaking_key(monkeypatch, regis
     assert "test-key" not in (result.error_message or "")
     assert "user-secret" not in (result.error_message or "")
     assert "Bearer secret" not in (result.error_message or "")
+    assert "shared free capacity is busy" in (result.error_message or "")
+
+
+@pytest.mark.asyncio
+async def test_adapter_uses_actionable_message_for_overloaded_provider(monkeypatch, registry) -> None:
+    class ServiceUnavailableError(Exception):
+        status_code = 503
+
+    async def fake_completion(**kwargs):
+        raise ServiceUnavailableError("upstream diagnostic payload that must not reach the UI")
+
+    monkeypatch.setattr("app.providers.litellm_openrouter.litellm.acompletion", fake_completion)
+    adapter = LiteLLMOpenRouterAdapter(
+        api_key="test-key", registry=registry, site_url="http://test", app_name="test"
+    )
+    result = await adapter.generate(
+        GenerationRequest(model_id=registry.models[0].id, prompt="hello")
+    )
+    assert result.status == GenerationStatus.PROVIDER_ERROR
+    assert "temporarily unavailable or overloaded" in (result.error_message or "")
+    assert "diagnostic payload" not in (result.error_message or "")

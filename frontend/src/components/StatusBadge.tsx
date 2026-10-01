@@ -8,7 +8,9 @@ export function StatusBadge({ status, label }: Props) {
     ? 'positive'
     : ['failed', 'error', 'provider_error', 'excluded'].includes(normalized)
       ? 'negative'
-      : ['running', 'pending'].includes(normalized)
+      : ['rate_limited', 'timeout'].includes(normalized)
+        ? 'warning'
+        : ['running', 'pending'].includes(normalized)
         ? 'active'
         : 'neutral'
   return (

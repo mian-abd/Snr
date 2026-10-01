@@ -35,7 +35,11 @@
 .details summary, .record summary { padding: 0.8rem 1rem; color: var(--text-muted); cursor: pointer; font-size: 0.78rem; }
 .metadata { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.9rem; padding: 0 1rem 1rem; margin: 0; }
 .metadata dd { overflow-wrap: anywhere; margin: 0.25rem 0 0; color: var(--text); font: 0.72rem/1.4 var(--font-mono); }
-.errorBox { display: flex; gap: 0.5rem; align-items: flex-start; margin: 1rem; padding: 0.8rem; border: 1px solid color-mix(in srgb, var(--danger) 45%, transparent); border-radius: var(--radius-sm); background: color-mix(in srgb, var(--danger) 8%, transparent); color: var(--danger); font-size: 0.82rem; }
+.errorBox { display: flex; gap: 0.65rem; align-items: flex-start; margin: 1rem; padding: 0.85rem; border: 1px solid color-mix(in srgb, var(--danger) 45%, transparent); border-radius: var(--radius-sm); background: color-mix(in srgb, var(--danger) 8%, transparent); color: var(--danger); font-size: 0.82rem; line-height: 1.45; }
+.errorBox svg { flex: 0 0 auto; margin-top: 0.1rem; }
+.errorBox strong { display: block; color: var(--text); font-size: 0.8rem; }
+.errorBox p { margin: 0.28rem 0 0; }
+.errorGuidance { color: var(--text-muted); }
 .filterForm { min-width: min(100%, 19rem); }
 .filterForm > label { display: block; margin-bottom: 0.45rem; color: var(--text-muted); font-size: 0.72rem; }
 .filterForm > div { display: flex; }

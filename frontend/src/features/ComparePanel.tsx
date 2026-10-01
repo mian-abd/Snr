@@ -12,8 +12,28 @@ type Props = { models: ModelSpec[]; credentialConfigured: boolean }
 const samplePrompt =
   'Explain why alternating model order matters in a small latency benchmark. Keep the answer under 120 words.'
 
+function failureGuidance(status: string) {
+  if (status === 'rate_limited') {
+    return {
+      title: 'Shared free capacity is busy',
+      action: 'Try again in a minute. For Gemma, adding your own Google provider key in OpenRouter Integrations gives requests account-level capacity.',
+    }
+  }
+  if (status === 'provider_error') {
+    return {
+      title: 'Provider temporarily overloaded',
+      action: 'This is upstream availability, not a problem with your app or OpenRouter key. Retry the comparison shortly.',
+    }
+  }
+  if (status === 'timeout') {
+    return { title: 'Provider timed out', action: 'Retry the same comparison; no configuration change is needed.' }
+  }
+  return { title: 'No usable result', action: 'Review the normalized request metadata, then try again.' }
+}
+
 function ResultCard({ result, model }: { result: GenerationResult; model?: ModelSpec }) {
   const success = result.status === 'success'
+  const guidance = failureGuidance(result.status)
   return (
     <article className={styles.resultCard}>
       <header className={styles.resultHeader}>
@@ -28,7 +48,11 @@ function ResultCard({ result, model }: { result: GenerationResult; model?: Model
       ) : (
         <div className={styles.errorBox} role="alert">
           <TriangleAlert size={16} />
-          <span>{result.error_message ?? 'The provider did not return a usable response.'}</span>
+          <div>
+            <strong>{guidance.title}</strong>
+            <p>{result.error_message ?? 'The provider did not return a usable response.'}</p>
+            <p className={styles.errorGuidance}>{guidance.action}</p>
+          </div>
         </div>
       )}
       <dl className={styles.metricStrip}>

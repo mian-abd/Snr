@@ -18,5 +18,6 @@
 .dot { width: 0.42rem; height: 0.42rem; border-radius: 50%; background: currentColor; }
 .positive { color: var(--success); }
 .negative { color: var(--danger); }
+.warning { color: var(--warning); }
 .active { color: var(--accent); }
 .neutral { color: var(--text-muted); }

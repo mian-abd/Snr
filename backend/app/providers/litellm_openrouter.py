@@ -29,6 +29,40 @@ def _get_value(value: Any, key: str, default: Any = None) -> Any:
 def _decimal_or_none(value: Any) -> Decimal | None:
     if value is None:
         return None
+
+
+def _public_error_message(status: GenerationStatus) -> str:
+    """Return a safe, actionable message for the browser and saved evidence.
+
+    Provider exceptions frequently include nested JSON, account identifiers and
+    routing diagnostics.  They are useful to the provider but make a poor and
+    potentially unsafe UI surface, so the application exposes the normalized
+    result category rather than the raw exception text.
+    """
+    messages = {
+        GenerationStatus.RATE_LIMITED: (
+            "This provider's shared free capacity is busy. Wait a minute and try "
+            "again, or connect your own provider key in OpenRouter Integrations "
+            "for dedicated account capacity."
+        ),
+        GenerationStatus.TIMEOUT: (
+            "The provider did not respond before the request timeout. Try the "
+            "same prompt again."
+        ),
+        GenerationStatus.PROVIDER_ERROR: (
+            "This provider is temporarily unavailable or overloaded. Your app and "
+            "OpenRouter credential remain configured; retry the comparison shortly."
+        ),
+        GenerationStatus.INVALID_RESPONSE: (
+            "The provider returned a response that could not be used. Try the "
+            "comparison again."
+        ),
+        GenerationStatus.MODEL_MISMATCH: (
+            "The provider returned a different model than the pinned identity, so "
+            "the result was rejected."
+        ),
+    }
+    return messages.get(status, "The provider could not complete this request.")
     try:
         return Decimal(str(value))
     except (InvalidOperation, ValueError):
@@ -174,13 +208,15 @@ class LiteLLMOpenRouterAdapter:
                 status = GenerationStatus.TIMEOUT
             else:
                 status = GenerationStatus.PROVIDER_ERROR
-            safe_message = sanitize_text(str(exc), secrets=(self.api_key,))
+            # Sanitize the exception before discarding it.  This is intentional:
+            # raw provider payloads must never escape through the API or artifacts.
+            sanitize_text(str(exc), secrets=(self.api_key,))
             return self._error_result(
                 request=request,
                 attempt_number=attempt_number,
                 status=status,
                 code=str(status_code or type(exc).__name__),
-                message=safe_message[:1000],
+                message=_public_error_message(status),
                 started_at=started_at,
                 completed_at=completed_at,
                 latency_ms=latency_ms,
