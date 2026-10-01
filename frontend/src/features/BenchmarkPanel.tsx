@@ -90,7 +90,19 @@ export function BenchmarkPanel({ credentialConfigured }: { credentialConfigured:
             <details key={`${record.sample_id}-${record.result.requested_model_id}`} className={styles.record}>
               <summary>
                 <span>{record.sample_id} · {record.result.requested_model_id.split('/').at(-1)}</span>
-                <span className={record.exact_match ? styles.correct : styles.incorrect}>{record.exact_match ? 'correct' : 'incorrect'}</span>
+                <span className={
+                  record.result.status !== 'success'
+                    ? styles.failure
+                    : record.exact_match
+                      ? styles.correct
+                      : styles.incorrect
+                }>
+                  {record.result.status !== 'success'
+                    ? record.result.status.replaceAll('_', ' ')
+                    : record.exact_match
+                      ? 'correct'
+                      : 'incorrect'}
+                </span>
               </summary>
               <div className={styles.recordBody}>
                 <p>{record.rendered_prompt}</p>

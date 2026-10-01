@@ -74,6 +74,7 @@
 .recordBody pre { overflow-x: auto; padding: 0.8rem; border: 1px solid var(--border); border-radius: var(--radius-sm); white-space: pre-wrap; color: var(--text-muted); font: 0.75rem/1.5 var(--font-mono); }
 .correct { color: var(--success); }
 .incorrect { color: var(--danger); }
+.failure { color: var(--warning); }
 .spin { animation: spin 800ms linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (max-width: 800px) { .sectionHeading, .actionRow { align-items: stretch; flex-direction: column; } .modelPair { justify-content: flex-start; } .resultsGrid { grid-template-columns: 1fr; } .filterForm { width: 100%; } }
