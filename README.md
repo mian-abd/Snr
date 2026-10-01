@@ -51,7 +51,7 @@ The check script runs backend linting, type checks, tests, frontend tests, and a
 
 The runner validates the exact model IDs against the live OpenRouter catalog before making calls. It fails closed on model drift, uses one request at a time, records every attempt, and stops at the project-side daily budget. Manual comparisons are not saved unless the UI toggle is enabled.
 
-See [Checkpoint 1](docs/checkpoint-1.md), [research basis](docs/research-basis.md), and [demo script](docs/demo-script.md) for the protocol and limitations.
+See [Checkpoint 1](docs/checkpoint-1.md), [build handover](docs/build-handover.md), [presentation script](docs/presentation-script.md), [live demo guide](docs/live-demo-guide.md), [research basis](docs/research-basis.md), and [demo script](docs/demo-script.md) for the protocol and limitations.
 
 ## License
 
