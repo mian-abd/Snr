@@ -364,7 +364,8 @@ class BenchmarkRunner:
         if not candidates:
             return None
         latest = max(candidates, key=lambda path: path.stat().st_mtime)
-        return self.load_run(latest.parent.name)
+        manifest = BenchmarkManifest.model_validate_json(latest.read_text(encoding="utf-8"))
+        return self.load_run(manifest.run_id)
 
     def records(self, run_id: str, offset: int, limit: int) -> PaginatedRecords:
         rows = [

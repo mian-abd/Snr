@@ -1,3 +1,4 @@
+import shutil
 from datetime import UTC, datetime
 from decimal import Decimal
 
@@ -85,3 +86,9 @@ async def test_pilot_persists_four_cells_and_resumes_without_duplicates(
     assert len(adapter.calls) == 4
     records = runner.records(first.manifest.run_id, 0, 100)
     assert records.total == 4
+
+    runner.sanitize_run(first.manifest.run_id)
+    shutil.rmtree(data_dir / "local" / "runs" / first.manifest.run_id)
+    latest = runner.latest_run()
+    assert latest is not None
+    assert latest.manifest.run_id == first.manifest.run_id
