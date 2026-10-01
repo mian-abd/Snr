@@ -17,6 +17,7 @@ from app.domain.models import (
     GenerationStatus,
 )
 from app.registry.loader import ModelRegistry
+from app.storage import sanitize_text
 
 
 def _get_value(value: Any, key: str, default: Any = None) -> Any:
@@ -173,7 +174,7 @@ class LiteLLMOpenRouterAdapter:
                 status = GenerationStatus.TIMEOUT
             else:
                 status = GenerationStatus.PROVIDER_ERROR
-            safe_message = str(exc).replace(self.api_key, "[redacted]")
+            safe_message = sanitize_text(str(exc), secrets=(self.api_key,))
             return self._error_result(
                 request=request,
                 attempt_number=attempt_number,

@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from app import __version__
@@ -19,7 +20,7 @@ def create_app(
     resolved_settings = settings or get_settings()
 
     @asynccontextmanager
-    async def lifespan(app: FastAPI):
+    async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         app.state.services = services or build_services(resolved_settings)
         yield
 
@@ -44,7 +45,7 @@ def create_app(
         app.mount("/assets", StaticFiles(directory=assets), name="assets")
 
     @app.get("/{full_path:path}", include_in_schema=False)
-    async def frontend(full_path: str):
+    async def frontend(full_path: str) -> Response:
         index = dist / "index.html"
         if index.exists():
             return FileResponse(index)

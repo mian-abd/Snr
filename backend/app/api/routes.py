@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 
@@ -28,7 +28,7 @@ router = APIRouter(prefix="/api/v1")
 
 
 def get_services(request: Request) -> AppServices:
-    return request.app.state.services
+    return cast(AppServices, request.app.state.services)
 
 
 Services = Annotated[AppServices, Depends(get_services)]

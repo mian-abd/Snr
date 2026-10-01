@@ -37,7 +37,13 @@ from app.domain.models import (
 )
 from app.providers.service import GenerationService
 from app.registry.loader import ModelRegistry
-from app.storage import append_jsonl, atomic_write_json, atomic_write_jsonl, read_jsonl
+from app.storage import (
+    append_jsonl,
+    atomic_write_json,
+    atomic_write_jsonl,
+    read_jsonl,
+    sanitize_text,
+)
 
 GENERATION_CONFIG: dict[str, Any] = {
     "temperature": 0,
@@ -72,9 +78,11 @@ class RequestBudget:
         if not self.path.exists():
             return {"date": today, "count": 0}
         state = json.loads(self.path.read_text(encoding="utf-8"))
+        if not isinstance(state, dict):
+            return {"date": today, "count": 0}
         if state.get("date") != today:
             return {"date": today, "count": 0}
-        return state
+        return {str(key): value for key, value in state.items()}
 
     @property
     def remaining(self) -> int:
@@ -380,7 +388,7 @@ class BenchmarkRunner:
         for record in records:
             record.result.provider_request_id = None
             if record.result.error_message:
-                record.result.error_message = record.result.error_message[:300]
+                record.result.error_message = sanitize_text(record.result.error_message)[:300]
         atomic_write_json(destination / "manifest.json", manifest)
         atomic_write_jsonl(destination / "results.jsonl", records)
         summary = self._summarize(run_id, records)

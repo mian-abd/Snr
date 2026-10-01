@@ -37,7 +37,9 @@ async def test_adapter_handles_rate_limit_without_leaking_key(monkeypatch, regis
         status_code = 429
 
     async def fake_completion(**kwargs):
-        raise RateLimitError("bad test-key")
+        raise RateLimitError(
+            'bad test-key {"user_id":"user-secret","Authorization":"Bearer secret"}'
+        )
 
     monkeypatch.setattr("app.providers.litellm_openrouter.litellm.acompletion", fake_completion)
     adapter = LiteLLMOpenRouterAdapter(
@@ -48,3 +50,5 @@ async def test_adapter_handles_rate_limit_without_leaking_key(monkeypatch, regis
     )
     assert result.status == GenerationStatus.RATE_LIMITED
     assert "test-key" not in (result.error_message or "")
+    assert "user-secret" not in (result.error_message or "")
+    assert "Bearer secret" not in (result.error_message or "")
