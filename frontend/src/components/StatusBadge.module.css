@@ -1,0 +1,22 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 1.55rem;
+  padding: 0 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-muted);
+  background: var(--panel-raised);
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.dot { width: 0.42rem; height: 0.42rem; border-radius: 50%; background: currentColor; }
+.positive { color: var(--success); }
+.negative { color: var(--danger); }
+.active { color: var(--accent); }
+.neutral { color: var(--text-muted); }

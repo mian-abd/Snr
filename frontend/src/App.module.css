@@ -1,0 +1,20 @@
+.app { min-height: 100vh; }
+.header { position: sticky; top: 0; z-index: 10; border-bottom: 1px solid var(--border); background: rgb(8 10 11 / 94%); backdrop-filter: blur(10px); }
+.headerInner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; width: min(100% - 2rem, 1280px); min-height: 4.25rem; margin: 0 auto; }
+.brand { display: flex; align-items: center; gap: 0.75rem; }
+.mark { display: grid; width: 2rem; height: 2rem; place-items: center; border: 1px solid var(--accent); border-radius: var(--radius-sm); color: var(--accent); font: 700 0.74rem var(--font-mono); }
+.brand strong { display: block; font-size: 0.9rem; }
+.brand span { color: var(--text-dim); font: 0.67rem var(--font-mono); }
+.statusRail { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.45rem; }
+.main { width: min(100% - 2rem, 1280px); margin: 0 auto; padding: 2.3rem 0 5rem; }
+.intro { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(16rem, 0.6fr); align-items: end; gap: 3rem; padding: 2rem 0 2.5rem; }
+.intro h1 { max-width: 52rem; margin: 0; font-size: clamp(2.1rem, 5vw, 4.5rem); line-height: 0.98; letter-spacing: -0.06em; }
+.intro h1 span { color: var(--accent); }
+.introAside { padding-left: 1rem; border-left: 1px solid var(--border-strong); color: var(--text-muted); font-size: 0.85rem; line-height: 1.65; }
+.tabsList { display: flex; gap: 0.25rem; margin-bottom: 0.75rem; padding: 0.25rem; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--panel); }
+.tab { flex: 1; border: 0; border-radius: var(--radius-sm); padding: 0.7rem; background: transparent; color: var(--text-muted); cursor: pointer; font: 600 0.75rem var(--font-mono); }
+.tab[data-state='active'] { background: var(--panel-raised); color: var(--accent); }
+.error { padding: 1rem; border: 1px solid var(--danger); border-radius: var(--radius-md); color: var(--danger); }
+.loading { color: var(--text-muted); }
+.footer { display: flex; justify-content: space-between; gap: 1rem; margin-top: 1rem; color: var(--text-dim); font: 0.67rem var(--font-mono); }
+@media (max-width: 760px) { .headerInner { align-items: flex-start; flex-direction: column; padding: 0.75rem 0; } .statusRail { justify-content: flex-start; } .intro { grid-template-columns: 1fr; gap: 1.5rem; } .tabsList { overflow-x: auto; } .tab { min-width: 8rem; } .footer { flex-direction: column; } }
