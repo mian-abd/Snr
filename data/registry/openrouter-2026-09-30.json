@@ -1,0 +1,39 @@
+{
+  "schema_version": "1.0",
+  "snapshot_id": "openrouter-2026-09-30-cp1",
+  "metadata_as_of": "2026-09-30T00:00:00Z",
+  "source_url": "https://openrouter.ai/api/v1/models",
+  "models_sha256": "a2f09bc81d9a95295c6492438c1b414ffe8bb6c7c332eb9408d21422cb7a22d9",
+  "models": [
+    {
+      "id": "google/gemma-4-26b-a4b-it:free",
+      "display_name": "Google: Gemma 4 26B A4B (free)",
+      "provider": "google",
+      "context_length": 262144,
+      "pricing": {"prompt_per_token": "0", "completion_per_token": "0"},
+      "input_modalities": ["text", "image", "video"],
+      "output_modalities": ["text"],
+      "supported_parameters": ["max_tokens", "response_format", "temperature", "tool_choice", "tools", "top_p"],
+      "capabilities": {"tools": true, "structured_output": true},
+      "enabled": true,
+      "snapshot_id": "openrouter-2026-09-30-cp1",
+      "metadata_as_of": "2026-09-30T00:00:00Z",
+      "source_url": "https://openrouter.ai/google/gemma-4-26b-a4b-it:free"
+    },
+    {
+      "id": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "display_name": "NVIDIA: Nemotron 3 Ultra 550B A55B (free)",
+      "provider": "nvidia",
+      "context_length": 1000000,
+      "pricing": {"prompt_per_token": "0", "completion_per_token": "0"},
+      "input_modalities": ["text"],
+      "output_modalities": ["text"],
+      "supported_parameters": ["max_tokens", "response_format", "temperature", "tool_choice", "tools", "top_p"],
+      "capabilities": {"tools": true, "structured_output": true},
+      "enabled": true,
+      "snapshot_id": "openrouter-2026-09-30-cp1",
+      "metadata_as_of": "2026-09-30T00:00:00Z",
+      "source_url": "https://openrouter.ai/nvidia/nemotron-3-ultra-550b-a55b:free"
+    }
+  ]
+}

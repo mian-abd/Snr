@@ -1,0 +1,10 @@
+{
+  "dataset": "openai/gsm8k",
+  "configuration": "main",
+  "split": "test",
+  "revision": "b0bb162abedc65e1fdd8e93ed090fd7598ee68bc",
+  "source_file_sha256": "3730d312f6e3440559ace48831e51066acaca737f6eabec99bccb9e4b3c39d14",
+  "selection_seed": 498,
+  "source_indices": [30, 263, 507, 509, 539, 756, 780, 851, 987, 1218, 1227, 1251],
+  "sample_size": 12
+}
