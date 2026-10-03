@@ -3,7 +3,6 @@ from pathlib import Path
 
 from app.main import create_app
 
-
 repository_root = Path(__file__).resolve().parents[2]
 destination = repository_root / "frontend" / "openapi.json"
 destination.write_text(

@@ -14,4 +14,4 @@ try {
     Pop-Location
 }
 
-Write-Host "All Checkpoint 1 checks passed."
+Write-Host "All Checkpoint 2 checks passed."

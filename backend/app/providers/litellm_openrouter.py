@@ -29,6 +29,10 @@ def _get_value(value: Any, key: str, default: Any = None) -> Any:
 def _decimal_or_none(value: Any) -> Decimal | None:
     if value is None:
         return None
+    try:
+        return Decimal(str(value))
+    except (InvalidOperation, ValueError):
+        return None
 
 
 def _public_error_message(status: GenerationStatus) -> str:
@@ -63,10 +67,6 @@ def _public_error_message(status: GenerationStatus) -> str:
         ),
     }
     return messages.get(status, "The provider could not complete this request.")
-    try:
-        return Decimal(str(value))
-    except (InvalidOperation, ValueError):
-        return None
 
 
 class LiteLLMOpenRouterAdapter:

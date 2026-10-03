@@ -9,6 +9,7 @@ backend/.env
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.pytest-cp2-*/
 .mypy_cache/
 .ruff_cache/
 .coverage

@@ -990,6 +990,229 @@
         "title": "RegistrySnapshot",
         "type": "object"
       },
+      "RouteRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "min_context_tokens": {
+            "default": 1,
+            "minimum": 1.0,
+            "title": "Min Context Tokens",
+            "type": "integer"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/RoutingPriority",
+            "default": "balanced"
+          },
+          "prompt": {
+            "maxLength": 50000,
+            "minLength": 1,
+            "title": "Prompt",
+            "type": "string"
+          }
+        },
+        "required": [
+          "prompt"
+        ],
+        "title": "RouteRequest",
+        "type": "object"
+      },
+      "RouteResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "decision": {
+            "$ref": "#/components/schemas/RoutingDecision"
+          },
+          "result": {
+            "$ref": "#/components/schemas/GenerationResult"
+          }
+        },
+        "required": [
+          "decision",
+          "result"
+        ],
+        "title": "RouteResponse",
+        "type": "object"
+      },
+      "RoutingDashboard": {
+        "additionalProperties": false,
+        "properties": {
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "source_cells": {
+            "title": "Source Cells",
+            "type": "integer"
+          },
+          "source_dataset": {
+            "title": "Source Dataset",
+            "type": "string"
+          },
+          "source_run_id": {
+            "title": "Source Run Id",
+            "type": "string"
+          },
+          "strategies": {
+            "items": {
+              "$ref": "#/components/schemas/RoutingStrategySummary"
+            },
+            "title": "Strategies",
+            "type": "array"
+          }
+        },
+        "required": [
+          "source_run_id",
+          "source_dataset",
+          "source_cells",
+          "note",
+          "strategies"
+        ],
+        "title": "RoutingDashboard",
+        "type": "object"
+      },
+      "RoutingDecision": {
+        "additionalProperties": false,
+        "properties": {
+          "eligible_model_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Eligible Model Ids",
+            "type": "array"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/RoutingPriority"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "selected_model_id": {
+            "title": "Selected Model Id",
+            "type": "string"
+          },
+          "strategy_id": {
+            "title": "Strategy Id",
+            "type": "string"
+          },
+          "task_signals": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Task Signals",
+            "type": "array"
+          }
+        },
+        "required": [
+          "strategy_id",
+          "priority",
+          "selected_model_id",
+          "eligible_model_ids",
+          "task_signals",
+          "reason"
+        ],
+        "title": "RoutingDecision",
+        "type": "object"
+      },
+      "RoutingPriority": {
+        "enum": [
+          "cost",
+          "quality",
+          "latency",
+          "balanced"
+        ],
+        "title": "RoutingPriority",
+        "type": "string"
+      },
+      "RoutingStrategySummary": {
+        "additionalProperties": false,
+        "properties": {
+          "accuracy": {
+            "title": "Accuracy",
+            "type": "number"
+          },
+          "accuracy_when_served": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accuracy When Served"
+          },
+          "attempted": {
+            "title": "Attempted",
+            "type": "integer"
+          },
+          "correct": {
+            "title": "Correct",
+            "type": "integer"
+          },
+          "failed": {
+            "title": "Failed",
+            "type": "integer"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "mean_latency_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Latency Ms"
+          },
+          "selected_model_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Selected Model Counts",
+            "type": "object"
+          },
+          "strategy_id": {
+            "title": "Strategy Id",
+            "type": "string"
+          },
+          "successful": {
+            "title": "Successful",
+            "type": "integer"
+          },
+          "total_cost_usd": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Cost Usd"
+          }
+        },
+        "required": [
+          "strategy_id",
+          "label",
+          "selected_model_counts",
+          "attempted",
+          "successful",
+          "failed",
+          "correct",
+          "accuracy",
+          "accuracy_when_served",
+          "mean_latency_ms",
+          "total_cost_usd"
+        ],
+        "title": "RoutingStrategySummary",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -1033,7 +1256,7 @@
     }
   },
   "info": {
-    "description": "Checkpoint 1 dual-model comparison and GSM8K benchmark API",
+    "description": "Checkpoint 2 transparent routing over a reproducible model benchmark API",
     "title": "Adaptive LLM Router",
     "version": "0.1.0"
   },
@@ -1306,6 +1529,63 @@
           }
         },
         "summary": "Models"
+      }
+    },
+    "/api/v1/routes": {
+      "post": {
+        "description": "Select exactly one pinned model using the explicit CP2 rule policy.",
+        "operationId": "route_prompt_api_v1_routes_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RouteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Route Prompt"
+      }
+    },
+    "/api/v1/routing/dashboard": {
+      "get": {
+        "operationId": "routing_dashboard_api_v1_routing_dashboard_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoutingDashboard"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Routing Dashboard"
       }
     }
   }

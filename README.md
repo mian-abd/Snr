@@ -1,6 +1,6 @@
 # Adaptive LLM Router
 
-Checkpoint 1 is a local, reproducible comparison console for two pinned OpenRouter models. It provides a shared model adapter, a versioned registry with hard eligibility filtering, and a fixed 12-question GSM8K benchmark whose records can be inspected offline.
+Adaptive LLM Router is a local, reproducible console for comparing pinned OpenRouter models and making transparent routing decisions. Checkpoint 1 established the measurement evidence; Checkpoint 2 adds an inspectable rule-based policy and an offline strategy replay over that same saved evidence.
 
 ## Checkpoint 1 features
 
@@ -10,6 +10,15 @@ Checkpoint 1 is a local, reproducible comparison console for two pinned OpenRout
 - Run or resume a fixed 24-cell GSM8K experiment.
 - Review sanitized, append-only experiment evidence.
 - Use a single production URL served by FastAPI.
+
+## Checkpoint 2 features
+
+- Route one prompt to a single eligible pinned model using a visible priority: balanced, lower cost, higher quality, or faster response.
+- Keep hard capability requirements separate from soft user priorities.
+- Replay two fixed baselines and four policy variants over the committed 24-cell GSM8K matrix, without making another provider call.
+- Compare selected-model counts, accuracy, availability, latency, and cost using the same saved evidence.
+
+Checkpoint 2 is deliberately a simple, rule-based policy—not a learned router or a claim of statistically conclusive model rankings.
 
 ## Prerequisites
 
@@ -51,7 +60,7 @@ The check script runs backend linting, type checks, tests, frontend tests, and a
 
 The runner validates the exact model IDs against the live OpenRouter catalog before making calls. It fails closed on model drift, uses one request at a time, records every attempt, and stops at the project-side daily budget. Manual comparisons are not saved unless the UI toggle is enabled.
 
-See [Checkpoint 1](docs/checkpoint-1.md), [build handover](docs/build-handover.md), [presentation script](docs/presentation-script.md), [live demo guide](docs/live-demo-guide.md), [research basis](docs/research-basis.md), and [demo script](docs/demo-script.md) for the protocol and limitations.
+See [Checkpoint 1](docs/checkpoint-1.md), [Checkpoint 2](docs/checkpoint-2.md), [build handover](docs/build-handover.md), [presentation script](docs/presentation-script.md), [live demo guide](docs/live-demo-guide.md), [research basis](docs/research-basis.md), and [demo script](docs/demo-script.md) for the protocol and limitations.
 
 ## License
 

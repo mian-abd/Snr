@@ -136,6 +136,62 @@ class ComparisonResponse(StrictModel):
     results: list[GenerationResult]
 
 
+class RoutingPriority(StrEnum):
+    COST = "cost"
+    QUALITY = "quality"
+    LATENCY = "latency"
+    BALANCED = "balanced"
+
+
+class RouteRequest(StrictModel):
+    prompt: str = Field(min_length=1, max_length=50_000)
+    priority: RoutingPriority = RoutingPriority.BALANCED
+    min_context_tokens: int = Field(default=1, ge=1)
+
+    @field_validator("prompt")
+    @classmethod
+    def prompt_must_not_be_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("prompt must not be blank")
+        return value
+
+
+class RoutingDecision(StrictModel):
+    strategy_id: str
+    priority: RoutingPriority
+    selected_model_id: str
+    eligible_model_ids: list[str]
+    task_signals: list[str]
+    reason: str
+
+
+class RouteResponse(StrictModel):
+    decision: RoutingDecision
+    result: GenerationResult
+
+
+class RoutingStrategySummary(StrictModel):
+    strategy_id: str
+    label: str
+    selected_model_counts: dict[str, int]
+    attempted: int
+    successful: int
+    failed: int
+    correct: int
+    accuracy: float
+    accuracy_when_served: float | None
+    mean_latency_ms: float | None
+    total_cost_usd: Decimal | None
+
+
+class RoutingDashboard(StrictModel):
+    source_run_id: str
+    source_dataset: str
+    source_cells: int
+    note: str
+    strategies: list[RoutingStrategySummary]
+
+
 class EligibilityRequest(StrictModel):
     min_context_tokens: int = Field(default=500_000, ge=1)
 

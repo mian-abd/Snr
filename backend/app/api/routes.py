@@ -18,9 +18,13 @@ from app.domain.models import (
     HealthResponse,
     PaginatedRecords,
     RegistrySnapshot,
+    RouteRequest,
+    RouteResponse,
+    RoutingDashboard,
 )
 from app.registry.filtering import evaluate_eligibility
 from app.registry.loader import ModelDriftError
+from app.routing import RuleBasedRouter, build_dashboard
 from app.state import AppServices
 from app.storage import append_jsonl
 
@@ -105,6 +109,51 @@ async def compare(payload: ComparisonRequest, services: Services) -> ComparisonR
             response,
         )
     return response
+
+
+@router.post("/routes", response_model=RouteResponse)
+async def route_prompt(payload: RouteRequest, services: Services) -> RouteResponse:
+    """Select exactly one pinned model using the explicit CP2 rule policy."""
+    _require_live_services(services)
+    assert services.settings.openrouter_api_key is not None
+    assert services.generation_service is not None
+    try:
+        await services.registry.validate_live_catalog(
+            services.settings.openrouter_api_key.get_secret_value()
+        )
+        decision = RuleBasedRouter().decide(
+            prompt=payload.prompt,
+            priority=payload.priority,
+            models=services.registry.models,
+            min_context_tokens=payload.min_context_tokens,
+        )
+    except ModelDriftError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
+        ) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"OpenRouter catalog preflight failed: {type(exc).__name__}",
+        ) from exc
+
+    outcome = await services.generation_service.generate_with_retries(
+        GenerationRequest(model_id=decision.selected_model_id, prompt=payload.prompt)
+    )
+    return RouteResponse(
+        decision=decision,
+        result=outcome.final.model_copy(update={"provider_request_id": None}),
+    )
+
+
+@router.get("/routing/dashboard", response_model=RoutingDashboard)
+async def routing_dashboard(services: Services) -> RoutingDashboard:
+    try:
+        return build_dashboard(services.settings.data_dir / "demo" / "checkpoint-1")
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 
 
 @router.post(

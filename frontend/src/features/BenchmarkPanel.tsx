@@ -35,7 +35,7 @@ export function BenchmarkPanel({ credentialConfigured }: { credentialConfigured:
     <section className={styles.panel} aria-labelledby="benchmark-heading">
       <div className={styles.sectionHeading}>
         <div>
-          <span className={styles.index}>03 / BENCHMARK</span>
+          <span className={styles.index}>04 / BENCHMARK</span>
           <h2 id="benchmark-heading">A small baseline, captured completely.</h2>
           <p>Twelve fixed GSM8K questions establish the first objective model-quality evidence.</p>
         </div>

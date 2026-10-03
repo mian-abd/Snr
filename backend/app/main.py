@@ -27,7 +27,7 @@ def create_app(
     app = FastAPI(
         title="Adaptive LLM Router",
         version=__version__,
-        description="Checkpoint 1 dual-model comparison and GSM8K benchmark API",
+        description="Checkpoint 2 transparent routing over a reproducible model benchmark API",
         lifespan=lifespan,
     )
     app.add_middleware(
@@ -52,7 +52,7 @@ def create_app(
         return JSONResponse(
             {
                 "name": "Adaptive LLM Router",
-                "checkpoint": 1,
+                "checkpoint": 2,
                 "message": "Frontend build not found. Run npm run build in frontend/.",
                 "docs": "/docs",
             }

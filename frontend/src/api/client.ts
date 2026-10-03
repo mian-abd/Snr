@@ -5,6 +5,9 @@ import type {
   Health,
   PaginatedRecords,
   RegistrySnapshot,
+  RouteResponse,
+  RoutingDashboard,
+  RoutingPriority,
 } from './types'
 
 export class ApiError extends Error {
@@ -42,6 +45,12 @@ export const client = {
       method: 'POST',
       body: JSON.stringify({ prompt, save }),
     }),
+  route: (prompt: string, priority: RoutingPriority) =>
+    api<RouteResponse>('/api/v1/routes', {
+      method: 'POST',
+      body: JSON.stringify({ prompt, priority }),
+    }),
+  routingDashboard: () => api<RoutingDashboard>('/api/v1/routing/dashboard'),
   eligibility: (minContextTokens: number) =>
     api<{ results: EligibilityResult[] }>('/api/v1/eligibility', {
       method: 'POST',

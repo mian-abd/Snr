@@ -16,7 +16,7 @@ class Settings(BaseSettings):
 
     openrouter_api_key: SecretStr | None = None
     openrouter_site_url: str = "http://localhost:8000"
-    openrouter_app_name: str = "Adaptive LLM Router Checkpoint 1"
+    openrouter_app_name: str = "Adaptive LLM Router Checkpoint 2"
     max_daily_provider_requests: int = Field(default=40, ge=1, le=1000)
     data_dir: Path = REPOSITORY_ROOT / "data"
     frontend_dist_dir: Path = REPOSITORY_ROOT / "frontend" / "dist"

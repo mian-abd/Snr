@@ -56,7 +56,9 @@ async def test_adapter_handles_rate_limit_without_leaking_key(monkeypatch, regis
 
 
 @pytest.mark.asyncio
-async def test_adapter_uses_actionable_message_for_overloaded_provider(monkeypatch, registry) -> None:
+async def test_adapter_uses_actionable_message_for_overloaded_provider(
+    monkeypatch, registry
+) -> None:
     class ServiceUnavailableError(Exception):
         status_code = 503
 

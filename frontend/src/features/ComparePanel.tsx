@@ -84,7 +84,7 @@ export function ComparePanel({ models, credentialConfigured }: Props) {
     <section className={styles.panel} aria-labelledby="compare-heading">
       <div className={styles.sectionHeading}>
         <div>
-          <span className={styles.index}>01 / COMPARE</span>
+          <span className={styles.index}>02 / COMPARE</span>
           <h2 id="compare-heading">One prompt. Two fixed models.</h2>
           <p>Calls run concurrently for interaction speed. Benchmark timing uses a separate sequential protocol.</p>
         </div>

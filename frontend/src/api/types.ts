@@ -61,6 +61,44 @@ export type ComparisonResponse = {
   results: GenerationResult[]
 }
 
+export type RoutingPriority = 'cost' | 'quality' | 'latency' | 'balanced'
+
+export type RoutingDecision = {
+  strategy_id: string
+  priority: RoutingPriority
+  selected_model_id: string
+  eligible_model_ids: string[]
+  task_signals: string[]
+  reason: string
+}
+
+export type RouteResponse = {
+  decision: RoutingDecision
+  result: GenerationResult
+}
+
+export type RoutingStrategySummary = {
+  strategy_id: string
+  label: string
+  selected_model_counts: Record<string, number>
+  attempted: number
+  successful: number
+  failed: number
+  correct: number
+  accuracy: number
+  accuracy_when_served: number | null
+  mean_latency_ms: number | null
+  total_cost_usd: string | null
+}
+
+export type RoutingDashboard = {
+  source_run_id: string
+  source_dataset: string
+  source_cells: number
+  note: string
+  strategies: RoutingStrategySummary[]
+}
+
 export type EligibilityResult = {
   model_id: string
   eligible: boolean

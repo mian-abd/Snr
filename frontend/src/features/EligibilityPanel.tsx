@@ -16,7 +16,7 @@ export function EligibilityPanel({ models }: { models: ModelSpec[] }) {
     <section className={styles.panel} aria-labelledby="eligibility-heading">
       <div className={styles.sectionHeading}>
         <div>
-          <span className={styles.index}>02 / ELIGIBILITY</span>
+          <span className={styles.index}>03 / ELIGIBILITY</span>
           <h2 id="eligibility-heading">Hard requirements before routing.</h2>
           <p>A pure metadata filter excludes models that cannot satisfy the request before any generation call.</p>
         </div>

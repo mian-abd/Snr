@@ -13,4 +13,4 @@ try {
     Pop-Location
 }
 
-Write-Host "Checkpoint 1 dependencies are ready. Copy .env.example to backend/.env and add only a replacement OpenRouter key."
+Write-Host "Adaptive LLM Router dependencies are ready. Copy .env.example to backend/.env and add only a replacement OpenRouter key."

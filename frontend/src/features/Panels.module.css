@@ -40,6 +40,24 @@
 .errorBox strong { display: block; color: var(--text); font-size: 0.8rem; }
 .errorBox p { margin: 0.28rem 0 0; }
 .errorGuidance { color: var(--text-muted); }
+.priorityFieldset { margin: 1rem 0 0; padding: 0; border: 0; }
+.priorityFieldset legend { margin-bottom: 0.55rem; color: var(--text-muted); font-size: 0.78rem; font-weight: 650; }
+.priorityGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.55rem; }
+.priorityOption, .priorityActive { min-height: 4.5rem; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.7rem; background: var(--background); color: var(--text-muted); text-align: left; cursor: pointer; transition: 120ms ease; }
+.priorityOption:hover { border-color: var(--border-strong); color: var(--text); }
+.priorityActive { border-color: var(--accent); background: var(--accent-faint); color: var(--text); }
+.priorityOption strong, .priorityActive strong { display: block; margin-bottom: 0.25rem; font-size: 0.78rem; }
+.priorityOption span, .priorityActive span { display: block; color: var(--text-dim); font-size: 0.7rem; line-height: 1.35; }
+.routeOutcome { display: grid; grid-template-columns: minmax(15rem, 0.7fr) minmax(0, 1.3fr); gap: 1rem; margin-top: 1.35rem; }
+.decisionBlock { padding: 1rem; border: 1px solid var(--accent); border-radius: var(--radius-md); background: var(--accent-faint); }
+.decisionBlock h3 { margin: 0.3rem 0 0.55rem; font-size: 1rem; }
+.decisionBlock p { margin: 0; color: var(--text-muted); font-size: 0.8rem; line-height: 1.55; }
+.signalRow { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.9rem; }
+.signalRow span { padding: 0.28rem 0.4rem; border: 1px solid var(--border); border-radius: 999px; color: var(--text-muted); font: 0.65rem var(--font-mono); }
+.dashboard { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+.dashboardHeading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.dashboardHeading h3 { margin: 0.3rem 0 0; font-size: 1rem; }
+.dashboardHeading svg { color: var(--accent); }
 .filterForm { min-width: min(100%, 19rem); }
 .filterForm > label { display: block; margin-bottom: 0.45rem; color: var(--text-muted); font-size: 0.72rem; }
 .filterForm > div { display: flex; }
@@ -81,5 +99,5 @@
 .failure { color: var(--warning); }
 .spin { animation: spin 800ms linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-@media (max-width: 800px) { .sectionHeading, .actionRow { align-items: stretch; flex-direction: column; } .modelPair { justify-content: flex-start; } .resultsGrid { grid-template-columns: 1fr; } .filterForm { width: 100%; } }
+@media (max-width: 800px) { .sectionHeading, .actionRow { align-items: stretch; flex-direction: column; } .modelPair { justify-content: flex-start; } .resultsGrid, .routeOutcome { grid-template-columns: 1fr; } .priorityGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .filterForm { width: 100%; } }
 @media (prefers-reduced-motion: reduce) { .spin { animation: none; } * { transition-duration: 0ms !important; } }
