@@ -13,7 +13,7 @@ The application now has a **Route** section with four priorities:
 
 Before any priority is applied, the existing deterministic eligibility filter removes models that do not meet a requested minimum context length. This preserves the distinction between a hard requirement and a user preference.
 
-The live route endpoint makes exactly one generation request to the selected fixed model. It still performs the existing credential and catalog-drift preflight first. It never silently substitutes a different model.
+The local decision-preview endpoint evaluates the same policy without a credential or provider request, so a user can inspect how a priority and minimum-context requirement change the choice. The live route endpoint makes exactly one generation request to that selected fixed model. It still performs the existing credential and catalog-drift preflight first. It never silently substitutes a different model.
 
 ## Baselines and replay
 
@@ -37,7 +37,7 @@ This checkpoint is a transparent baseline rather than a trained policy. The prom
 ## Demo path
 
 1. Open **Route**. The strategy table loads from the saved matrix with no key or live model request.
-2. Change between **Lower cost** and **Higher quality** to show the selected fixed model changes for the same prompt.
-3. Explain that hard context requirements run first and can override a preference.
+2. Change between **Lower cost** and **Higher quality**, click **Preview decision**, and show the selected fixed model changes for the same prompt without a provider call.
+3. Set the minimum context to `500000`, preview again, and explain that the hard requirement excludes Gemma before it can satisfy a lower-cost preference.
 4. If provider capacity is available, click **Route prompt** to show a single real request and the recorded status, response, latency, token usage, and cost.
 5. Use the Benchmark section to return to the raw Checkpoint 1 evidence that powers the replay.

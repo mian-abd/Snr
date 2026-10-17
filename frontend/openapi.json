@@ -1080,6 +1080,10 @@
             "title": "Eligible Model Ids",
             "type": "array"
           },
+          "min_context_tokens": {
+            "title": "Min Context Tokens",
+            "type": "integer"
+          },
           "priority": {
             "$ref": "#/components/schemas/RoutingPriority"
           },
@@ -1106,6 +1110,7 @@
         "required": [
           "strategy_id",
           "priority",
+          "min_context_tokens",
           "selected_model_id",
           "eligible_model_ids",
           "task_signals",
@@ -1586,6 +1591,45 @@
           }
         },
         "summary": "Routing Dashboard"
+      }
+    },
+    "/api/v1/routing/decisions": {
+      "post": {
+        "description": "Evaluate the fixed CP2 policy without a credential or provider request.",
+        "operationId": "preview_routing_decision_api_v1_routing_decisions_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RouteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoutingDecision"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Preview Routing Decision"
       }
     }
   }

@@ -5,6 +5,7 @@ import type {
   Health,
   PaginatedRecords,
   RegistrySnapshot,
+  RoutingDecision,
   RouteResponse,
   RoutingDashboard,
   RoutingPriority,
@@ -45,10 +46,15 @@ export const client = {
       method: 'POST',
       body: JSON.stringify({ prompt, save }),
     }),
-  route: (prompt: string, priority: RoutingPriority) =>
+  route: (prompt: string, priority: RoutingPriority, minContextTokens: number) =>
     api<RouteResponse>('/api/v1/routes', {
       method: 'POST',
-      body: JSON.stringify({ prompt, priority }),
+      body: JSON.stringify({ prompt, priority, min_context_tokens: minContextTokens }),
+    }),
+  previewRoute: (prompt: string, priority: RoutingPriority, minContextTokens: number) =>
+    api<RoutingDecision>('/api/v1/routing/decisions', {
+      method: 'POST',
+      body: JSON.stringify({ prompt, priority, min_context_tokens: minContextTokens }),
     }),
   routingDashboard: () => api<RoutingDashboard>('/api/v1/routing/dashboard'),
   eligibility: (minContextTokens: number) =>

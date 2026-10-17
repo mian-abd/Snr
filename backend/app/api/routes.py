@@ -21,6 +21,7 @@ from app.domain.models import (
     RouteRequest,
     RouteResponse,
     RoutingDashboard,
+    RoutingDecision,
 )
 from app.registry.filtering import evaluate_eligibility
 from app.registry.loader import ModelDriftError
@@ -146,6 +147,24 @@ async def route_prompt(payload: RouteRequest, services: Services) -> RouteRespon
         decision=decision,
         result=outcome.final.model_copy(update={"provider_request_id": None}),
     )
+
+
+@router.post("/routing/decisions", response_model=RoutingDecision)
+async def preview_routing_decision(
+    payload: RouteRequest, services: Services
+) -> RoutingDecision:
+    """Evaluate the fixed CP2 policy without a credential or provider request."""
+    try:
+        return RuleBasedRouter().decide(
+            prompt=payload.prompt,
+            priority=payload.priority,
+            models=services.registry.models,
+            min_context_tokens=payload.min_context_tokens,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
+        ) from exc
 
 
 @router.get("/routing/dashboard", response_model=RoutingDashboard)

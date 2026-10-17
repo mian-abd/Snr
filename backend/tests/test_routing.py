@@ -35,6 +35,7 @@ def test_rule_router_respects_context_requirement(registry) -> None:
     )
     assert decision.selected_model_id == STRONG_MODEL_ID
     assert decision.eligible_model_ids == [STRONG_MODEL_ID]
+    assert "filtered out by hard requirements" in decision.reason
 
 
 def test_dashboard_replays_checkpoint_one_matrix_without_live_calls() -> None:

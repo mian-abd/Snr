@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { ArrowRight, Clock3, Route } from 'lucide-react'
+import { ArrowRight, Clock3, Route, ScanSearch } from 'lucide-react'
 import { useState } from 'react'
 import { client } from '../api/client'
 import type { ModelSpec, RoutingPriority } from '../api/types'
@@ -18,9 +18,21 @@ const priorities: Array<{ id: RoutingPriority; label: string; description: strin
 export function RouterPanel({ models, credentialConfigured }: Props) {
   const [prompt, setPrompt] = useState('Explain why a router should separate hard requirements from user preferences.')
   const [priority, setPriority] = useState<RoutingPriority>('balanced')
-  const route = useMutation({ mutationFn: () => client.route(prompt.trim(), priority) })
+  const [minContextTokens, setMinContextTokens] = useState(1)
+  const [lastAction, setLastAction] = useState<'preview' | 'route'>('preview')
+  const preview = useMutation({
+    mutationFn: () => client.previewRoute(prompt.trim(), priority, minContextTokens),
+    onSuccess: () => setLastAction('preview'),
+  })
+  const route = useMutation({
+    mutationFn: () => client.route(prompt.trim(), priority, minContextTokens),
+    onSuccess: () => setLastAction('route'),
+  })
   const dashboard = useQuery({ queryKey: ['routing-dashboard'], queryFn: client.routingDashboard })
-  const selectedModel = models.find((model) => model.id === route.data?.decision.selected_model_id)
+  const decision = lastAction === 'route'
+    ? route.data?.decision ?? preview.data
+    : preview.data ?? route.data?.decision
+  const selectedModel = models.find((model) => model.id === decision?.selected_model_id)
 
   return (
     <section className={styles.panel} aria-labelledby="router-heading">
@@ -49,32 +61,52 @@ export function RouterPanel({ models, credentialConfigured }: Props) {
         </div>
       </fieldset>
 
-      <div className={styles.actionRow}>
-        <p className={styles.disclaimer}>Hard requirements still filter candidates before this priority policy runs.</p>
-        <button className={styles.primaryButton} disabled={!credentialConfigured || !prompt.trim() || route.isPending} onClick={() => route.mutate()}>
-          {route.isPending ? <Clock3 className={styles.spin} size={16} /> : <Route size={16} />}
-          {route.isPending ? 'Selecting and routing…' : 'Route prompt'}
-        </button>
+      <div className={styles.requirementControl}>
+        <div>
+          <span className={styles.fieldLabel}>Hard requirement</span>
+          <p>Minimum context tokens. This filter runs before the selected priority.</p>
+        </div>
+        <label htmlFor="route-min-context">
+          <span>Minimum context</span>
+          <input id="route-min-context" type="number" min="1" step="1" value={minContextTokens} onChange={(event) => setMinContextTokens(Math.max(1, Number(event.target.value) || 1))} />
+        </label>
+        <button type="button" className={styles.requirementPreset} onClick={() => setMinContextTokens(500_000)}>Use 500,000 demo</button>
       </div>
 
+      <div className={styles.actionRow}>
+        <p className={styles.disclaimer}>Preview is local and never calls a provider. Routing sends one call only to the selected eligible model.</p>
+        <div className={styles.routeActions}>
+          <button className={styles.secondaryRouteButton} disabled={!prompt.trim() || preview.isPending} onClick={() => preview.mutate()}>
+            {preview.isPending ? <Clock3 className={styles.spin} size={16} /> : <ScanSearch size={16} />}
+            {preview.isPending ? 'Evaluating…' : 'Preview decision'}
+          </button>
+          <button className={styles.primaryButton} disabled={!credentialConfigured || !prompt.trim() || route.isPending} onClick={() => route.mutate()}>
+            {route.isPending ? <Clock3 className={styles.spin} size={16} /> : <Route size={16} />}
+            {route.isPending ? 'Selecting and routing…' : 'Route prompt'}
+          </button>
+        </div>
+      </div>
+
+      {preview.error && <p className={styles.errorBox} role="alert">{preview.error.message}</p>}
       {route.error && <p className={styles.errorBox} role="alert">{route.error.message}</p>}
-      {route.data && (
+      {decision && (
         <div className={styles.routeOutcome} aria-live="polite">
           <div className={styles.decisionBlock}>
-            <span className={styles.eyebrow}>Selected model</span>
-            <h3>{selectedModel?.display_name ?? route.data.decision.selected_model_id}</h3>
-            <p>{route.data.decision.reason}</p>
-            <div className={styles.signalRow}>{route.data.decision.task_signals.map((signal) => <span key={signal}>{signal}</span>)}</div>
+            <span className={styles.eyebrow}>{route.data ? 'Selected model' : 'Previewed model'}</span>
+            <h3>{selectedModel?.display_name ?? decision.selected_model_id}</h3>
+            <p>{decision.reason}</p>
+            <div className={styles.signalRow}>{decision.task_signals.map((signal) => <span key={signal}>{signal}</span>)}</div>
+            <p className={styles.eligibilityLine}>{decision.eligible_model_ids.length} eligible model{decision.eligible_model_ids.length === 1 ? '' : 's'} after the {decision.min_context_tokens.toLocaleString()}-token requirement.</p>
           </div>
-          <article className={styles.resultCard}>
-            <header className={styles.resultHeader}><div><span className={styles.eyebrow}>Single routed result</span><h3>{route.data.result.requested_model_id}</h3></div><StatusBadge status={route.data.result.status} /></header>
-            <div className={styles.responseText}>{route.data.result.text ?? route.data.result.error_message ?? 'The provider did not return usable text.'}</div>
-            <dl className={styles.metricStrip}>
-              <div><dt>Latency</dt><dd>{Math.round(route.data.result.latency_ms).toLocaleString()} ms</dd></div>
-              <div><dt>Tokens</dt><dd>{route.data.result.total_tokens?.toLocaleString() ?? '—'}</dd></div>
-              <div><dt>Cost</dt><dd>{route.data.result.cost_usd == null ? 'Not reported' : `$${Number(route.data.result.cost_usd).toFixed(6)}`}</dd></div>
-            </dl>
-          </article>
+          {route.data ? <article className={styles.resultCard}>
+              <header className={styles.resultHeader}><div><span className={styles.eyebrow}>Single routed result</span><h3>{route.data.result.requested_model_id}</h3></div><StatusBadge status={route.data.result.status} /></header>
+              <div className={styles.responseText}>{route.data.result.text ?? route.data.result.error_message ?? 'The provider did not return usable text.'}</div>
+              <dl className={styles.metricStrip}>
+                <div><dt>Latency</dt><dd>{Math.round(route.data.result.latency_ms).toLocaleString()} ms</dd></div>
+                <div><dt>Tokens</dt><dd>{route.data.result.total_tokens?.toLocaleString() ?? '—'}</dd></div>
+                <div><dt>Cost</dt><dd>{route.data.result.cost_usd == null ? 'Not reported' : `$${Number(route.data.result.cost_usd).toFixed(6)}`}</dd></div>
+              </dl>
+            </article> : <div className={styles.previewPanel}><span className={styles.eyebrow}>No provider call made</span><h3>Decision preview complete.</h3><p>Change the priority or context requirement, then preview again to inspect the policy before routing.</p></div>}
         </div>
       )}
 

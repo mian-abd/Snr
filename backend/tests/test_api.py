@@ -57,6 +57,25 @@ def test_read_only_endpoints_work_without_credential(registry, tmp_path) -> None
         eligibility = client.post("/api/v1/eligibility", json={"min_context_tokens": 500000})
         assert eligibility.status_code == 200
         assert [item["eligible"] for item in eligibility.json()["results"]] == [False, True]
+        lower_cost = client.post(
+            "/api/v1/routing/decisions",
+            json={"prompt": "Explain the water cycle.", "priority": "cost"},
+        )
+        assert lower_cost.status_code == 200
+        assert lower_cost.json()["selected_model_id"].startswith("google/")
+        constrained_quality = client.post(
+            "/api/v1/routing/decisions",
+            json={
+                "prompt": "Explain the water cycle.",
+                "priority": "cost",
+                "min_context_tokens": 500000,
+            },
+        )
+        assert constrained_quality.status_code == 200
+        assert constrained_quality.json()["selected_model_id"].startswith("nvidia/")
+        assert constrained_quality.json()["eligible_model_ids"] == [
+            constrained_quality.json()["selected_model_id"]
+        ]
         compare = client.post("/api/v1/comparisons", json={"prompt": "hello", "save": False})
         assert compare.status_code == 503
 

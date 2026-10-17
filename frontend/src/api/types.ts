@@ -66,6 +66,7 @@ export type RoutingPriority = 'cost' | 'quality' | 'latency' | 'balanced'
 export type RoutingDecision = {
   strategy_id: string
   priority: RoutingPriority
+  min_context_tokens: number
   selected_model_id: string
   eligible_model_ids: string[]
   task_signals: string[]

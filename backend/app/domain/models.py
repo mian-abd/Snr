@@ -159,6 +159,7 @@ class RouteRequest(StrictModel):
 class RoutingDecision(StrictModel):
     strategy_id: str
     priority: RoutingPriority
+    min_context_tokens: int
     selected_model_id: str
     eligible_model_ids: list[str]
     task_signals: list[str]

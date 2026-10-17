@@ -48,12 +48,27 @@
 .priorityActive { border-color: var(--accent); background: var(--accent-faint); color: var(--text); }
 .priorityOption strong, .priorityActive strong { display: block; margin-bottom: 0.25rem; font-size: 0.78rem; }
 .priorityOption span, .priorityActive span { display: block; color: var(--text-dim); font-size: 0.7rem; line-height: 1.35; }
+.requirementControl { display: flex; align-items: end; gap: 0.75rem; margin-top: 1rem; padding: 0.8rem; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--panel-raised); }
+.requirementControl > div { flex: 1 1 14rem; }
+.requirementControl .fieldLabel { margin: 0; }
+.requirementControl p { margin: 0.25rem 0 0; color: var(--text-dim); font-size: 0.72rem; line-height: 1.45; }
+.requirementControl label { display: grid; gap: 0.35rem; color: var(--text-muted); font-size: 0.7rem; }
+.requirementControl input { width: 10rem; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); padding: 0.55rem 0.65rem; background: var(--background); color: var(--text); font: 0.76rem var(--font-mono); outline: none; }
+.requirementControl input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-faint); }
+.requirementPreset, .secondaryRouteButton { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; min-height: 2.5rem; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); padding: 0 0.85rem; background: var(--panel-raised); color: var(--text); font-size: 0.78rem; font-weight: 650; cursor: pointer; transition: 120ms ease; }
+.requirementPreset:hover, .secondaryRouteButton:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.secondaryRouteButton:disabled { cursor: not-allowed; opacity: 0.45; }
+.routeActions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.6rem; }
 .routeOutcome { display: grid; grid-template-columns: minmax(15rem, 0.7fr) minmax(0, 1.3fr); gap: 1rem; margin-top: 1.35rem; }
 .decisionBlock { padding: 1rem; border: 1px solid var(--accent); border-radius: var(--radius-md); background: var(--accent-faint); }
 .decisionBlock h3 { margin: 0.3rem 0 0.55rem; font-size: 1rem; }
 .decisionBlock p { margin: 0; color: var(--text-muted); font-size: 0.8rem; line-height: 1.55; }
+.eligibilityLine { margin-top: 0.9rem !important; color: var(--text-dim) !important; font: 0.68rem/1.45 var(--font-mono) !important; }
 .signalRow { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.9rem; }
 .signalRow span { padding: 0.28rem 0.4rem; border: 1px solid var(--border); border-radius: 999px; color: var(--text-muted); font: 0.65rem var(--font-mono); }
+.previewPanel { padding: 1rem; border: 1px dashed var(--border-strong); border-radius: var(--radius-md); background: var(--background); }
+.previewPanel h3 { margin: 0.35rem 0 0.45rem; font-size: 1rem; }
+.previewPanel p { margin: 0; color: var(--text-muted); font-size: 0.8rem; line-height: 1.55; }
 .dashboard { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
 .dashboardHeading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 .dashboardHeading h3 { margin: 0.3rem 0 0; font-size: 1rem; }
@@ -99,5 +114,5 @@
 .failure { color: var(--warning); }
 .spin { animation: spin 800ms linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-@media (max-width: 800px) { .sectionHeading, .actionRow { align-items: stretch; flex-direction: column; } .modelPair { justify-content: flex-start; } .resultsGrid, .routeOutcome { grid-template-columns: 1fr; } .priorityGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .filterForm { width: 100%; } }
+@media (max-width: 800px) { .sectionHeading, .actionRow, .requirementControl { align-items: stretch; flex-direction: column; } .modelPair, .routeActions { justify-content: flex-start; } .requirementControl input { width: 100%; } .resultsGrid, .routeOutcome { grid-template-columns: 1fr; } .priorityGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .filterForm { width: 100%; } }
 @media (prefers-reduced-motion: reduce) { .spin { animation: none; } * { transition-duration: 0ms !important; } }
