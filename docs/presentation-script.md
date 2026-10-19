@@ -1,123 +1,150 @@
-# Presentation script for Checkpoint 1
+# Checkpoint 2 presentation script
 
-This script follows `Adaptive LLM Router.pptx` and the live application as it stands today. It is designed for six minutes, plus questions.
+This script follows `docs/presentations/Adaptive_LLM_Router_Checkpoint_2_Final.pptx`. It is written for about seven minutes plus the live demo and questions. The safest demo is the local **decision preview** and saved benchmark replay; neither one spends provider calls or depends on free-provider availability.
 
-## The one idea to keep in mind
+## The simple explanation
 
-Checkpoint 1 does **not** claim that it has already built a smart router. It builds the measurement layer a router needs: fixed model identities, comparable response fields, hard capability filtering, an objective scorer, saved evidence, and visible provider failures.
+Checkpoint 1 built an evidence layer: two fixed models, one normalized interface, a hard eligibility filter, a fixed GSM8K sample, objective scoring, and saved experiment records.
 
-The current Compare screen is a valid demonstration when Gemma is rate-limited and Nemotron succeeds. Say that the screen records two independent provider outcomes. Do not say that Gemma gave a bad answer. It did not return an answer at all.
+Checkpoint 2 puts a transparent decision layer on top of that evidence. A request now follows this order:
 
-## Before presenting
+1. Check hard requirements, such as minimum context length.
+2. Remove models that cannot satisfy those requirements.
+3. Apply a visible priority: lower cost, higher quality, faster response, or balanced.
+4. Select exactly one pinned model.
+5. Return the selected model and a human-readable reason.
 
-1. Keep the local app open at `http://127.0.0.1:8000` and leave the current Compare result visible.
-2. Do not submit another prompt unless you have already confirmed both providers are available. The visible screen already demonstrates the feature.
-3. Open the Benchmark tab once before presenting, then return to Compare.
-4. Keep the release page open in another tab as a backup.
+This is an understandable baseline, not a learned router. That distinction is important.
 
-Important corrections to the slides:
+## Slide 1 — Adaptive LLM Router, Checkpoint 2
 
-- Slide 4 contains placeholder names, `gpt-4o` and `claude-3-5-sonnet`. The live application compares **Google Gemma 4 26B A4B** and **NVIDIA Nemotron 3 Ultra 550B** through OpenRouter.
-- Slide 6 spells **Nemotron** incorrectly as “Nemetron.” Say the correct name aloud.
+Say:
 
-## Slide 1: Title
+“Hi, I’m Mian Abdullah. In Checkpoint 1 I built the measurement layer for my Adaptive LLM Router. In this checkpoint I moved from comparing models to making a transparent routing decision. The system now filters incompatible models, applies an explicit user priority, selects one fixed model, and explains why it made that choice.”
 
-“Hi, I’m Mian Abdullah. This is Checkpoint 1 of my Adaptive LLM Router. The long-term project will choose an appropriate language model for each request. Before building that policy, I needed a reliable way to collect evidence about models.”
+## Slide 2 — Today
 
-## Slide 2: Agenda
+Say:
 
-“I will briefly explain the problem, show the live comparison console, explain the fixed GSM8K experiment, show the context-window filter, and then summarize what the first run taught me.”
+“I will show four things. First, what changed since Checkpoint 1. Second, how the rule-based router works. Third, how the same prompt produces different decisions when the priority or requirement changes. Finally, I will connect those choices to the saved benchmark evidence and show the live application.”
 
-## Slide 3: What I am building
+## Slide 3 — Evidence to decision
 
-“One prompt can be handled by many models, but they differ in latency, cost, context capacity, quality, and availability. A router should not make a choice based only on a model name.
+Say:
 
-This checkpoint builds the layer underneath the router. It stores model metadata, rejects models that fail a hard requirement, calls fixed model identities through one interface, and records the result of an objective benchmark. Choosing the best model is deliberately deferred to the next checkpoint.”
+“The key architectural change is this four-step pipeline. The prompt enters first. Hard filters run before any preference. For example, if a request needs at least 500,000 context tokens, Gemma is removed because its context window is 262,144, while Nemotron remains because it supports one million.
 
-Transition: “First, I will show the live comparison surface.”
+After filtering, the policy rule applies the user’s priority. It then selects one model and returns an explanation. The important design decision is that requirements and preferences are separate. A lower-cost preference is allowed to choose only among models that can actually satisfy the request.”
 
-## Slide 4: Promise 1, dual-model comparison
+Transition:
 
-“In the implementation, I have pinned Gemma and Nemotron to exact OpenRouter IDs. The same prompt goes to both models concurrently. Each result has its own response text, latency, token count, cost when available, and status.
+“Now I will explain what the current rules mean.”
 
-Pinning matters because the app must never label one model while a different model actually answered. The system also does not silently replace a failed model with another one.”
+## Slide 4 — Rule routing and transparent decisions
 
-### Live demo: Compare tab
+Say:
 
-Point to the two cards and say:
+“The two candidates stay pinned to the same exact OpenRouter model IDs used in Checkpoint 1: Google Gemma 4 26B and NVIDIA Nemotron 3 Ultra.
 
-“Here is the live Compare screen. Both cards show the same request, but their results remain independent. Nemotron completed this request, so the response, latency, tokens, and zero cost are visible on the right.
+The cost-oriented and latency-oriented baselines prefer Gemma, the smaller model. Both endpoints were free in this experiment, so the cost rule is currently a transparent smaller-model proxy, not proof of a measured price advantage. The latency rule is supported only by the successful calls in this small run: Gemma averaged about 5.6 seconds when it was served, while Nemotron averaged about 19.9 seconds. Gemma was available for only three of twelve cells, so I do not present latency without that reliability caveat.
 
-Gemma returned a provider rate limit. The application preserves that as a capacity event. It does not hide the error, call a different model, or turn the failure into a quality score. This is important because a future router needs honest reliability data before it can make a decision.”
+The quality-oriented baseline prefers Nemotron because it scored eight correct answers out of twelve logical cells, compared with Gemma’s three out of twelve. A 500,000-token hard requirement also leaves only Nemotron eligible.
 
-If both models happen to return successfully on a later attempt, say:
+Every decision records the priority, required context, eligible models, excluded models, selected model, policy version, and explanation. There is no hidden fallback.”
 
-“Each card contains a separate answer, latency, usage, and cost record. They are two independent calls under the same prompt.”
+## Slide 5 — Baseline evidence
 
-Do not say “Gemma is worse” or “the rate limit proves anything about reasoning quality.”
+Say:
 
-## Slide 5: Promise 2, objective benchmark
+“These rules are connected to the saved Checkpoint 1 matrix rather than invented performance claims. The experiment contains twelve fixed GSM8K questions for each of two models, so there are twenty-four logical result cells.
 
-“For quality measurement, I used twelve fixed GSM8K grade-school math questions. Both pinned models received the same prompt template, temperature zero, and a maximum of 512 output tokens. That creates 24 model-question cells.
+Nemotron successfully served all twelve cells and scored eight exact numeric matches, which is 66.7 percent across the fixed sample. Its mean successful latency was about 19.9 seconds.
 
-The saved run has 24 final records. Nemotron completed 12 calls and answered 8 correctly by exact numeric match. Gemma completed 3 calls and answered all 3 correctly. The remaining 9 Gemma cells ended in upstream rate limits.
+Gemma served three of twelve cells and those three answers were correct. Nine cells ended in upstream shared-pool rate limits. Because failed cells remain in the twelve-cell denominator, the demonstrated accuracy is three out of twelve, or 25 percent, and availability is shown separately.
 
-I keep those nine cells as provider failures. I do not call them wrong answers, and I do not claim that twelve questions prove a general ranking. The purpose is to demonstrate a reproducible collection, scoring, and evidence pipeline.”
+The important point is not that this tiny sample proves one model is universally better. The point is that quality, latency, cost, and availability are preserved as separate evidence instead of being hidden.”
 
-### Live demo: Benchmark tab
+## Slide 6 — Policy tests
 
-“This tab loads saved evidence. It does not send a new provider request. The protocol is locked: GSM8K test data, 12 questions, two fixed models, 24 cells, temperature zero, and exact numeric matching.
+Say:
 
-The summary separates quality from availability. Expanding a record shows the question, expected answer, extracted answer, response or normalized provider error, and score. The sanitized JSON evidence is committed with the project so this run can be inspected offline.”
+“This slide shows the test I use in the demo. I keep the prompt unchanged and change one control at a time.
 
-## Slide 6: Promise 3, eligibility before inference
+With no restrictive context requirement, the lower-cost or faster-response priority selects Gemma. The higher-quality priority selects Nemotron. Then I choose lower cost again but require at least 500,000 context tokens. Gemma is filtered out first, so Nemotron is selected even though the preference asked for the smaller model.
 
-“The third piece is a hard eligibility filter. I set a minimum context requirement of 500,000 tokens. Gemma has 262,144 tokens, so the filter excludes it. Nemotron has one million tokens, so it remains eligible.
+That behavior proves the router treats a hard requirement as non-negotiable and a priority as a preference. The preview endpoint returns the full decision explanation locally and does not call OpenRouter.”
 
-This is deterministic. It is not a judgment that Nemotron is smarter. It simply proves that a future router can remove models that cannot meet a non-negotiable requirement before spending money or waiting for inference.”
+### Live demo at this point
 
-### Live demo: Eligibility tab
+Use the **Route** tab.
 
-“I keep the requirement at 500,000 and evaluate it. The app shows both the decision and the exact numerical reason beside the model.”
+1. Keep the default prompt.
+2. Select **Lower cost**, keep minimum context at `1`, and click **Preview decision**. Point out that Gemma is selected.
+3. Select **Higher quality** and preview again. Point out that Nemotron is selected for the same prompt.
+4. Select **Lower cost**, click **Use 500,000 demo**, and preview again. Read the explanation: the lower-cost rule would prefer Gemma, but the hard requirement removes it, so Nemotron is selected.
+5. Scroll to the strategy replay table. Explain that it replays the saved twenty-four-cell matrix and makes no provider calls.
 
-## Slide 7: Reproducibility and engineering work
+Do not rely on **Route prompt** for the main presentation. It is a real provider call and free capacity may be rate-limited. The live UI and local preview are real application behavior even though inference is not called.
 
-“I made the experiment recoverable and inspectable. Each provider attempt is append-only. The runner can resume interrupted work without repeating completed cells. It writes a manifest, attempt log, canonical results, and summary.
+## Slide 7 — What shipped by October 15
 
-I also versioned the model registry and fail the live preflight if the catalog changes. Tests cover the registry, scoring, retries, resume behavior, sanitization, API behavior, frontend states, and the production build. Secrets remain server-side.”
+Say:
 
-## Slide 8: What I learned and what comes next
+“By the October 15 milestone, the application included fixed baselines, a rule router, four priority controls, the context requirement control, an explanation view, and an offline strategy dashboard.
 
-“The key lesson is that model quality and model availability are different measurements. A free endpoint can be temporarily unavailable even when the model itself is capable. The system needs to record that fact rather than hide it.
+The screenshot is the actual production UI. The dashboard replays the same saved evidence under six strategies: two fixed baselines plus cost, quality, latency, and balanced rule policies. Because it uses committed records, I can demonstrate routing behavior even when a free provider is unavailable.
 
-The next checkpoint will add a routing policy on top of this evidence. It can then decide among eligible models using quality, latency, cost, and operational reliability.”
+The implementation also has automated backend, frontend, and end-to-end tests. The policy can be previewed without a key, while a live routed response still keeps the credential on the backend.”
 
-## Questions you may get
+## Slide 8 — What I learned
 
-### “Why is Gemma rate-limited even after several hours?”
+Say:
 
-“This is a provider-side shared-capacity limit from Google AI Studio through OpenRouter. It is separate from the app’s local request budget and does not evaluate Gemma’s reasoning quality. The app exposes that distinction clearly.”
+“The main lesson is that model quality and provider availability are different measurements. A capable model may still be unavailable through a shared free endpoint. A robust router must preserve that distinction.
 
-### “Why did you keep that failure on the screen?”
+My response was to add a deterministic preview and saved-evidence replay. That gives me a reliable demo path without hiding real provider failures.
 
-“Because hiding it would make the comparison misleading. A future router needs to know when a model cannot currently serve a request. The next checkpoint can use reliability as one routing input.”
+The next phase is learned routing. I will keep these fixed and rule-based strategies as baselines, expand the evaluation evidence, and measure whether a trained policy actually improves the quality, latency, cost, and availability trade-off.”
 
-### “Why not add a third free model right now?”
+Close with:
 
-“A third free model would still depend on shared provider capacity and would change the fixed two-model baseline. I tested current alternatives before the presentation; they were not reliable enough to make the demo stronger. A deliberate paid-model replacement is the proper next step if the goal is guaranteed live availability.”
+“That is Checkpoint 2: evidence first, then a transparent decision. I’m happy to take questions.”
 
-### “Why only 12 questions?”
+## Questions you may receive
 
-“Twelve questions demonstrate the entire pipeline within the checkpoint. They do not support a statistically strong general ranking. The saved records make expansion straightforward in the next stage.”
+### Is this already an intelligent or learned router?
 
-### “Why do you use exact match?”
+“No. It is a deterministic and explainable baseline. I need that baseline before I can claim that a learned policy improves anything. The next phase compares learned routing against the same fixed evidence and metrics.”
 
-“GSM8K has a canonical numeric answer. The scorer extracts the final number, parses it as a decimal, and compares it exactly. It gives no partial credit and does not use another model to judge the answer.”
+### Why does lower cost choose Gemma if both models are free?
 
-### “What would you change for a production version?”
+“In this checkpoint it is explicitly a smaller-model proxy. The current run reports zero cost for both free endpoints, so I do not claim a measured dollar advantage. The interface and policy are structured so real price metadata can replace that proxy in a later benchmark version.”
 
-“I would use a paid, pinned provider route or a configured provider key, measure a larger evaluation set, and add an explicit routing policy. I would version every change so results stay comparable.”
+### Does 66.7 percent prove Nemotron is better?
 
-## Last-minute fallback
+“No. Twelve GSM8K questions are a functional checkpoint, not a statistically conclusive leaderboard. The result supports this small baseline demonstration and shows that the evidence pipeline works.”
 
-If the local server stops or both providers fail, open the Benchmark tab or the published release. Say: “The saved checkpoint evidence is part of the release, so the evaluation remains inspectable even when a live free endpoint is busy.” Do not start the full benchmark during the presentation.
+### Why count provider failures in accuracy?
+
+“The dashboard treats each model-question pair as a logical routing outcome. If the chosen route cannot return an answer, that route did not solve the request. I still show availability separately so the audience can distinguish reasoning quality from service reliability.”
+
+### Why not keep retrying Gemma until it answers?
+
+“Unlimited retries would hide the operational cost of choosing an unavailable route and make latency comparisons misleading. Retries are bounded and every attempt is preserved.”
+
+### What does balanced mean?
+
+“Balanced is a small visible rule set. Math, code, long prompts, or prompts with several numeric values prefer Nemotron; simpler prompts prefer Gemma. It is intentionally easy to inspect and is not presented as a learned quality predictor.”
+
+### What happens if the live provider fails during the presentation?
+
+“The decision preview and strategy replay remain fully functional because they are local and based on versioned metadata and saved results. Provider failure is displayed honestly rather than hidden.”
+
+## Final presenter checklist
+
+- Start the app with `./scripts/demo.ps1` and open `http://127.0.0.1:8000`.
+- Use **Preview decision**, not repeated live routing, for the main demonstration.
+- Keep the backup video `docs/demo/checkpoint-2-backup-demo.webm` open in another window.
+- Keep the PowerPoint deck in `docs/presentations/Adaptive_LLM_Router_Checkpoint_2_Final.pptx`.
+- Do not show `backend/.env` or any API credential.
+- Do not start a new full benchmark during the presentation.

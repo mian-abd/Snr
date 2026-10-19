@@ -1,6 +1,6 @@
-# Live UI demo guide
+# Checkpoint 2 live demo guide
 
-## Start the application
+## Start the production application
 
 From the repository root in PowerShell:
 
@@ -8,69 +8,70 @@ From the repository root in PowerShell:
 ./scripts/demo.ps1
 ```
 
-Then open:
+Open `http://127.0.0.1:8000` and leave the PowerShell window running. FastAPI serves both the built React application and the API from this address.
 
-```text
-http://127.0.0.1:8000
-```
+The main Checkpoint 2 demonstration does not require a working provider call. Decision previews, eligibility, the saved benchmark, and strategy replay all work locally.
 
-The script builds the React frontend and starts FastAPI, which serves the application and API from that one local address. Leave the PowerShell window open while you present.
+## Recommended three-minute walkthrough
 
-If the `uv` command is unavailable in a newly opened terminal, restart the terminal after installing `uv`, or run the backend with the project virtual environment:
+### 1. Prove that priority changes the decision
 
-```powershell
-cd backend
-.\.venv\Scripts\python.exe -m app.cli serve
-```
+Open **01 Route** and keep the minimum context at `1`.
 
-The production UI still loads the committed benchmark evidence without an API key. A live comparison needs `OPENROUTER_API_KEY` in ignored `backend/.env`.
+1. Select **Lower cost**.
+2. Click **Preview decision**.
+3. Show that Gemma is selected and that the card says no provider call was made.
+4. Select **Higher quality** and preview again.
+5. Show that Nemotron is selected for the same prompt.
 
-## What to show
+Explain: “I am changing the decision policy, not the prompt or model identities.”
 
-### 1. Compare
+### 2. Prove that hard requirements override preferences
 
-Enter a short non-sensitive prompt. The app calls the two pinned models concurrently. Show that each card has a requested model, served model, result text or error, latency, tokens, and cost.
+1. Select **Lower cost**.
+2. Click **Use 500,000 demo**.
+3. Click **Preview decision**.
+4. Read the explanation: Gemma would satisfy the preference, but it is excluded because `262144 < 500000`; Nemotron remains because `1000000 >= 500000`.
 
-Do not promise both free endpoints will answer. Gemma can return a shared-pool rate limit. A partial result is a valid demonstration of independent failure handling.
+Explain: “The filter is a hard constraint. The priority is evaluated only among eligible models.”
 
-### 2. Eligibility
+### 3. Connect the decision to evidence
 
-Keep the minimum context at `500000`, then click **Evaluate**. Explain the concrete result:
+Scroll to **Offline strategy replay**. Show:
 
-- Gemma: `262144 < 500000`, excluded
-- Nemotron: `1000000 >= 500000`, eligible
+- fixed smaller-model baseline;
+- fixed stronger-model baseline;
+- cost, quality, latency, and balanced rule strategies;
+- selected-model counts;
+- exact-match accuracy;
+- availability;
+- mean successful latency;
+- known cost.
 
-### 3. Benchmark
+Explain that this table replays `data/demo/checkpoint-1/results.jsonl` and makes no OpenRouter calls.
 
-Open the Benchmark tab. It automatically loads the committed saved run:
+### 4. Show the source records
 
-- 12 fixed GSM8K questions
-- 2 pinned models
-- 24 completed logical cells
-- temperature 0
-- maximum 512 output tokens
-- exact numeric match
+Open **04 Benchmark**. Point out the locked protocol and the saved 24 logical cells. Expand one record to show expected answer, extracted answer, score, model response or normalized provider failure, and attempt history.
 
-Expand one result record. Explain that the view displays persisted evidence and does not send a new provider request.
+## Optional live inference
 
-## Presentation-safe behavior
+Use **Route prompt** only if you already confirmed provider capacity. It sends one request to the selected model after credential and model-catalog preflight. If the provider returns a rate limit or overload, keep the result visible and explain that the system preserves real operational failures.
 
-- Never paste or show the OpenRouter API key.
-- Keep “Save locally” off for ordinary prompts.
-- Do not click **Run benchmark** during the presentation.
-- If a live comparison fails, move directly to Benchmark and explain the recorded failure state.
-- If the UI will not start, use the published release and attached video: <https://github.com/mian-abd/Snr/releases/tag/checkpoint-1>.
+Do not repeatedly retry and do not start the full benchmark while presenting.
 
-## Capacity note for the presenter
+## Fallbacks
 
-The application cap is 200 calls per day. It does not change OpenRouter or provider rate limits.
+1. If OpenRouter is unavailable, continue with **Preview decision** and the saved dashboard.
+2. If the local browser is closed, reopen `http://127.0.0.1:8000`.
+3. If the server stops, rerun `./scripts/demo.ps1`.
+4. If the application cannot be restarted, play `docs/demo/checkpoint-2-backup-demo.webm`.
+5. Keep the deck `docs/presentations/Adaptive_LLM_Router_Checkpoint_2_Final.pptx` available locally.
 
-If Gemma shows **Shared free capacity is busy**, treat the card as the intended independent-failure demonstration and continue to Eligibility and Benchmark. Do not keep retrying during the presentation.
+## Security rules
 
-For a future live comparison with more capacity, use OpenRouter's account settings:
-
-1. Adding at least $10 in OpenRouter credits raises the account's free-model allowance from 50 to 1,000 daily requests. It does not guarantee an upstream provider's shared free capacity.
-2. Add a Google AI Studio provider key through OpenRouter's **Settings → Integrations** page if the account offers that integration. This uses the provider account's capacity and may incur provider charges.
-3. Do not paste any provider key into this application or the browser UI. `OPENROUTER_API_KEY` stays only in the ignored `backend/.env` file.
-
-For a guaranteed demo, replacing Gemma with a paid pinned model requires a new registry snapshot and a new benchmark version. Do not mix that result with the Checkpoint 1 baseline.
+- Never open or project `backend/.env`.
+- Never paste the OpenRouter key into the browser UI.
+- Keep manual prompt saving off unless the prompt is safe to store.
+- Do not claim the 12-question sample is a statistically conclusive ranking.
+- Describe Gemma’s nine missing answers as provider rate limits, not wrong math answers.

@@ -31,3 +31,6 @@ data/local/**
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Local build and inspection scratch space
+tmp/
