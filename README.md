@@ -15,6 +15,7 @@ Adaptive LLM Router is a local, reproducible console for comparing pinned OpenRo
 
 - Route one prompt to a single eligible pinned model using a visible priority: balanced, lower cost, higher quality, or faster response.
 - Keep hard capability requirements separate from soft user priorities.
+- Verify the policy against five deterministic expected-versus-actual acceptance cases without a provider call.
 - Replay two fixed baselines and four policy variants over the committed 24-cell GSM8K matrix, without making another provider call.
 - Compare selected-model counts, accuracy, availability, latency, and cost using the same saved evidence.
 
@@ -60,7 +61,7 @@ The check script runs backend linting, type checks, tests, frontend tests, and a
 
 The runner validates the exact model IDs against the live OpenRouter catalog before making calls. It fails closed on model drift, uses one request at a time, records every attempt, and stops at the project-side daily budget. Manual comparisons are not saved unless the UI toggle is enabled.
 
-See [Checkpoint 1](docs/checkpoint-1.md), [Checkpoint 2](docs/checkpoint-2.md), [build handover](docs/build-handover.md), [presentation script](docs/presentation-script.md), [live demo guide](docs/live-demo-guide.md), [research basis](docs/research-basis.md), and [demo script](docs/demo-script.md) for the protocol and limitations.
+See [full project context](CONTEXT.md), [Checkpoint 1](docs/checkpoint-1.md), [Checkpoint 2](docs/checkpoint-2.md), [build handover](docs/build-handover.md), [presentation script](docs/presentation-script.md), [live demo guide](docs/live-demo-guide.md), [research basis](docs/research-basis.md), and [demo script](docs/demo-script.md) for the protocol and limitations.
 
 ## License
 

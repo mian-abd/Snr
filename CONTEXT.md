@@ -1,0 +1,798 @@
+# Adaptive LLM Router: technical context, build log, and handover
+
+Last updated: 2026-10-22  
+Current milestone: Checkpoint 2  
+Repository: `https://github.com/mian-abd/Snr`  
+Primary branch: `main`
+
+## 1. Purpose of this document
+
+This file is the durable operating record for the project. It combines the roles normally split across a contributor-instructions file, `context.md`, `log.md`, and `handover.md`:
+
+- why the project exists and what it is trying to prove;
+- what has been built, in implementation detail;
+- the important design decisions and why they were made;
+- exact data, model, benchmark, and API contracts;
+- milestone history and release evidence;
+- local setup, testing, demo, and recovery procedures;
+- security and repository rules that future work must preserve;
+- known limitations and the next development stages.
+
+This is not a marketing summary. It is meant to let the owner, a professor, or a future developer recover the reasoning and continue the work without reconstructing it from commit history.
+
+## 2. Project objective
+
+The long-term project is an adaptive LLM router. A router receives a user request, applies hard requirements such as context length, and chooses a model according to preferences such as cost, quality, or latency.
+
+The project deliberately begins with evidence collection instead of jumping directly to a learned router. A routing policy is only credible if the underlying model calls, scores, failures, latency, token use, cost, and model identity are observable and reproducible.
+
+The milestone sequence therefore follows this logic:
+
+1. **Checkpoint 1: evidence layer.** Compare two fixed models, preserve a versioned registry, demonstrate hard eligibility filtering, run a fixed benchmark, and store inspectable results.
+2. **Checkpoint 2: transparent routing layer.** Add fixed baselines, an explainable rule policy, user priority controls, hard-requirement precedence, offline replay, and a visible policy acceptance matrix.
+3. **Later work: broader and learned routing.** Expand the task matrix, create better quality and confidence estimates, compare stronger routing methods against the fixed and rule baselines, and only then consider learned or multi-objective routing.
+
+The current application completes the first two layers. It does not claim that a small rule policy is the final adaptive router.
+
+## 3. Source-of-truth hierarchy
+
+When documents disagree, use this order:
+
+1. The current code, schemas, tests, and committed benchmark artifacts.
+2. This file and milestone documents in `docs/`.
+3. The safer, narrower implementation decisions recorded in the original handover.
+4. The broad proposal and presentation language.
+
+The proposal describes the eventual research direction. It must not be used to imply that later-stage work such as learned routing, Jev integration, local inference, or large benchmark suites already exists.
+
+## 4. Milestone status
+
+### Checkpoint 1: complete
+
+Checkpoint 1 established a reproducible comparison and benchmark system:
+
+- one prompt can be sent concurrently to two pinned models through one project-owned adapter interface;
+- each result preserves its own response, status, latency, token usage, cost when available, requested model, and served model;
+- a frozen model registry records context length, pricing, modalities, supported parameters, and capabilities;
+- a deterministic hard filter excludes models below a requested context length;
+- a fixed 12-question GSM8K sample produces 24 logical model-question cells;
+- every provider attempt and final cell can be persisted and summarized;
+- interrupted benchmark work can resume without duplicating completed cells;
+- sanitized benchmark evidence remains viewable offline;
+- a React interface exposes comparison, eligibility, and benchmark views;
+- backend, frontend, integration, build, and secret checks run in CI.
+
+Checkpoint 1 release information:
+
+- tag: `checkpoint-1`
+- tagged commit: `be52231a98dabc8cd4fa687457951267e9842fcf`
+- release: `https://github.com/mian-abd/Snr/releases/tag/checkpoint-1`
+
+### Checkpoint 2: implementation complete, final release packaging in progress
+
+Checkpoint 2 adds the routing layer required by the proposal schedule through the week of October 15 and the October 22 checkpoint:
+
+- fixed model baselines;
+- four visible priorities: balanced, lower cost, higher quality, and faster response;
+- hard requirements evaluated before preferences;
+- an inspectable rule-based policy with visible task signals and explanation text;
+- local decision preview with no key and no provider call;
+- a one-model live route path that never calls an unselected fallback;
+- an offline strategy replay over the exact Checkpoint 1 evidence matrix;
+- a deterministic five-case acceptance matrix showing expected and actual choices;
+- a Checkpoint 2 presentation, full speaking script, live demo guide, progress record, and backup demo recording.
+
+The remaining release operation is to complete final verification, push the synchronized code and documents, and publish the `checkpoint-2` tag/release.
+
+## 5. Current system architecture
+
+```text
+Browser
+  React + TypeScript + TanStack Query + Radix UI
+  ├── Route
+  │   ├── local decision preview
+  │   ├── one-model live route
+  │   ├── deterministic policy acceptance matrix
+  │   └── offline strategy replay
+  ├── Compare
+  │   └── same prompt sent to both fixed models
+  ├── Eligibility
+  │   └── minimum-context hard filter
+  └── Benchmark
+      └── fixed GSM8K run, progress, summary, and records
+          │
+          ▼
+FastAPI
+  ├── versioned HTTP API
+  ├── frozen model registry and live-catalog drift check
+  ├── project-owned ModelAdapter protocol
+  ├── LiteLLM OpenRouter adapter
+  ├── explicit retry service
+  ├── rule policy and validation cases
+  ├── offline routing replay
+  ├── benchmark runner and exact numeric scorer
+  └── atomic JSON and append-only JSONL storage
+          │
+          ▼
+OpenRouter
+  ├── google/gemma-4-26b-a4b-it:free
+  └── nvidia/nemotron-3-ultra-550b-a55b:free
+```
+
+The production demo builds the React bundle and serves it from FastAPI, so the complete application uses one local URL: `http://127.0.0.1:8000`.
+
+## 6. Repository layout
+
+```text
+backend/
+  app/
+    api/              FastAPI route handlers
+    benchmarks/       GSM8K loading, scoring, running, aggregation
+    domain/           Pydantic request, result, and persistence contracts
+    providers/        Adapter protocol, LiteLLM adapter, retry service
+    registry/         Snapshot loading, drift checks, eligibility filtering
+    routing/          Rule policy, validation matrix, offline replay
+    storage/          Atomic JSON, JSONL, and sanitization
+    config.py         Server settings and secret loading
+    main.py           Application construction and static serving
+    state.py          Service construction and benchmark coordinator
+  tests/              Backend unit and integration tests
+  pyproject.toml      Python package and tool configuration
+  uv.lock             Locked Python dependency graph
+
+frontend/
+  src/
+    api/              Typed client, project types, generated OpenAPI types
+    components/       Shared UI components
+    features/         Route, Compare, Eligibility, Benchmark panels
+    styles/           Design tokens and global styling
+  e2e/                Playwright smoke flows
+  openapi.json        Generated FastAPI contract
+  package-lock.json   Locked Node dependency graph
+
+data/
+  benchmarks/         Fixed GSM8K sample and provenance metadata
+  registry/           Frozen OpenRouter model snapshot
+  demo/checkpoint-1/  Committed sanitized 24-cell benchmark evidence
+  local/              Ignored local runs and opt-in manual comparisons
+
+docs/
+  checkpoint-1.md
+  checkpoint-2.md
+  research-basis.md
+  build-handover.md
+  progress-through-oct-15.md
+  presentation-script.md
+  live-demo-guide.md
+  demo-script.md
+  presentations/      Final checkpoint deck
+  demo/               Backup checkpoint recording
+
+scripts/
+  bootstrap.ps1       Install locked Python and Node dependencies
+  dev.ps1             Start separate development servers
+  demo.ps1            Build and serve the one-URL production demo
+  check.ps1           Run backend and frontend verification
+  generate-api-types.ps1
+```
+
+## 7. Runtime and dependency decisions
+
+### Backend
+
+- Python `3.12` only, managed by `uv`.
+- FastAPI provides the local versioned API and OpenAPI schema.
+- Pydantic validates every external and stored contract.
+- LiteLLM is used as a Python SDK wrapper for OpenRouter, not as a proxy.
+- `httpx` is used for HTTP and test integration.
+- `filelock` prevents concurrent modification of one benchmark run.
+- Ruff, mypy strict mode, pytest, pytest-asyncio, and respx provide verification.
+
+LiteLLM Router, automatic fallbacks, caching, callbacks, and its proxy server are intentionally not used. Routing behavior belongs to this repository and must remain visible.
+
+### Frontend
+
+- React 19 and TypeScript.
+- Vite for development and production bundling.
+- TanStack Query for server state and benchmark polling.
+- Radix primitives for accessible interactions.
+- CSS Modules and project-owned tokens for styling.
+- Lucide icons used only when they improve scanability.
+- Vitest and Testing Library for component behavior.
+- Playwright for production-style smoke flows.
+
+### Why OpenRouter
+
+OpenRouter provides one API and one catalog for models from different providers. This lets the project focus on comparison, evaluation, and routing rather than maintaining separate provider clients. The exact OpenRouter model slugs are still pinned so that a hidden upstream router cannot invalidate the baseline.
+
+## 8. Fixed model registry
+
+The committed snapshot is `data/registry/openrouter-2026-09-30.json`.
+
+Tracked model identities:
+
+1. `google/gemma-4-26b-a4b-it:free`
+   - display name: Google Gemma 4 26B A4B
+   - snapshot context length: 262,144 tokens
+   - role in the current policy: cheaper/smaller baseline
+2. `nvidia/nemotron-3-ultra-550b-a55b:free`
+   - display name: NVIDIA Nemotron 3 Ultra 550B A55B
+   - snapshot context length: 1,000,000 tokens
+   - role in the current policy: stronger baseline
+
+The registry is immutable at normal runtime. A real comparison, route, or benchmark first checks the live OpenRouter catalog. The check confirms that both exact slugs still exist, still expose a free route, still support text output, and still match the tracked metadata. Drift fails closed before generation. The application never silently replaces a missing model.
+
+## 9. Backend contracts
+
+### Generation request
+
+`GenerationRequest` contains:
+
+- UUID request ID;
+- exact model ID;
+- prompt and optional system prompt;
+- temperature;
+- maximum output tokens;
+- timeout;
+- optional run and sample identifiers.
+
+### Generation result
+
+`GenerationResult` normalizes:
+
+- requested and served model identity;
+- provider;
+- status: success, provider error, timeout, rate limit, invalid response, or model mismatch;
+- response text;
+- prompt, completion, and total tokens;
+- end-to-end latency;
+- cost and cost source;
+- error code and sanitized message;
+- start and completion timestamps;
+- explicit attempt number.
+
+Provider request IDs exist only where needed for local raw evidence. Public API responses and sanitized artifacts remove them.
+
+### Routing decision
+
+`RoutingDecision` records:
+
+- strategy ID;
+- requested priority;
+- minimum context requirement;
+- selected model;
+- eligible models after hard filtering;
+- detected task signals;
+- a human-readable reason.
+
+### Validation report
+
+`RoutingValidationReport` records the policy version, registry snapshot, overall result, passed count, and full reference cases. Each case preserves the input prompt, priority, requirement, expected model, actual decision, and pass/fail value.
+
+## 10. HTTP API
+
+All application routes use the `/api/v1` prefix.
+
+| Method and route | Purpose | Provider call |
+| --- | --- | --- |
+| `GET /health` | Server, registry, credential-configured, and benchmark state | No |
+| `GET /models` | Frozen registry and snapshot metadata | No |
+| `POST /eligibility` | Deterministic minimum-context filtering | No |
+| `POST /comparisons` | Send the same prompt concurrently to both pinned models | Yes |
+| `POST /routing/decisions` | Preview one routing decision | No |
+| `GET /routing/validation` | Run the five deterministic policy acceptance cases | No |
+| `GET /routing/dashboard` | Replay routing strategies over saved evidence | No |
+| `POST /routes` | Select one model and send exactly one live generation request | Yes |
+| `POST /benchmarks/gsm8k/runs` | Start or resume pilot/full benchmark | Yes |
+| `GET /benchmarks/runs/latest` | Load latest local or committed run | No |
+| `GET /benchmarks/runs/{run_id}` | Load manifest and aggregate summary | No |
+| `GET /benchmarks/runs/{run_id}/records` | Load paginated result records | No |
+
+The frontend types are regenerated from FastAPI OpenAPI and CI rejects schema drift.
+
+## 11. Checkpoint 1 benchmark protocol
+
+### Dataset
+
+- dataset: `openai/gsm8k`
+- configuration: `main`
+- split: `test`
+- revision: `b0bb162abedc65e1fdd8e93ed090fd7598ee68bc`
+- selection seed: `498`
+- source indices: `30, 263, 507, 509, 539, 756, 780, 851, 987, 1218, 1227, 1251`
+- sample size: 12
+- committed source checksum: `3730d312f6e3440559ace48831e51066acaca737f6eabec99bccb9e4b3c39d14`
+
+### Generation protocol
+
+- temperature: `0`
+- maximum output tokens: `512`
+- streaming: disabled
+- one response per attempt
+- one in-flight benchmark request at a time
+- alternating model order by question
+- at most two attempts per logical cell
+- retry only timeouts, network failures, HTTP 408, HTTP 429, and HTTP 5xx
+- no hidden fallback model
+
+The benchmark prompt requires concise reasoning and a final line formatted as `FINAL_ANSWER: <number>`.
+
+### Scoring
+
+The expected answer comes from GSM8K's canonical `####` suffix. Candidate extraction tries:
+
+1. `FINAL_ANSWER: <number>`;
+2. a boxed numeric answer;
+3. the last standalone numeric expression.
+
+Normalization removes commas, currency symbols, and surrounding whitespace. Decimal comparison avoids binary floating-point errors. The metric is exact numeric match. An unparseable or truncated answer receives zero with an explicit extraction status. No LLM judge is used.
+
+### Persistence
+
+Every local run contains:
+
+- `manifest.json` for protocol, status, hashes, Git commit, and progress;
+- `attempts.jsonl` for each provider attempt as it completes;
+- `results.jsonl` for one canonical result per logical cell;
+- `summary.json` for aggregate counts, accuracy, latency, token use, cost, and errors.
+
+Attempts are append-only and flushed immediately. Manifest and summary files use temporary-file replacement. Resume identity combines dataset revision, sample ID, model ID, and generation-configuration hash.
+
+## 12. Committed benchmark evidence
+
+Committed run: `gsm8k-full-20261001T134908Z-0b94a2ed`.
+
+The run completed all 24 logical cells. Fifteen provider calls succeeded and nine ended in recorded Gemma rate-limit failures.
+
+| Model | Cells | Successful | Exact matches | Failed | Accuracy over all cells | Mean successful latency | Tokens | Cost |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Gemma | 12 | 3 | 3 | 9 | 25.0% | 5,646.55 ms | 1,058 | $0 |
+| Nemotron | 12 | 12 | 8 | 0 | 66.7% | 19,858.77 ms | 6,115 | $0 |
+
+Interpretation rules:
+
+- the nine Gemma rate limits are availability failures, not math answers;
+- accuracy over all cells intentionally keeps failures in the denominator;
+- the 12-question sample demonstrates the pipeline but does not establish a statistically significant ranking;
+- free-tier latency and availability can change with shared provider capacity;
+- later evaluations must distinguish answer quality from served-request availability.
+
+## 13. Checkpoint 2 routing policy
+
+The policy ID is `rule_based_v1`.
+
+### Hard requirements first
+
+The minimum-context filter evaluates every model before any preference. A model becomes ineligible if it is disabled or its context length is below the requirement.
+
+The required demonstration uses 500,000 tokens:
+
+- Gemma: excluded because `262144 < 500000`;
+- Nemotron: eligible because `1000000 >= 500000`.
+
+If no model remains, routing returns a validation error. If only one model remains, a soft preference cannot override the hard requirement.
+
+### Priorities
+
+- **Lower cost:** select the designated cheaper/smaller baseline when eligible.
+- **Higher quality:** select the designated stronger baseline when eligible.
+- **Faster response:** select the smaller baseline for the first transparent latency baseline.
+- **Balanced:** inspect simple prompt signals. Math, code, long prompts, or prompts containing several numbers select the stronger baseline. General prompts select the smaller baseline.
+
+### Prompt signals
+
+The policy exposes, rather than hides, its current features:
+
+- `math` for calculation words, equation terms, or common arithmetic symbols;
+- `code` for fenced code or common programming terms;
+- `long_prompt` at 45 or more whitespace-separated words;
+- `many_numbers` for at least four numeric values;
+- `general` when none of the above appears.
+
+These signals are intentionally simple. They establish an explainable baseline for later comparison; they are not a learned quality predictor.
+
+### Decision preview and live route
+
+Decision preview runs only against the committed registry. It needs no API key and makes no network request. It exists so the policy can be demonstrated even when free provider capacity is unavailable.
+
+The live route performs the same decision, validates the current catalog, and calls only the selected model. There is no silent fallback. Provider failures remain visible.
+
+## 14. Five-case policy acceptance matrix
+
+The Route view and `GET /api/v1/routing/validation` execute these fixed local cases:
+
+| Case | Priority | Minimum context | Expected model | Behavior tested |
+| --- | --- | ---: | --- | --- |
+| Cost preference | Cost | 1 | Gemma | Soft cost preference |
+| Latency preference | Latency | 1 | Gemma | Initial latency baseline |
+| Quality preference | Quality | 1 | Nemotron | Stronger-model preference |
+| Balanced complex task | Balanced | 1 | Nemotron | Visible math signal |
+| Hard requirement override | Cost | 500,000 | Nemotron | Eligibility overrides cost |
+
+The UI shows expected and actual selections, the policy explanation, and an overall pass count. These are deterministic acceptance checks, not a provider benchmark.
+
+## 15. Offline strategy replay
+
+`GET /api/v1/routing/dashboard` reads the committed Checkpoint 1 `results.jsonl`. It groups the two model results for each sample and applies a strategy by selecting one existing record. It makes no model requests.
+
+Replayed strategies:
+
+1. fixed cheaper/smaller model;
+2. fixed stronger model;
+3. rule router with cost priority;
+4. rule router with quality priority;
+5. rule router with latency priority;
+6. rule router with balanced priority.
+
+For each strategy, the UI reports:
+
+- selected-model counts;
+- attempted, successful, and failed cells;
+- exact-match accuracy over all selected cells;
+- accuracy when served, when defined in the API;
+- mean successful latency;
+- known total cost.
+
+Because every strategy selects from the same saved matrix, comparisons are controlled and reproducible. The replay is a retrospective estimate over twelve GSM8K prompts, not a live randomized trial.
+
+## 16. Frontend behavior
+
+### Persistent header
+
+The header shows project name, checkpoint label, backend state, key-configured state, and registry state. It never displays the key.
+
+### Route
+
+- editable prompt;
+- four priority choices;
+- numeric minimum-context requirement;
+- one-click 500,000-token demonstration;
+- provider-free preview;
+- one-model live route when a key is configured;
+- selected-model explanation and task signals;
+- response, latency, tokens, cost, and status for a live route;
+- five-case acceptance matrix;
+- offline strategy replay table.
+
+### Compare
+
+- one prompt sent concurrently to both fixed models;
+- independent result cards, so one failure does not hide the other;
+- response, latency, tokens, cost, requested model, served model, and normalized error state;
+- manual-save control off by default.
+
+### Eligibility
+
+- frozen model metadata table;
+- minimum-context input;
+- explicit eligible/excluded result and reason;
+- 500,000-token demonstration.
+
+### Benchmark
+
+- locked protocol summary;
+- pilot, full-run, and resume controls;
+- progress polling;
+- saved summary metrics;
+- expandable per-question evidence;
+- automatic loading of committed evidence when no newer local run exists.
+
+### Visual system
+
+The interface uses a dark, data-dense console style inspired by OpenRouter's structure without copying its brand assets. It uses thin borders, restrained status colors, Inter for interface text, JetBrains Mono for identifiers and metrics, responsive stacking, visible focus states, reduced-motion support, and explicit loading, empty, error, partial-success, and completed states.
+
+## 17. Reliability and failure handling
+
+The project treats failure as evidence:
+
+- manual comparisons return both per-model outcomes even when one fails;
+- the benchmark continues after one permanent cell failure;
+- only retryable categories receive a second attempt;
+- model mismatch is a distinct final status and never receives a score;
+- missing token or cost data stays null instead of being invented;
+- provider-reported cost takes precedence, then registry calculation, then unavailable;
+- catalog drift stops live work before generation;
+- a process lock rejects a second benchmark writer;
+- interrupted manifests can resume missing or retryable cells;
+- error messages are sanitized before public storage or display.
+
+Free provider rate limits cannot be increased by this application. Dedicated capacity requires an OpenRouter/provider account integration or a paid route. The application instead makes capacity failures understandable and keeps the provider-free policy and saved-evidence demonstrations available.
+
+## 18. Security rules
+
+These rules are mandatory for future work:
+
+1. Store `OPENROUTER_API_KEY` only in ignored `backend/.env` or a secure environment variable.
+2. Never place the key in React code, browser storage, URL parameters, documentation, test fixtures, commits, screenshots, or recorded terminal output.
+3. Never return authorization headers or provider request IDs through public API responses.
+4. Keep manual comparison saving opt-in and off by default.
+5. Keep local runs under ignored `data/local/` unless a deliberate sanitization/export step creates a public artifact.
+6. Run secret scanning before a release.
+7. Preserve exact model identity checks and fail closed on drift.
+8. Do not convert a provider failure into another model without an explicit, documented future policy.
+
+## 19. Testing strategy
+
+### Backend coverage
+
+- registry parsing and checksum validation;
+- missing, malformed, and duplicate models;
+- context-filter boundaries and explanations;
+- provider normalization with complete or missing usage/cost;
+- cost precedence;
+- timeout, rate limit, provider failure, invalid response, and model mismatch;
+- retryable versus permanent failures;
+- numeric answer extraction and exact matching;
+- manifest transitions, atomic writes, resume keys, and sanitization;
+- routing priorities and task signals;
+- hard-requirement precedence;
+- five-case validation report;
+- offline replay metrics;
+- API behavior without a credential;
+- partial comparison success and opt-in saving.
+
+### Frontend coverage
+
+- project and checkpoint status;
+- live actions disabled when a key is absent;
+- local route preview remains available;
+- priority changes produce a visible preview;
+- five-case policy result appears;
+- saved replay remains available;
+- comparison, eligibility, benchmark, and responsive states;
+- production smoke flows through Playwright.
+
+### Continuous integration
+
+`.github/workflows/checkpoint.yml` runs on pushes and pull requests:
+
+- locked Python sync;
+- Ruff;
+- mypy strict mode;
+- pytest;
+- OpenAPI regeneration and drift check;
+- locked npm install;
+- ESLint;
+- Vitest;
+- production frontend build;
+- generated TypeScript schema drift check;
+- Gitleaks across repository history.
+
+Local verification command:
+
+```powershell
+./scripts/check.ps1
+```
+
+End-to-end smoke command:
+
+```powershell
+Push-Location frontend
+npm run test:e2e
+Pop-Location
+```
+
+## 20. Local setup and operating procedures
+
+### First setup
+
+```powershell
+Copy-Item .env.example backend/.env
+# Put the replacement API key only in backend/.env.
+./scripts/bootstrap.ps1
+```
+
+### Development mode
+
+```powershell
+./scripts/dev.ps1
+```
+
+The frontend development server uses `http://localhost:5173`; FastAPI runs separately.
+
+### Production-style demo
+
+```powershell
+./scripts/demo.ps1
+```
+
+The script builds the frontend and serves the complete application at `http://127.0.0.1:8000`.
+
+### Demo order designed to survive provider limits
+
+1. Open Route and point out the two fixed candidate identities.
+2. Show the five-case policy matrix and its pass count.
+3. Preview cost and quality on the same prompt.
+4. set the minimum context to 500,000 and show the cost preference forced to Nemotron.
+5. Show the offline strategy replay and explain that it uses the same preserved 24-cell evidence.
+6. Show Eligibility for the explicit Gemma exclusion reason.
+7. Show Benchmark for the raw results and availability distinction.
+8. Make a live route or comparison only if free provider capacity is available.
+
+The live call is optional evidence. The policy, validation, benchmark, and saved outputs remain demonstrable without provider availability.
+
+## 21. Presentation and deliverables
+
+Checkpoint 2 presentation assets:
+
+- `docs/presentations/Adaptive_LLM_Router_Checkpoint_2_Final.pptx`
+- `docs/presentation-script.md`
+- `docs/live-demo-guide.md`
+- `docs/demo-script.md`
+- `docs/demo/checkpoint-2-backup-demo.webm`
+- `docs/progress-through-oct-15.md`
+
+The presentation covers:
+
+1. milestone and research question;
+2. the evidence-first development path;
+3. prompt, filter, rule, and model decision flow;
+4. transparent rule behavior;
+5. measured Checkpoint 1 availability and accuracy evidence;
+6. priority and hard-requirement test cases;
+7. the real application and completed Checkpoint 2 scope;
+8. limitations and the next learned-routing stage.
+
+The speaker should say clearly that Gemma's nine failed cells were provider rate limits and not nine incorrect math answers. The speaker should also identify the small GSM8K sample as a functional checkpoint rather than a conclusive leaderboard.
+
+## 22. Build and release history
+
+Important commits currently in `main`:
+
+- `680c20d` sanitized provider error metadata;
+- `aedbee1` added Checkpoint 1 benchmark evidence;
+- `be52231` loaded committed benchmark evidence and became the `checkpoint-1` tag;
+- `6d02cb9` added the Checkpoint 1 handover and presentation guide;
+- `5cfe1e1` labeled benchmark provider failures accurately;
+- `0619d1b` improved provider-failure presentation;
+- `88615c0` prepared the demo for provider capacity limits;
+- `3f47647` added transparent Checkpoint 2 routing;
+- `d32c0ee` added provider-free routing decision preview;
+- `4825477` packaged the Checkpoint 2 deck, script, demo guide, progress record, and backup recording.
+
+The next release commit adds the deterministic acceptance matrix, aligns remaining Checkpoint 2 metadata, refreshes generated API types, updates presentation material, and adds this document.
+
+## 23. Key decisions and rejected alternatives
+
+### Use fixed model identities
+
+Accepted: exact pinned slugs.  
+Rejected for the benchmark: `openrouter/auto`, the free random router, or dynamic replacement.  
+Reason: reproducible evidence requires knowing which model answered.
+
+### Use LiteLLM only as an SDK
+
+Accepted: `litellm.acompletion` behind a project-owned adapter.  
+Rejected: LiteLLM proxy or LiteLLM Router.  
+Reason: provider normalization is useful, but routing, retries, and observability must remain project behavior.
+
+### Keep retry logic explicit
+
+Accepted: zero LiteLLM retries plus a maximum of two project attempts.  
+Rejected: invisible SDK retry loops.  
+Reason: attempts and latency must be observable and persistable.
+
+### Start with exact numeric scoring
+
+Accepted: GSM8K and Decimal exact match.  
+Rejected for the checkpoint: an LLM judge.  
+Reason: the scoring rule should be deterministic and inexpensive.
+
+### Replay before new expensive evaluation
+
+Accepted: select results from the same saved model-by-prompt matrix.  
+Rejected: rerun all strategies live during Checkpoint 2.  
+Reason: replay controls the evidence, avoids new provider variability, and works offline.
+
+### Separate hard constraints from preferences
+
+Accepted: eligibility first, routing second.  
+Rejected: a single weighted score that can trade away a required context length.  
+Reason: hard requirements must remain inviolable and easy to explain.
+
+### Keep the first router interpretable
+
+Accepted: fixed baselines plus a small rule policy.  
+Rejected for Checkpoint 2: prematurely training a model on twelve math prompts.  
+Reason: the first router must be a meaningful baseline, and the current evidence is too small for a credible learned policy.
+
+### Keep Jev for a later typed-decision experiment
+
+Jev may help represent a future structured routing decision or confidence value. It does not generate the two natural-language model answers required by Checkpoint 1 and is not used as a comparison model.
+
+## 24. Known limitations
+
+- The evaluation contains twelve GSM8K questions and one task family.
+- The rule policy uses hand-written lexical signals.
+- Cost and latency preferences currently map to designated baselines rather than calibrated predictive models.
+- Free model availability can be intermittent and can dominate observed accuracy over all cells.
+- The offline replay can compare choices available in the saved matrix but cannot estimate models absent from that matrix.
+- The in-process benchmark coordinator is appropriate for one local user, not distributed production work.
+- There is no user authentication or multi-user data isolation.
+- There is no database or cloud deployment.
+- The current system does not train a learned router, estimate calibrated confidence, or optimize a Pareto frontier.
+- The current benchmark is not a general statement about either model's overall quality.
+
+These limitations are presentation requirements, not hidden defects. Future work should measure and address them rather than remove the disclosure.
+
+## 25. Next development stages
+
+### Stage 1: enlarge the evidence matrix
+
+- Add more examples while preserving fixed revisions and checksums.
+- Add at least one non-math task family so routing signals can be evaluated across domains.
+- Add paid or dedicated-capacity routes if consistent availability is required.
+- Preserve raw availability separately from correctness among served calls.
+- Record repeated trials when provider nondeterminism or latency variance matters.
+
+### Stage 2: improve policy features
+
+- Replace simple prompt-length and keyword signals with measured task features.
+- Add structured capability requirements such as tool use, modality, and structured output.
+- Estimate prompt tokens before applying a context requirement.
+- Add policy-versioned confidence and abstention behavior.
+- Add an explicit rule for what happens when no model is eligible.
+
+### Stage 3: learned routing
+
+- Define train, validation, and held-out test partitions before fitting a policy.
+- Train only after the matrix has enough task and model diversity.
+- Compare learned routing against both fixed baselines and `rule_based_v1`.
+- Optimize an explicit objective instead of saying “best model” without a definition.
+- Calibrate confidence and test distribution shift.
+- Keep model selection explanations and full evaluation records.
+
+### Stage 4: broader evaluation and operations
+
+- Consider EvalPlus, HumanEval, MMLU-Pro, or other suitable benchmarks only when their licenses, scoring, and computational cost fit the research question.
+- Add Docker, local inference, or Ollama only if reproducible deployment or privacy becomes a defined requirement.
+- Add a database and queued job worker only when concurrent or remote use justifies them.
+- Add cloud deployment and authentication only after local research behavior is stable.
+
+## 26. Rules for future contributors and agents
+
+1. Read this document, `README.md`, `docs/checkpoint-2.md`, and relevant tests before changing routing behavior.
+2. Do not change a model slug, dataset revision, sample, prompt template, or scorer without versioning the experiment.
+3. Do not overwrite committed evidence with a new run under the same schema or benchmark version.
+4. Keep provider calls behind the adapter and retry service.
+5. Keep read-only policy preview and offline evidence usable without a credential.
+6. Add or update Pydantic types before exposing new API behavior.
+7. Regenerate `frontend/openapi.json` and `frontend/src/api/schema.d.ts` after backend contract changes.
+8. Test hard-requirement boundaries and soft-priority behavior separately.
+9. Preserve unrelated user work in a dirty worktree.
+10. Never print or commit secrets.
+11. Use the repository-local Git identity for Mian Abdullah and do not add bot or assistant attribution.
+12. Push milestone documentation, code, generated schemas, and presentation materials together so they describe the same system.
+
+## 27. Definition of Checkpoint 2 done
+
+Checkpoint 2 is complete when all of the following remain true on `main`:
+
+- the application starts through the one-command demo path;
+- decision preview works without a provider call;
+- cost, quality, latency, and balanced priorities produce deterministic choices;
+- a 500,000-token hard requirement excludes Gemma before routing;
+- the five reference cases show expected-versus-actual passing results;
+- a live route calls only the selected fixed model when capacity is available;
+- the offline dashboard compares fixed and rule strategies over the same saved 24-cell matrix;
+- the raw benchmark evidence remains inspectable;
+- API and UI contracts are synchronized;
+- backend, frontend, build, end-to-end, and secret checks pass;
+- the speaking script, deck, live demo guide, backup recording, and this context file match the actual application;
+- the completed state is pushed to `main` and tagged `checkpoint-2`.
+
+## 28. Quick recovery checklist
+
+If work resumes on a new machine or after a long pause:
+
+1. Clone `https://github.com/mian-abd/Snr`.
+2. Check out `main` or the intended milestone tag.
+3. Install Python 3.12, `uv`, Node 24, and npm.
+4. Copy `.env.example` to `backend/.env` and add a valid key only if live calls are needed.
+5. Run `./scripts/bootstrap.ps1`.
+6. Run `./scripts/check.ps1`.
+7. Run `./scripts/demo.ps1`.
+8. Open `http://127.0.0.1:8000`.
+9. Verify Route preview, the five-case matrix, the saved replay, Eligibility at 500,000, and the saved Benchmark before attempting a live call.
+10. Review the latest commit, tags, and GitHub Actions result before making a new release.
+

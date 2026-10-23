@@ -11,6 +11,12 @@ from app.providers import GenerationService
 from app.registry import ModelRegistry
 
 REGISTRY_PATH = REPOSITORY_ROOT / "data" / "registry" / "openrouter-2026-09-30.json"
+PAID_REGISTRY_PATH = REPOSITORY_ROOT / "data" / "registry" / "openrouter-paid-2026-10-22.json"
+PAID_MODEL_IDS = (
+    "google/gemma-4-26b-a4b-it",
+    "inception/mercury-3",
+    "google/gemini-4-argon",
+)
 
 
 @dataclass
@@ -20,6 +26,8 @@ class AppServices:
     generation_service: GenerationService | None
     benchmark_runner: BenchmarkRunner | None
     benchmark_coordinator: BenchmarkCoordinator | None = None
+    routing_registry: ModelRegistry | None = None
+    routing_generation_service: GenerationService | None = None
 
 
 class BenchmarkCoordinator:
@@ -58,12 +66,18 @@ class BenchmarkCoordinator:
 
 def build_services(settings: Settings) -> AppServices:
     registry = ModelRegistry(REGISTRY_PATH)
+    routing_registry = ModelRegistry(
+        PAID_REGISTRY_PATH,
+        expected_model_ids=PAID_MODEL_IDS,
+        require_free=False,
+    )
     if not settings.credential_configured:
         return AppServices(
             settings=settings,
             registry=registry,
             generation_service=None,
             benchmark_runner=None,
+            routing_registry=routing_registry,
         )
     assert settings.openrouter_api_key is not None
     from app.providers.litellm_openrouter import LiteLLMOpenRouterAdapter
@@ -76,6 +90,13 @@ def build_services(settings: Settings) -> AppServices:
         app_name=settings.openrouter_app_name,
     )
     service = GenerationService(adapter)
+    routing_adapter = LiteLLMOpenRouterAdapter(
+        api_key=api_key,
+        registry=routing_registry,
+        site_url=settings.openrouter_site_url,
+        app_name=settings.openrouter_app_name,
+    )
+    routing_service = GenerationService(routing_adapter)
     runner = BenchmarkRunner(
         service=service,
         registry=registry,
@@ -91,4 +112,6 @@ def build_services(settings: Settings) -> AppServices:
         generation_service=service,
         benchmark_runner=runner,
         benchmark_coordinator=coordinator,
+        routing_registry=routing_registry,
+        routing_generation_service=routing_service,
     )

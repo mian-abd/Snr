@@ -104,19 +104,21 @@ class BenchmarkRunner:
         api_key: str,
         max_daily_requests: int,
         repository_root: Path,
+        demo_name: str = "checkpoint-1",
+        run_prefix: str = "gsm8k",
+        budget_file: str = "provider-request-budget.json",
     ) -> None:
         self.service = service
         self.registry = registry
         self.data_dir = data_dir
         self.api_key = api_key
         self.repository_root = repository_root
+        self.run_prefix = run_prefix
         self.samples_path = data_dir / "benchmarks" / "gsm8k_checkpoint1.jsonl"
         self.runs_dir = data_dir / "local" / "runs"
-        self.demo_dir = data_dir / "demo" / "checkpoint-1"
+        self.demo_dir = data_dir / "demo" / demo_name
         self.lock_path = data_dir / "local" / "benchmark.lock"
-        self.budget = RequestBudget(
-            data_dir / "local" / "provider-request-budget.json", max_daily_requests
-        )
+        self.budget = RequestBudget(data_dir / "local" / budget_file, max_daily_requests)
 
     async def run(self, mode: BenchmarkMode, run_id: str | None = None) -> BenchmarkRunView:
         lock = FileLock(self.lock_path, timeout=0)
@@ -266,7 +268,7 @@ class BenchmarkRunner:
 
     def new_run_id(self, mode: BenchmarkMode) -> str:
         stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
-        return f"gsm8k-{mode.value}-{stamp}-{uuid4().hex[:8]}"
+        return f"{self.run_prefix}-{mode.value}-{stamp}-{uuid4().hex[:8]}"
 
     def _load_or_create_manifest(
         self, path: Path, run_id: str, mode: BenchmarkMode, samples: list[Any]
@@ -361,10 +363,19 @@ class BenchmarkRunner:
         demo_manifest = self.demo_dir / "manifest.json"
         if demo_manifest.exists():
             candidates.append(demo_manifest)
-        if not candidates:
+        manifests = [
+            (path, BenchmarkManifest.model_validate_json(path.read_text(encoding="utf-8")))
+            for path in candidates
+        ]
+        # Runs over another registry (for example the paid pool) belong to another runner.
+        own = [
+            (path, manifest)
+            for path, manifest in manifests
+            if manifest.registry_snapshot_id == self.registry.snapshot.snapshot_id
+        ]
+        if not own:
             return None
-        latest = max(candidates, key=lambda path: path.stat().st_mtime)
-        manifest = BenchmarkManifest.model_validate_json(latest.read_text(encoding="utf-8"))
+        _, manifest = max(own, key=lambda item: item[0].stat().st_mtime)
         return self.load_run(manifest.run_id)
 
     def records(self, run_id: str, offset: int, limit: int) -> PaginatedRecords:

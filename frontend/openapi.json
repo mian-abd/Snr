@@ -990,6 +990,120 @@
         "title": "RegistrySnapshot",
         "type": "object"
       },
+      "ReplayCell": {
+        "additionalProperties": false,
+        "description": "One saved model outcome for one benchmark prompt.",
+        "properties": {
+          "correct": {
+            "title": "Correct",
+            "type": "boolean"
+          },
+          "cost_usd": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Usd"
+          },
+          "latency_ms": {
+            "title": "Latency Ms",
+            "type": "number"
+          },
+          "model_id": {
+            "title": "Model Id",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/GenerationStatus"
+          }
+        },
+        "required": [
+          "model_id",
+          "status",
+          "correct",
+          "latency_ms",
+          "cost_usd"
+        ],
+        "title": "ReplayCell",
+        "type": "object"
+      },
+      "ReplayPrompt": {
+        "additionalProperties": false,
+        "properties": {
+          "cells": {
+            "items": {
+              "$ref": "#/components/schemas/ReplayCell"
+            },
+            "title": "Cells",
+            "type": "array"
+          },
+          "question": {
+            "title": "Question",
+            "type": "string"
+          },
+          "sample_id": {
+            "title": "Sample Id",
+            "type": "string"
+          },
+          "selections": {
+            "items": {
+              "$ref": "#/components/schemas/ReplaySelection"
+            },
+            "title": "Selections",
+            "type": "array"
+          },
+          "source_index": {
+            "title": "Source Index",
+            "type": "integer"
+          },
+          "task_signals": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Task Signals",
+            "type": "array"
+          }
+        },
+        "required": [
+          "sample_id",
+          "source_index",
+          "question",
+          "task_signals",
+          "cells",
+          "selections"
+        ],
+        "title": "ReplayPrompt",
+        "type": "object"
+      },
+      "ReplaySelection": {
+        "additionalProperties": false,
+        "properties": {
+          "model_id": {
+            "title": "Model Id",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "strategy_id": {
+            "title": "Strategy Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "strategy_id",
+          "model_id",
+          "reason"
+        ],
+        "title": "ReplaySelection",
+        "type": "object"
+      },
       "RouteRequest": {
         "additionalProperties": false,
         "properties": {
@@ -998,6 +1112,10 @@
             "minimum": 1.0,
             "title": "Min Context Tokens",
             "type": "integer"
+          },
+          "pool": {
+            "$ref": "#/components/schemas/RoutingPool",
+            "default": "baseline"
           },
           "priority": {
             "$ref": "#/components/schemas/RoutingPriority",
@@ -1036,9 +1154,26 @@
       "RoutingDashboard": {
         "additionalProperties": false,
         "properties": {
+          "model_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Model Ids",
+            "type": "array"
+          },
           "note": {
             "title": "Note",
             "type": "string"
+          },
+          "pool": {
+            "$ref": "#/components/schemas/RoutingPool"
+          },
+          "prompts": {
+            "items": {
+              "$ref": "#/components/schemas/ReplayPrompt"
+            },
+            "title": "Prompts",
+            "type": "array"
           },
           "source_cells": {
             "title": "Source Cells",
@@ -1061,11 +1196,14 @@
           }
         },
         "required": [
+          "pool",
           "source_run_id",
           "source_dataset",
           "source_cells",
+          "model_ids",
           "note",
-          "strategies"
+          "strategies",
+          "prompts"
         ],
         "title": "RoutingDashboard",
         "type": "object"
@@ -1083,6 +1221,9 @@
           "min_context_tokens": {
             "title": "Min Context Tokens",
             "type": "integer"
+          },
+          "pool": {
+            "$ref": "#/components/schemas/RoutingPool"
           },
           "priority": {
             "$ref": "#/components/schemas/RoutingPriority"
@@ -1109,6 +1250,7 @@
         },
         "required": [
           "strategy_id",
+          "pool",
           "priority",
           "min_context_tokens",
           "selected_model_id",
@@ -1118,6 +1260,14 @@
         ],
         "title": "RoutingDecision",
         "type": "object"
+      },
+      "RoutingPool": {
+        "enum": [
+          "baseline",
+          "paid"
+        ],
+        "title": "RoutingPool",
+        "type": "string"
       },
       "RoutingPriority": {
         "enum": [
@@ -1155,6 +1305,18 @@
             "title": "Correct",
             "type": "integer"
           },
+          "cost_per_correct_usd": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Per Correct Usd"
+          },
           "failed": {
             "title": "Failed",
             "type": "integer"
@@ -1173,6 +1335,28 @@
               }
             ],
             "title": "Mean Latency Ms"
+          },
+          "median_latency_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median Latency Ms"
+          },
+          "p95_latency_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P95 Latency Ms"
           },
           "selected_model_counts": {
             "additionalProperties": {
@@ -1213,9 +1397,101 @@
           "accuracy",
           "accuracy_when_served",
           "mean_latency_ms",
-          "total_cost_usd"
+          "median_latency_ms",
+          "p95_latency_ms",
+          "total_cost_usd",
+          "cost_per_correct_usd"
         ],
         "title": "RoutingStrategySummary",
+        "type": "object"
+      },
+      "RoutingValidationCase": {
+        "additionalProperties": false,
+        "properties": {
+          "case_id": {
+            "title": "Case Id",
+            "type": "string"
+          },
+          "decision": {
+            "$ref": "#/components/schemas/RoutingDecision"
+          },
+          "expected_model_id": {
+            "title": "Expected Model Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "min_context_tokens": {
+            "title": "Min Context Tokens",
+            "type": "integer"
+          },
+          "passed": {
+            "title": "Passed",
+            "type": "boolean"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/RoutingPriority"
+          },
+          "prompt": {
+            "title": "Prompt",
+            "type": "string"
+          }
+        },
+        "required": [
+          "case_id",
+          "label",
+          "prompt",
+          "priority",
+          "min_context_tokens",
+          "expected_model_id",
+          "decision",
+          "passed"
+        ],
+        "title": "RoutingValidationCase",
+        "type": "object"
+      },
+      "RoutingValidationReport": {
+        "additionalProperties": false,
+        "properties": {
+          "cases": {
+            "items": {
+              "$ref": "#/components/schemas/RoutingValidationCase"
+            },
+            "title": "Cases",
+            "type": "array"
+          },
+          "passed": {
+            "title": "Passed",
+            "type": "boolean"
+          },
+          "passed_cases": {
+            "title": "Passed Cases",
+            "type": "integer"
+          },
+          "registry_snapshot_id": {
+            "title": "Registry Snapshot Id",
+            "type": "string"
+          },
+          "strategy_id": {
+            "title": "Strategy Id",
+            "type": "string"
+          },
+          "total_cases": {
+            "title": "Total Cases",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "strategy_id",
+          "registry_snapshot_id",
+          "passed",
+          "passed_cases",
+          "total_cases",
+          "cases"
+        ],
+        "title": "RoutingValidationReport",
         "type": "object"
       },
       "ValidationError": {
@@ -1577,7 +1853,19 @@
     },
     "/api/v1/routing/dashboard": {
       "get": {
+        "description": "Replay fixed and rule strategies over one saved evidence matrix.",
         "operationId": "routing_dashboard_api_v1_routing_dashboard_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "pool",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/RoutingPool",
+              "default": "baseline"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -1588,6 +1876,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
         "summary": "Routing Dashboard"
@@ -1630,6 +1928,64 @@
           }
         },
         "summary": "Preview Routing Decision"
+      }
+    },
+    "/api/v1/routing/models": {
+      "get": {
+        "operationId": "routing_models_api_v1_routing_models_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrySnapshot"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Routing Models"
+      }
+    },
+    "/api/v1/routing/validation": {
+      "get": {
+        "description": "Run the fixed CP2 policy acceptance matrix without provider calls.",
+        "operationId": "routing_validation_api_v1_routing_validation_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "pool",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/RoutingPool",
+              "default": "baseline"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoutingValidationReport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Routing Validation"
       }
     }
   }

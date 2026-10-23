@@ -1,0 +1,53 @@
+{
+  "generated_at_utc": "2026-10-23T04:51:39.951135Z",
+  "models": [
+    {
+      "accuracy": 0.9166666666666666,
+      "attempted": 12,
+      "completion_tokens": 2944,
+      "correct": 11,
+      "error_counts": {},
+      "failed": 0,
+      "mean_latency_ms": 4713.09697500692,
+      "median_latency_ms": 2940.7028000132414,
+      "model_id": "google/gemma-4-26b-a4b-it",
+      "prompt_tokens": 1554,
+      "successful": 12,
+      "total_cost_usd": "0.001035294",
+      "total_tokens": 4498
+    },
+    {
+      "accuracy": 0.8333333333333334,
+      "attempted": 12,
+      "completion_tokens": 2222,
+      "correct": 10,
+      "error_counts": {
+        "invalid_response": 2
+      },
+      "failed": 2,
+      "mean_latency_ms": 633.7865399953444,
+      "median_latency_ms": 579.3837499950314,
+      "model_id": "inception/mercury-3",
+      "prompt_tokens": 1234,
+      "successful": 10,
+      "total_cost_usd": "0.00090029",
+      "total_tokens": 3456
+    },
+    {
+      "accuracy": 1.0,
+      "attempted": 12,
+      "completion_tokens": 1738,
+      "correct": 12,
+      "error_counts": {},
+      "failed": 0,
+      "mean_latency_ms": 5310.327716671357,
+      "median_latency_ms": 4991.737150005065,
+      "model_id": "google/gemini-4-argon",
+      "prompt_tokens": 1756,
+      "successful": 12,
+      "total_cost_usd": "0.020892",
+      "total_tokens": 3494
+    }
+  ],
+  "run_id": "gsm8k-paid-full-20261023T044929Z-5f90eace"
+}

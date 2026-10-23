@@ -1,7 +1,7 @@
 [project]
 name = "adaptive-llm-router"
 version = "0.1.0"
-description = "Checkpoint 1 comparison and benchmark console for an adaptive LLM router"
+description = "Transparent rule-based routing over a reproducible LLM benchmark"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [

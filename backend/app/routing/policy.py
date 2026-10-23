@@ -6,12 +6,24 @@ from app.domain.models import (
     EligibilityRequest,
     ModelSpec,
     RoutingDecision,
+    RoutingPool,
     RoutingPriority,
 )
 from app.registry.filtering import evaluate_eligibility
 
 CHEAP_MODEL_ID = "google/gemma-4-26b-a4b-it:free"
 STRONG_MODEL_ID = "nvidia/nemotron-3-ultra-550b-a55b:free"
+PAID_BUDGET_MODEL_ID = "google/gemma-4-26b-a4b-it"
+PAID_EFFICIENT_MODEL_ID = "inception/mercury-3"
+PAID_QUALITY_MODEL_ID = "google/gemini-4-argon"
+HIGH_EFFORT_SIGNALS = frozenset({"math", "code", "long_prompt", "many_numbers"})
+# Paid pool only: balanced routing escalates to the quality model at this many signals.
+HIGH_EFFORT_THRESHOLD = 3
+
+
+def effort_score(signals: list[str]) -> int:
+    """Count visible higher-effort signals; the CP2 stand-in for a difficulty score."""
+    return len(HIGH_EFFORT_SIGNALS.intersection(signals))
 
 
 def prompt_signals(prompt: str) -> list[str]:
@@ -42,6 +54,7 @@ class RuleBasedRouter:
         prompt: str,
         priority: RoutingPriority,
         models: list[ModelSpec],
+        pool: RoutingPool = RoutingPool.BASELINE,
         min_context_tokens: int = 1,
     ) -> RoutingDecision:
         eligibility = evaluate_eligibility(
@@ -52,10 +65,20 @@ class RuleBasedRouter:
             raise ValueError("No model satisfies the current hard requirements")
 
         signals = prompt_signals(prompt)
-        cheap_available = CHEAP_MODEL_ID in eligible_ids
-        strong_available = STRONG_MODEL_ID in eligible_ids
-        cheap = CHEAP_MODEL_ID if cheap_available else eligible_ids[0]
-        strong = STRONG_MODEL_ID if strong_available else eligible_ids[-1]
+        if pool == RoutingPool.PAID:
+            cheap_id = PAID_BUDGET_MODEL_ID
+            latency_id = PAID_EFFICIENT_MODEL_ID
+            strong_id = PAID_QUALITY_MODEL_ID
+        else:
+            cheap_id = CHEAP_MODEL_ID
+            latency_id = CHEAP_MODEL_ID
+            strong_id = STRONG_MODEL_ID
+        cheap_available = cheap_id in eligible_ids
+        latency_available = latency_id in eligible_ids
+        strong_available = strong_id in eligible_ids
+        cheap = cheap_id if cheap_available else eligible_ids[0]
+        latency = latency_id if latency_available else eligible_ids[0]
+        strong = strong_id if strong_available else eligible_ids[-1]
 
         if priority == RoutingPriority.COST:
             selected = cheap
@@ -74,14 +97,26 @@ class RuleBasedRouter:
                 "out by hard requirements; the remaining eligible model is selected."
             )
         elif priority == RoutingPriority.LATENCY:
-            selected = cheap
+            selected = latency
             reason = (
-                "Latency priority selects the smaller baseline for a faster first attempt."
-                if cheap_available
-                else "Latency priority would prefer the smaller baseline, but it was filtered "
-                "out by hard requirements; the remaining eligible model is selected."
+                "Latency priority selects the designated low-latency candidate."
+                if latency_available
+                else "Latency priority would prefer the designated low-latency candidate, but "
+                "it was filtered out by hard requirements; the remaining eligible model is "
+                "selected."
             )
-        elif {"math", "code", "long_prompt", "many_numbers"}.intersection(signals):
+        elif pool == RoutingPool.PAID and 0 < effort_score(signals) < HIGH_EFFORT_THRESHOLD:
+            selected = latency
+            reason = (
+                f"Balanced priority found {effort_score(signals)} higher-effort signal(s), "
+                f"below the {HIGH_EFFORT_THRESHOLD}-signal threshold for the quality model, "
+                "and selects the mid-tier efficient candidate."
+                if latency_available
+                else "Balanced priority would prefer the mid-tier efficient candidate, but it "
+                "was filtered out by hard requirements; the remaining eligible model is "
+                "selected."
+            )
+        elif effort_score(signals):
             selected = strong
             reason = (
                 "Balanced priority detected a higher-effort task signal and selects the "
@@ -101,7 +136,8 @@ class RuleBasedRouter:
             )
 
         return RoutingDecision(
-            strategy_id="rule_based_v1",
+            strategy_id="rule_based_v1" if pool == RoutingPool.BASELINE else "rule_based_paid_v1",
+            pool=pool,
             priority=priority,
             min_context_tokens=min_context_tokens,
             selected_model_id=selected,

@@ -15,6 +15,12 @@ Before any priority is applied, the existing deterministic eligibility filter re
 
 The local decision-preview endpoint evaluates the same policy without a credential or provider request, so a user can inspect how a priority and minimum-context requirement change the choice. The live route endpoint makes exactly one generation request to that selected fixed model. It still performs the existing credential and catalog-drift preflight first. It never silently substitutes a different model.
 
+## Deterministic policy acceptance matrix
+
+The Route view also runs five fixed, provider-free acceptance cases and displays expected versus actual selections. The cases cover cost, latency, and quality priorities, the balanced policy's math signal, and the 500,000-token hard-requirement override. The same report is available from `GET /api/v1/routing/validation`.
+
+The matrix is a deterministic policy check, not a quality benchmark. It exists so the checkpoint can show that the implemented rules behave as documented even when shared free-model capacity is unavailable.
+
 ## Baselines and replay
 
 The dashboard replays six strategies against the committed Checkpoint 1 GSM8K matrix:
@@ -36,8 +42,9 @@ This checkpoint is a transparent baseline rather than a trained policy. The prom
 
 ## Demo path
 
-1. Open **Route**. The strategy table loads from the saved matrix with no key or live model request.
+1. Open **Route** and show the five-case acceptance matrix passes without a key or provider call.
 2. Change between **Lower cost** and **Higher quality**, click **Preview decision**, and show the selected fixed model changes for the same prompt without a provider call.
 3. Set the minimum context to `500000`, preview again, and explain that the hard requirement excludes Gemma before it can satisfy a lower-cost preference.
-4. If provider capacity is available, click **Route prompt** to show a single real request and the recorded status, response, latency, token usage, and cost.
-5. Use the Benchmark section to return to the raw Checkpoint 1 evidence that powers the replay.
+4. Show the strategy table, which replays the saved 24-cell matrix without a provider call.
+5. If provider capacity is available, click **Route prompt** to show one real request and the recorded status, response, latency, token usage, and cost.
+6. Use the Benchmark section to return to the raw Checkpoint 1 evidence that powers the replay.

@@ -14,7 +14,11 @@ The main Checkpoint 2 demonstration does not require a working provider call. De
 
 ## Recommended three-minute walkthrough
 
-### 1. Prove that priority changes the decision
+### 1. Show repeatable policy evidence
+
+Open **01 Route**, scroll to **Deterministic acceptance matrix**, and show **5/5 passed**. Point out that the table covers cost, latency, quality, a balanced math task, and a 500,000-token requirement override. The expected and actual model columns match, and the checks make no provider calls.
+
+### 2. Prove that priority changes the decision
 
 Open **01 Route** and keep the minimum context at `1`.
 
@@ -26,7 +30,7 @@ Open **01 Route** and keep the minimum context at `1`.
 
 Explain: “I am changing the decision policy, not the prompt or model identities.”
 
-### 2. Prove that hard requirements override preferences
+### 3. Prove that hard requirements override preferences
 
 1. Select **Lower cost**.
 2. Click **Use 500,000 demo**.
@@ -35,7 +39,7 @@ Explain: “I am changing the decision policy, not the prompt or model identitie
 
 Explain: “The filter is a hard constraint. The priority is evaluated only among eligible models.”
 
-### 3. Connect the decision to evidence
+### 4. Connect the decision to evidence
 
 Scroll to **Offline strategy replay**. Show:
 
@@ -50,7 +54,7 @@ Scroll to **Offline strategy replay**. Show:
 
 Explain that this table replays `data/demo/checkpoint-1/results.jsonl` and makes no OpenRouter calls.
 
-### 4. Show the source records
+### 5. Show the source records
 
 Open **04 Benchmark**. Point out the locked protocol and the saved 24 logical cells. Expand one record to show expected answer, extracted answer, score, model response or normalized provider failure, and attempt history.
 

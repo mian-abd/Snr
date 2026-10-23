@@ -143,9 +143,15 @@ class RoutingPriority(StrEnum):
     BALANCED = "balanced"
 
 
+class RoutingPool(StrEnum):
+    BASELINE = "baseline"
+    PAID = "paid"
+
+
 class RouteRequest(StrictModel):
     prompt: str = Field(min_length=1, max_length=50_000)
     priority: RoutingPriority = RoutingPriority.BALANCED
+    pool: RoutingPool = RoutingPool.BASELINE
     min_context_tokens: int = Field(default=1, ge=1)
 
     @field_validator("prompt")
@@ -158,12 +164,33 @@ class RouteRequest(StrictModel):
 
 class RoutingDecision(StrictModel):
     strategy_id: str
+    pool: RoutingPool
     priority: RoutingPriority
     min_context_tokens: int
     selected_model_id: str
     eligible_model_ids: list[str]
     task_signals: list[str]
     reason: str
+
+
+class RoutingValidationCase(StrictModel):
+    case_id: str
+    label: str
+    prompt: str
+    priority: RoutingPriority
+    min_context_tokens: int
+    expected_model_id: str
+    decision: RoutingDecision
+    passed: bool
+
+
+class RoutingValidationReport(StrictModel):
+    strategy_id: str
+    registry_snapshot_id: str
+    passed: bool
+    passed_cases: int
+    total_cases: int
+    cases: list[RoutingValidationCase]
 
 
 class RouteResponse(StrictModel):
@@ -182,15 +209,46 @@ class RoutingStrategySummary(StrictModel):
     accuracy: float
     accuracy_when_served: float | None
     mean_latency_ms: float | None
+    median_latency_ms: float | None
+    p95_latency_ms: float | None
     total_cost_usd: Decimal | None
+    cost_per_correct_usd: Decimal | None
+
+
+class ReplayCell(StrictModel):
+    """One saved model outcome for one benchmark prompt."""
+
+    model_id: str
+    status: GenerationStatus
+    correct: bool
+    latency_ms: float
+    cost_usd: Decimal | None
+
+
+class ReplaySelection(StrictModel):
+    strategy_id: str
+    model_id: str
+    reason: str
+
+
+class ReplayPrompt(StrictModel):
+    sample_id: str
+    source_index: int
+    question: str
+    task_signals: list[str]
+    cells: list[ReplayCell]
+    selections: list[ReplaySelection]
 
 
 class RoutingDashboard(StrictModel):
+    pool: RoutingPool
     source_run_id: str
     source_dataset: str
     source_cells: int
+    model_ids: list[str]
     note: str
     strategies: list[RoutingStrategySummary]
+    prompts: list[ReplayPrompt]
 
 
 class EligibilityRequest(StrictModel):

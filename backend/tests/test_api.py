@@ -1,8 +1,9 @@
+import shutil
 from datetime import UTC, datetime
 
 from fastapi.testclient import TestClient
 
-from app.config import Settings
+from app.config import REPOSITORY_ROOT, Settings
 from app.domain.models import (
     CostSource,
     GenerationOutcome,
@@ -39,13 +40,20 @@ class FakeGenerationService:
         return GenerationOutcome(final=result, attempts=[result])
 
 
-def test_read_only_endpoints_work_without_credential(registry, tmp_path) -> None:
+def test_read_only_endpoints_work_without_credential(
+    registry, paid_registry, tmp_path
+) -> None:
+    shutil.copytree(
+        REPOSITORY_ROOT / "data" / "demo" / "checkpoint-2-paid",
+        tmp_path / "demo" / "checkpoint-2-paid",
+    )
     settings = Settings(openrouter_api_key=None, data_dir=tmp_path)
     services = AppServices(
         settings=settings,
         registry=registry,
         generation_service=None,
         benchmark_runner=None,
+        routing_registry=paid_registry,
     )
     with TestClient(create_app(settings=settings, services=services)) as client:
         health = client.get("/api/v1/health")
@@ -54,6 +62,9 @@ def test_read_only_endpoints_work_without_credential(registry, tmp_path) -> None
         models = client.get("/api/v1/models")
         assert models.status_code == 200
         assert len(models.json()["models"]) == 2
+        paid_models = client.get("/api/v1/routing/models")
+        assert paid_models.status_code == 200
+        assert len(paid_models.json()["models"]) == 3
         eligibility = client.post("/api/v1/eligibility", json={"min_context_tokens": 500000})
         assert eligibility.status_code == 200
         assert [item["eligible"] for item in eligibility.json()["results"]] == [False, True]
@@ -76,6 +87,29 @@ def test_read_only_endpoints_work_without_credential(registry, tmp_path) -> None
         assert constrained_quality.json()["eligible_model_ids"] == [
             constrained_quality.json()["selected_model_id"]
         ]
+        paid_quality = client.post(
+            "/api/v1/routing/decisions",
+            json={
+                "prompt": "Explain the water cycle.",
+                "priority": "quality",
+                "pool": "paid",
+            },
+        )
+        assert paid_quality.status_code == 200
+        assert paid_quality.json()["selected_model_id"] == "google/gemini-4-argon"
+        validation = client.get("/api/v1/routing/validation")
+        assert validation.status_code == 200
+        assert validation.json()["passed"] is True
+        assert validation.json()["passed_cases"] == 5
+        assert validation.json()["total_cases"] == 5
+        paid_validation = client.get("/api/v1/routing/validation", params={"pool": "paid"})
+        assert paid_validation.status_code == 200
+        assert paid_validation.json()["strategy_id"] == "rule_based_paid_v1"
+        assert paid_validation.json()["passed"] is True
+        paid_dashboard = client.get("/api/v1/routing/dashboard", params={"pool": "paid"})
+        assert paid_dashboard.status_code == 200
+        assert paid_dashboard.json()["pool"] == "paid"
+        assert len(paid_dashboard.json()["prompts"]) == 12
         compare = client.post("/api/v1/comparisons", json={"prompt": "hello", "save": False})
         assert compare.status_code == 503
 

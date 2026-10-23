@@ -62,9 +62,11 @@ export type ComparisonResponse = {
 }
 
 export type RoutingPriority = 'cost' | 'quality' | 'latency' | 'balanced'
+export type RoutingPool = 'baseline' | 'paid'
 
 export type RoutingDecision = {
   strategy_id: string
+  pool: RoutingPool
   priority: RoutingPriority
   min_context_tokens: number
   selected_model_id: string
@@ -89,15 +91,64 @@ export type RoutingStrategySummary = {
   accuracy: number
   accuracy_when_served: number | null
   mean_latency_ms: number | null
+  median_latency_ms: number | null
+  p95_latency_ms: number | null
   total_cost_usd: string | null
+  cost_per_correct_usd: string | null
+}
+
+export type ReplayCell = {
+  model_id: string
+  status: string
+  correct: boolean
+  latency_ms: number
+  cost_usd: string | null
+}
+
+export type ReplaySelection = {
+  strategy_id: string
+  model_id: string
+  reason: string
+}
+
+export type ReplayPrompt = {
+  sample_id: string
+  source_index: number
+  question: string
+  task_signals: string[]
+  cells: ReplayCell[]
+  selections: ReplaySelection[]
 }
 
 export type RoutingDashboard = {
+  pool: RoutingPool
   source_run_id: string
   source_dataset: string
   source_cells: number
+  model_ids: string[]
   note: string
   strategies: RoutingStrategySummary[]
+  prompts: ReplayPrompt[]
+}
+
+export type RoutingValidationCase = {
+  case_id: string
+  label: string
+  prompt: string
+  priority: RoutingPriority
+  min_context_tokens: number
+  expected_model_id: string
+  decision: RoutingDecision
+  passed: boolean
+}
+
+export type RoutingValidationReport = {
+  strategy_id: string
+  registry_snapshot_id: string
+  passed: boolean
+  passed_cases: number
+  total_cases: number
+  cases: RoutingValidationCase[]
 }
 
 export type EligibilityResult = {

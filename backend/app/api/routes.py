@@ -22,10 +22,13 @@ from app.domain.models import (
     RouteResponse,
     RoutingDashboard,
     RoutingDecision,
+    RoutingPool,
+    RoutingValidationReport,
 )
 from app.registry.filtering import evaluate_eligibility
 from app.registry.loader import ModelDriftError
-from app.routing import RuleBasedRouter, build_dashboard
+from app.routing import RuleBasedRouter, build_dashboard, build_validation_report
+from app.routing.replay import EVIDENCE_DIRS
 from app.state import AppServices
 from app.storage import append_jsonl
 
@@ -63,6 +66,16 @@ async def health(services: Services) -> HealthResponse:
 @router.get("/models", response_model=RegistrySnapshot)
 async def models(services: Services) -> RegistrySnapshot:
     return services.registry.snapshot
+
+
+@router.get("/routing/models", response_model=RegistrySnapshot)
+async def routing_models(services: Services) -> RegistrySnapshot:
+    if services.routing_registry is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="The paid routing registry is not configured",
+        )
+    return services.routing_registry.snapshot
 
 
 @router.post("/eligibility", response_model=EligibilityResponse)
@@ -117,15 +130,30 @@ async def route_prompt(payload: RouteRequest, services: Services) -> RouteRespon
     """Select exactly one pinned model using the explicit CP2 rule policy."""
     _require_live_services(services)
     assert services.settings.openrouter_api_key is not None
-    assert services.generation_service is not None
+    registry = (
+        services.routing_registry
+        if payload.pool == RoutingPool.PAID
+        else services.registry
+    )
+    generation_service = (
+        services.routing_generation_service
+        if payload.pool == RoutingPool.PAID
+        else services.generation_service
+    )
+    if registry is None or generation_service is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="The selected routing pool is not configured",
+        )
     try:
-        await services.registry.validate_live_catalog(
+        await registry.validate_live_catalog(
             services.settings.openrouter_api_key.get_secret_value()
         )
         decision = RuleBasedRouter().decide(
             prompt=payload.prompt,
             priority=payload.priority,
-            models=services.registry.models,
+            pool=payload.pool,
+            models=registry.models,
             min_context_tokens=payload.min_context_tokens,
         )
     except ModelDriftError as exc:
@@ -140,7 +168,7 @@ async def route_prompt(payload: RouteRequest, services: Services) -> RouteRespon
             detail=f"OpenRouter catalog preflight failed: {type(exc).__name__}",
         ) from exc
 
-    outcome = await services.generation_service.generate_with_retries(
+    outcome = await generation_service.generate_with_retries(
         GenerationRequest(model_id=decision.selected_model_id, prompt=payload.prompt)
     )
     return RouteResponse(
@@ -154,11 +182,22 @@ async def preview_routing_decision(
     payload: RouteRequest, services: Services
 ) -> RoutingDecision:
     """Evaluate the fixed CP2 policy without a credential or provider request."""
+    registry = (
+        services.routing_registry
+        if payload.pool == RoutingPool.PAID
+        else services.registry
+    )
+    if registry is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="The selected routing pool is not configured",
+        )
     try:
         return RuleBasedRouter().decide(
             prompt=payload.prompt,
             priority=payload.priority,
-            models=services.registry.models,
+            pool=payload.pool,
+            models=registry.models,
             min_context_tokens=payload.min_context_tokens,
         )
     except ValueError as exc:
@@ -168,11 +207,30 @@ async def preview_routing_decision(
 
 
 @router.get("/routing/dashboard", response_model=RoutingDashboard)
-async def routing_dashboard(services: Services) -> RoutingDashboard:
+async def routing_dashboard(
+    services: Services, pool: RoutingPool = RoutingPool.BASELINE
+) -> RoutingDashboard:
+    """Replay fixed and rule strategies over one saved evidence matrix."""
     try:
-        return build_dashboard(services.settings.data_dir / "demo" / "checkpoint-1")
+        return build_dashboard(
+            services.settings.data_dir / "demo" / EVIDENCE_DIRS[pool], pool=pool
+        )
     except FileNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+
+@router.get("/routing/validation", response_model=RoutingValidationReport)
+async def routing_validation(
+    services: Services, pool: RoutingPool = RoutingPool.BASELINE
+) -> RoutingValidationReport:
+    """Run the fixed CP2 policy acceptance matrix without provider calls."""
+    registry = services.routing_registry if pool == RoutingPool.PAID else services.registry
+    if registry is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="The selected routing pool is not configured",
+        )
+    return build_validation_report(registry.models, pool=pool)
 
 
 @router.post(

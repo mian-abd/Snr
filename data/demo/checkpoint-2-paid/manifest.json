@@ -1,0 +1,31 @@
+{
+  "completed_cells": 36,
+  "created_at_utc": "2026-10-23T04:49:29.919612Z",
+  "dataset": "openai/gsm8k",
+  "dataset_revision": "b0bb162abedc65e1fdd8e93ed090fd7598ee68bc",
+  "error_message": null,
+  "failed_cells": 2,
+  "generation_config": {
+    "max_tokens": 512,
+    "prompt_template_version": "gsm8k-cp1-v1",
+    "stream": false,
+    "temperature": 0,
+    "timeout_seconds": 90
+  },
+  "generation_config_hash": "5cc562efc6aa30e17db754760976df78ccf9f3406c5275299e970d0b822d57e6",
+  "git_commit": "48254771e3ed4b567cf044e01be47f95ded2e1db",
+  "mode": "full",
+  "model_ids": [
+    "google/gemma-4-26b-a4b-it",
+    "inception/mercury-3",
+    "google/gemini-4-argon"
+  ],
+  "registry_models_sha256": "3e721e74b00de139a8629b131c92c7e6a48fd61d443bb1632e522194825d6a06",
+  "registry_snapshot_id": "openrouter-paid-2026-10-22-cp2",
+  "run_id": "gsm8k-paid-full-20261023T044929Z-5f90eace",
+  "schema_version": "1.0",
+  "status": "completed_with_errors",
+  "successful_cells": 34,
+  "total_cells": 36,
+  "updated_at_utc": "2026-10-23T04:51:39.945533Z"
+}

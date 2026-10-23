@@ -167,7 +167,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Routing Dashboard */
+        /**
+         * Routing Dashboard
+         * @description Replay fixed and rule strategies over one saved evidence matrix.
+         */
         get: operations["routing_dashboard_api_v1_routing_dashboard_get"];
         put?: never;
         post?: never;
@@ -191,6 +194,43 @@ export interface paths {
          * @description Evaluate the fixed CP2 policy without a credential or provider request.
          */
         post: operations["preview_routing_decision_api_v1_routing_decisions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/routing/models": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Routing Models */
+        get: operations["routing_models_api_v1_routing_models_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/routing/validation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Routing Validation
+         * @description Run the fixed CP2 policy acceptance matrix without provider calls.
+         */
+        get: operations["routing_validation_api_v1_routing_validation_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -582,6 +622,45 @@ export interface components {
             /** Source Url */
             source_url: string;
         };
+        /**
+         * ReplayCell
+         * @description One saved model outcome for one benchmark prompt.
+         */
+        ReplayCell: {
+            /** Correct */
+            correct: boolean;
+            /** Cost Usd */
+            cost_usd: string | null;
+            /** Latency Ms */
+            latency_ms: number;
+            /** Model Id */
+            model_id: string;
+            status: components["schemas"]["GenerationStatus"];
+        };
+        /** ReplayPrompt */
+        ReplayPrompt: {
+            /** Cells */
+            cells: components["schemas"]["ReplayCell"][];
+            /** Question */
+            question: string;
+            /** Sample Id */
+            sample_id: string;
+            /** Selections */
+            selections: components["schemas"]["ReplaySelection"][];
+            /** Source Index */
+            source_index: number;
+            /** Task Signals */
+            task_signals: string[];
+        };
+        /** ReplaySelection */
+        ReplaySelection: {
+            /** Model Id */
+            model_id: string;
+            /** Reason */
+            reason: string;
+            /** Strategy Id */
+            strategy_id: string;
+        };
         /** RouteRequest */
         RouteRequest: {
             /**
@@ -589,6 +668,8 @@ export interface components {
              * @default 1
              */
             min_context_tokens: number;
+            /** @default baseline */
+            pool: components["schemas"]["RoutingPool"];
             /** @default balanced */
             priority: components["schemas"]["RoutingPriority"];
             /** Prompt */
@@ -601,8 +682,13 @@ export interface components {
         };
         /** RoutingDashboard */
         RoutingDashboard: {
+            /** Model Ids */
+            model_ids: string[];
             /** Note */
             note: string;
+            pool: components["schemas"]["RoutingPool"];
+            /** Prompts */
+            prompts: components["schemas"]["ReplayPrompt"][];
             /** Source Cells */
             source_cells: number;
             /** Source Dataset */
@@ -618,6 +704,7 @@ export interface components {
             eligible_model_ids: string[];
             /** Min Context Tokens */
             min_context_tokens: number;
+            pool: components["schemas"]["RoutingPool"];
             priority: components["schemas"]["RoutingPriority"];
             /** Reason */
             reason: string;
@@ -628,6 +715,11 @@ export interface components {
             /** Task Signals */
             task_signals: string[];
         };
+        /**
+         * RoutingPool
+         * @enum {string}
+         */
+        RoutingPool: "baseline" | "paid";
         /**
          * RoutingPriority
          * @enum {string}
@@ -643,12 +735,18 @@ export interface components {
             attempted: number;
             /** Correct */
             correct: number;
+            /** Cost Per Correct Usd */
+            cost_per_correct_usd: string | null;
             /** Failed */
             failed: number;
             /** Label */
             label: string;
             /** Mean Latency Ms */
             mean_latency_ms: number | null;
+            /** Median Latency Ms */
+            median_latency_ms: number | null;
+            /** P95 Latency Ms */
+            p95_latency_ms: number | null;
             /** Selected Model Counts */
             selected_model_counts: {
                 [key: string]: number;
@@ -659,6 +757,38 @@ export interface components {
             successful: number;
             /** Total Cost Usd */
             total_cost_usd: string | null;
+        };
+        /** RoutingValidationCase */
+        RoutingValidationCase: {
+            /** Case Id */
+            case_id: string;
+            decision: components["schemas"]["RoutingDecision"];
+            /** Expected Model Id */
+            expected_model_id: string;
+            /** Label */
+            label: string;
+            /** Min Context Tokens */
+            min_context_tokens: number;
+            /** Passed */
+            passed: boolean;
+            priority: components["schemas"]["RoutingPriority"];
+            /** Prompt */
+            prompt: string;
+        };
+        /** RoutingValidationReport */
+        RoutingValidationReport: {
+            /** Cases */
+            cases: components["schemas"]["RoutingValidationCase"][];
+            /** Passed */
+            passed: boolean;
+            /** Passed Cases */
+            passed_cases: number;
+            /** Registry Snapshot Id */
+            registry_snapshot_id: string;
+            /** Strategy Id */
+            strategy_id: string;
+            /** Total Cases */
+            total_cases: number;
         };
         /** ValidationError */
         ValidationError: {
@@ -941,7 +1071,9 @@ export interface operations {
     };
     routing_dashboard_api_v1_routing_dashboard_get: {
         parameters: {
-            query?: never;
+            query?: {
+                pool?: components["schemas"]["RoutingPool"];
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -955,6 +1087,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RoutingDashboard"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -979,6 +1120,57 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RoutingDecision"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    routing_models_api_v1_routing_models_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegistrySnapshot"];
+                };
+            };
+        };
+    };
+    routing_validation_api_v1_routing_validation_get: {
+        parameters: {
+            query?: {
+                pool?: components["schemas"]["RoutingPool"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoutingValidationReport"];
                 };
             };
             /** @description Validation Error */

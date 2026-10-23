@@ -8,7 +8,9 @@ import type {
   RoutingDecision,
   RouteResponse,
   RoutingDashboard,
+  RoutingPool,
   RoutingPriority,
+  RoutingValidationReport,
 } from './types'
 
 export class ApiError extends Error {
@@ -41,22 +43,24 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
 export const client = {
   health: () => api<Health>('/api/v1/health'),
   models: () => api<RegistrySnapshot>('/api/v1/models'),
+  routingModels: () => api<RegistrySnapshot>('/api/v1/routing/models'),
   compare: (prompt: string, save: boolean) =>
     api<ComparisonResponse>('/api/v1/comparisons', {
       method: 'POST',
       body: JSON.stringify({ prompt, save }),
     }),
-  route: (prompt: string, priority: RoutingPriority, minContextTokens: number) =>
+  route: (prompt: string, priority: RoutingPriority, pool: RoutingPool, minContextTokens: number) =>
     api<RouteResponse>('/api/v1/routes', {
       method: 'POST',
-      body: JSON.stringify({ prompt, priority, min_context_tokens: minContextTokens }),
+      body: JSON.stringify({ prompt, priority, pool, min_context_tokens: minContextTokens }),
     }),
-  previewRoute: (prompt: string, priority: RoutingPriority, minContextTokens: number) =>
+  previewRoute: (prompt: string, priority: RoutingPriority, pool: RoutingPool, minContextTokens: number) =>
     api<RoutingDecision>('/api/v1/routing/decisions', {
       method: 'POST',
-      body: JSON.stringify({ prompt, priority, min_context_tokens: minContextTokens }),
+      body: JSON.stringify({ prompt, priority, pool, min_context_tokens: minContextTokens }),
     }),
-  routingDashboard: () => api<RoutingDashboard>('/api/v1/routing/dashboard'),
+  routingDashboard: (pool: RoutingPool) => api<RoutingDashboard>(`/api/v1/routing/dashboard?pool=${pool}`),
+  routingValidation: (pool: RoutingPool) => api<RoutingValidationReport>(`/api/v1/routing/validation?pool=${pool}`),
   eligibility: (minContextTokens: number) =>
     api<{ results: EligibilityResult[] }>('/api/v1/eligibility', {
       method: 'POST',

@@ -68,21 +68,24 @@ The important point is not that this tiny sample proves one model is universally
 
 Say:
 
-“This slide shows the test I use in the demo. I keep the prompt unchanged and change one control at a time.
+“This slide shows the same behavior as the five-case acceptance matrix in the application. The matrix automatically verifies cost, latency, and quality priorities, a balanced math prompt, and the 500,000-token hard-requirement override. It shows expected and actual models, and all five cases pass locally without an OpenRouter call.
+
+For the interactive test, I keep the prompt unchanged and change one control at a time.
 
 With no restrictive context requirement, the lower-cost or faster-response priority selects Gemma. The higher-quality priority selects Nemotron. Then I choose lower cost again but require at least 500,000 context tokens. Gemma is filtered out first, so Nemotron is selected even though the preference asked for the smaller model.
 
-That behavior proves the router treats a hard requirement as non-negotiable and a priority as a preference. The preview endpoint returns the full decision explanation locally and does not call OpenRouter.”
+That behavior proves the router treats a hard requirement as non-negotiable and a priority as a preference. The preview endpoint returns the full decision explanation locally and does not call OpenRouter. The acceptance matrix makes the test repeatable instead of depending only on my manual clicks.”
 
 ### Live demo at this point
 
 Use the **Route** tab.
 
-1. Keep the default prompt.
-2. Select **Lower cost**, keep minimum context at `1`, and click **Preview decision**. Point out that Gemma is selected.
-3. Select **Higher quality** and preview again. Point out that Nemotron is selected for the same prompt.
-4. Select **Lower cost**, click **Use 500,000 demo**, and preview again. Read the explanation: the lower-cost rule would prefer Gemma, but the hard requirement removes it, so Nemotron is selected.
-5. Scroll to the strategy replay table. Explain that it replays the saved twenty-four-cell matrix and makes no provider calls.
+1. Scroll briefly to the **Deterministic acceptance matrix** and point out **5/5 passed**.
+2. Return to the default prompt.
+3. Select **Lower cost**, keep minimum context at `1`, and click **Preview decision**. Point out that Gemma is selected.
+4. Select **Higher quality** and preview again. Point out that Nemotron is selected for the same prompt.
+5. Select **Lower cost**, click **Use 500,000 demo**, and preview again. Read the explanation: the lower-cost rule would prefer Gemma, but the hard requirement removes it, so Nemotron is selected.
+6. Scroll to the strategy replay table. Explain that it replays the saved twenty-four-cell matrix and makes no provider calls.
 
 Do not rely on **Route prompt** for the main presentation. It is a real provider call and free capacity may be rate-limited. The live UI and local preview are real application behavior even though inference is not called.
 
@@ -90,7 +93,7 @@ Do not rely on **Route prompt** for the main presentation. It is a real provider
 
 Say:
 
-“By the October 15 milestone, the application included fixed baselines, a rule router, four priority controls, the context requirement control, an explanation view, and an offline strategy dashboard.
+“By the October 15 milestone, the application included fixed baselines, a rule router, four priority controls, the context requirement control, an explanation view, and an offline strategy dashboard. The final checkpoint build also includes a five-case expected-versus-actual acceptance matrix, so the policy rules are visible and repeatable in the UI.
 
 The screenshot is the actual production UI. The dashboard replays the same saved evidence under six strategies: two fixed baselines plus cost, quality, latency, and balanced rule policies. Because it uses committed records, I can demonstrate routing behavior even when a free provider is unavailable.
 
@@ -144,6 +147,7 @@ Close with:
 
 - Start the app with `./scripts/demo.ps1` and open `http://127.0.0.1:8000`.
 - Use **Preview decision**, not repeated live routing, for the main demonstration.
+- Show the **5/5 passed** policy matrix before the manual preview.
 - Keep the backup video `docs/demo/checkpoint-2-backup-demo.webm` open in another window.
 - Keep the PowerPoint deck in `docs/presentations/Adaptive_LLM_Router_Checkpoint_2_Final.pptx`.
 - Do not show `backend/.env` or any API credential.
