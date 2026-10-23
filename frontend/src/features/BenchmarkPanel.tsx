@@ -1,9 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Beaker, Play, RotateCcw } from 'lucide-react'
+import { useState } from 'react'
 import { client } from '../api/client'
-import type { BenchmarkView } from '../api/types'
+import type { BenchmarkEstimate, BenchmarkView, ModelSpec, RoutingPool } from '../api/types'
 import { StatusBadge } from '../components/StatusBadge'
 import styles from './Panels.module.css'
+import { PoolSwitch } from './PoolSwitch'
+
+type Props = { pools: Record<RoutingPool, ModelSpec[]>; credentialConfigured: boolean }
 
 const activeStatuses = new Set(['pending', 'running'])
 
@@ -11,24 +15,44 @@ function formatMetric(value: number | null, suffix = '') {
   return value == null ? '—' : `${Math.round(value).toLocaleString()}${suffix}`
 }
 
-export function BenchmarkPanel({ credentialConfigured }: { credentialConfigured: boolean }) {
+export function BenchmarkPanel({ pools, credentialConfigured }: Props) {
   const queryClient = useQueryClient()
-  const latest = useQuery({ queryKey: ['benchmark', 'latest'], queryFn: client.latestBenchmark, refetchInterval: (query) => activeStatuses.has(query.state.data?.manifest.status ?? '') ? 1500 : false })
+  const [pool, setPool] = useState<RoutingPool>('paid')
+  const [pending, setPending] = useState<BenchmarkEstimate | null>(null)
+  const latest = useQuery({ queryKey: ['benchmark', 'latest', pool], queryFn: () => client.latestBenchmark(pool), refetchInterval: (query) => activeStatuses.has(query.state.data?.manifest.status ?? '') ? 1500 : false })
   const runId = latest.data?.manifest.run_id
   const records = useQuery({ queryKey: ['benchmark-records', runId], queryFn: () => client.records(runId!), enabled: Boolean(runId) && !activeStatuses.has(latest.data?.manifest.status ?? '') })
+  const estimate = useMutation({
+    mutationFn: (mode: 'pilot' | 'full') => client.benchmarkEstimate(pool, mode),
+    onSuccess: (data) => setPending(data),
+  })
   const start = useMutation({
-    mutationFn: (mode: 'pilot' | 'full') => client.startBenchmark(mode),
+    mutationFn: ({ mode, confirmed }: { mode: 'pilot' | 'full'; confirmed?: string }) => client.startBenchmark(mode, pool, confirmed),
     onSuccess: (data) => {
-      queryClient.setQueryData<BenchmarkView | null>(['benchmark', 'latest'], data)
-      void queryClient.invalidateQueries({ queryKey: ['benchmark', 'latest'] })
+      setPending(null)
+      queryClient.setQueryData<BenchmarkView | null>(['benchmark', 'latest', pool], data)
+      void queryClient.invalidateQueries({ queryKey: ['benchmark', 'latest', pool] })
     },
   })
   const manifest = latest.data?.manifest
   const running = start.isPending || activeStatuses.has(manifest?.status ?? '')
+  const modelCount = pools[pool].length
+
+  const choosePool = (next: RoutingPool) => {
+    setPool(next)
+    setPending(null)
+    estimate.reset()
+    start.reset()
+  }
 
   const begin = (mode: 'pilot' | 'full') => {
-    const calls = mode === 'pilot' ? 4 : 24
-    if (window.confirm(`Start the fixed ${mode} run? This schedules ${calls} logical model calls before retries.`)) start.mutate(mode)
+    if (pool === 'paid') {
+      // Paid runs show the worst-case estimate first and need an explicit confirmation.
+      estimate.mutate(mode)
+      return
+    }
+    const calls = (mode === 'pilot' ? 2 : 12) * modelCount
+    if (window.confirm(`Start the fixed ${mode} run? This schedules ${calls} logical model calls before retries.`)) start.mutate({ mode })
   }
 
   return (
@@ -37,12 +61,20 @@ export function BenchmarkPanel({ credentialConfigured }: { credentialConfigured:
         <div>
           <span className={styles.index}>04 / BENCHMARK</span>
           <h2 id="benchmark-heading">A small baseline, captured completely.</h2>
-          <p>Twelve fixed GSM8K questions establish the first objective model-quality evidence.</p>
+          <p>The same twelve fixed GSM8K questions, prompt, and scorer run against each pool, so both matrices stay comparable.</p>
         </div>
         {manifest && <StatusBadge status={manifest.status} />}
       </div>
+      <PoolSwitch
+        value={pool}
+        onChange={choosePool}
+        descriptions={{
+          paid: 'Gemma, Mercury, and Gemini Argon. Paid runs show a cost estimate and need confirmation.',
+          baseline: 'The original free Gemma and Nemotron matrix from Checkpoint 1.',
+        }}
+      />
       <div className={styles.protocolStrip}>
-        {['GSM8K · test', '12 questions', '2 models', '24 cells', 'temperature 0', 'max 512 tokens', 'exact match'].map((label) => <span key={label}>{label}</span>)}
+        {['GSM8K · test', '12 questions', `${modelCount} models`, `${12 * modelCount} cells`, 'temperature 0', 'max 512 tokens', 'exact match'].map((label) => <span key={label}>{label}</span>)}
       </div>
 
       {manifest ? (
@@ -52,16 +84,29 @@ export function BenchmarkPanel({ credentialConfigured }: { credentialConfigured:
           {manifest.error_message && <p className={styles.errorBox}>{manifest.error_message}</p>}
         </div>
       ) : (
-        <div className={styles.emptyState}><Beaker size={20} /><span>No saved benchmark yet. Start with the four-call pilot.</span></div>
+        <div className={styles.emptyState}><Beaker size={20} /><span>No saved benchmark for this pool yet. Start with the {2 * modelCount}-call pilot.</span></div>
       )}
 
       <div className={styles.actionRow}>
         <div className={styles.secondaryActions}>
-          <button disabled={!credentialConfigured || running} onClick={() => begin('pilot')}><Play size={15} /> Run pilot</button>
-          <button disabled={!credentialConfigured || running} onClick={() => begin('full')}><Play size={15} /> Run benchmark</button>
+          <button disabled={!credentialConfigured || running || estimate.isPending} onClick={() => begin('pilot')}><Play size={15} /> Run pilot</button>
+          <button disabled={!credentialConfigured || running || estimate.isPending} onClick={() => begin('full')}><Play size={15} /> Run benchmark</button>
         </div>
         <button className={styles.iconButton} onClick={() => latest.refetch()} aria-label="Refresh benchmark"><RotateCcw size={16} /></button>
       </div>
+      {pending && (
+        <div className={styles.estimateBox} role="dialog" aria-labelledby="estimate-heading">
+          <span className={styles.eyebrow}>Confirm paid run</span>
+          <h3 id="estimate-heading">Worst-case cost ${Number(pending.worst_case_usd).toFixed(4)} for {pending.cells} cells</h3>
+          <p>{pending.mode} run · {pending.samples} questions × {pending.model_ids.length} models · cap ${pending.spend_cap_usd}. The estimate assumes every call uses the full 512-token budget and is retried once; actual spend is usually far lower.</p>
+          {!pending.within_cap && <p className={styles.errorBox}>This estimate exceeds the spending cap, so the run cannot start.</p>}
+          <div className={styles.estimateActions}>
+            <button className={styles.primaryButton} disabled={!pending.within_cap || start.isPending} onClick={() => start.mutate({ mode: pending.mode, confirmed: pending.worst_case_usd })}><Play size={15} /> Confirm and start</button>
+            <div className={styles.secondaryActions}><button onClick={() => setPending(null)}>Cancel</button></div>
+          </div>
+        </div>
+      )}
+      {estimate.error && <p className={styles.errorBox} role="alert">{estimate.error.message}</p>}
       {start.error && <p className={styles.errorBox} role="alert">{start.error.message}</p>}
 
       {latest.data?.summary && (

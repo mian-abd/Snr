@@ -21,7 +21,13 @@
 .switchThumb[data-state='checked'] { background: var(--accent); transform: translateX(1.1rem); }
 .notice, .disclaimer { color: var(--text-muted); font-size: 0.78rem; }
 .notice code { color: var(--text); }
-.resultsGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 1.35rem; }
+.resultsGrid, .resultsGridThree { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 1.35rem; }
+.resultsGridThree { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.poolColumn { font: 650 0.7rem var(--font-mono); letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-muted); }
+.estimateBox { margin-top: 1rem; padding: 1rem; border: 1px solid var(--accent); border-radius: var(--radius-md); background: var(--accent-faint); }
+.estimateBox h3 { margin: 0.35rem 0 0.4rem; font-size: 1rem; }
+.estimateBox p { margin: 0; color: var(--text-muted); font-size: 0.85rem; }
+.estimateActions { display: flex; gap: 0.6rem; margin-top: 0.85rem; flex-wrap: wrap; }
 .resultCard { min-width: 0; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--panel-raised); }
 .resultHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: 1rem; border-bottom: 1px solid var(--border); }
 .resultHeader h3 { margin: 0.3rem 0 0; font-size: 0.95rem; }
@@ -131,5 +137,5 @@
 .failure { color: var(--warning); }
 .spin { animation: spin 800ms linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-@media (max-width: 800px) { .sectionHeading, .actionRow, .requirementControl { align-items: stretch; flex-direction: column; } .modelPair, .routeActions { justify-content: flex-start; } .requirementControl input { width: 100%; } .resultsGrid, .routeOutcome { grid-template-columns: 1fr; } .priorityGrid, .poolGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .replayControls { align-items: stretch; flex-direction: column; } .replayControls select { min-width: 0; width: 100%; } .filterForm { width: 100%; } }
+@media (max-width: 800px) { .sectionHeading, .actionRow, .requirementControl { align-items: stretch; flex-direction: column; } .modelPair, .routeActions { justify-content: flex-start; } .requirementControl input { width: 100%; } .resultsGrid, .resultsGridThree, .routeOutcome { grid-template-columns: 1fr; } .priorityGrid, .poolGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .replayControls { align-items: stretch; flex-direction: column; } .replayControls select { min-width: 0; width: 100%; } .filterForm { width: 100%; } }
 @media (prefers-reduced-motion: reduce) { .spin { animation: none; } * { transition-duration: 0ms !important; } }

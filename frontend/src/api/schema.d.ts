@@ -4,6 +4,26 @@
  */
 
 export interface paths {
+    "/api/v1/benchmarks/gsm8k/estimate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Benchmark Estimate
+         * @description Worst-case cost of a run before anything is spent (no provider call).
+         */
+        get: operations["benchmark_estimate_api_v1_benchmarks_gsm8k_estimate_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/benchmarks/gsm8k/runs": {
         parameters: {
             query?: never;
@@ -241,6 +261,25 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** BenchmarkEstimate */
+        BenchmarkEstimate: {
+            /** Cells */
+            cells: number;
+            mode: components["schemas"]["BenchmarkMode"];
+            /** Model Ids */
+            model_ids: string[];
+            pool: components["schemas"]["RoutingPool"];
+            /** Requires Confirmation */
+            requires_confirmation: boolean;
+            /** Samples */
+            samples: number;
+            /** Spend Cap Usd */
+            spend_cap_usd: string | null;
+            /** Within Cap */
+            within_cap: boolean;
+            /** Worst Case Usd */
+            worst_case_usd: string;
+        };
         /** BenchmarkManifest */
         BenchmarkManifest: {
             /**
@@ -352,8 +391,12 @@ export interface components {
         };
         /** BenchmarkStartRequest */
         BenchmarkStartRequest: {
+            /** Confirmed Estimate Usd */
+            confirmed_estimate_usd?: number | string | null;
             /** @default full */
             mode: components["schemas"]["BenchmarkMode"];
+            /** @default baseline */
+            pool: components["schemas"]["RoutingPool"];
         };
         /**
          * BenchmarkStatus
@@ -387,6 +430,8 @@ export interface components {
         };
         /** ComparisonRequest */
         ComparisonRequest: {
+            /** @default baseline */
+            pool: components["schemas"]["RoutingPool"];
             /** Prompt */
             prompt: string;
             /**
@@ -407,6 +452,8 @@ export interface components {
              * Format: date-time
              */
             created_at_utc?: string;
+            /** @default baseline */
+            pool: components["schemas"]["RoutingPool"];
             /** Prompt */
             prompt: string;
             /** Results */
@@ -426,6 +473,7 @@ export interface components {
              * @default 500000
              */
             min_context_tokens: number;
+            pool?: components["schemas"]["RoutingPool"] | null;
         };
         /** EligibilityResponse */
         EligibilityResponse: {
@@ -441,6 +489,7 @@ export interface components {
             model_id: string;
             /** Model Snapshot Id */
             model_snapshot_id: string;
+            pool?: components["schemas"]["RoutingPool"] | null;
             /** Reasons */
             reasons: string[];
         };
@@ -514,6 +563,8 @@ export interface components {
             registry_loaded: boolean;
             /** Registry Snapshot Id */
             registry_snapshot_id: string | null;
+            /** Routing Registry Snapshot Id */
+            routing_registry_snapshot_id?: string | null;
             /** Status */
             status: string;
             /** Version */
@@ -812,6 +863,38 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    benchmark_estimate_api_v1_benchmarks_gsm8k_estimate_get: {
+        parameters: {
+            query?: {
+                pool?: components["schemas"]["RoutingPool"];
+                mode?: components["schemas"]["BenchmarkMode"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BenchmarkEstimate"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     start_benchmark_api_v1_benchmarks_gsm8k_runs_post: {
         parameters: {
             query?: never;
@@ -847,7 +930,9 @@ export interface operations {
     };
     latest_benchmark_api_v1_benchmarks_runs_latest_get: {
         parameters: {
-            query?: never;
+            query?: {
+                pool?: components["schemas"]["RoutingPool"];
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -861,6 +946,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BenchmarkRunView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -1018,7 +1112,9 @@ export interface operations {
     };
     models_api_v1_models_get: {
         parameters: {
-            query?: never;
+            query?: {
+                pool?: components["schemas"]["RoutingPool"];
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -1032,6 +1128,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RegistrySnapshot"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

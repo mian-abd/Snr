@@ -1,4 +1,5 @@
 import type {
+  BenchmarkEstimate,
   BenchmarkView,
   ComparisonResponse,
   EligibilityResult,
@@ -42,12 +43,12 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const client = {
   health: () => api<Health>('/api/v1/health'),
-  models: () => api<RegistrySnapshot>('/api/v1/models'),
+  models: (pool: RoutingPool = 'baseline') => api<RegistrySnapshot>(`/api/v1/models?pool=${pool}`),
   routingModels: () => api<RegistrySnapshot>('/api/v1/routing/models'),
-  compare: (prompt: string, save: boolean) =>
+  compare: (prompt: string, save: boolean, pool: RoutingPool) =>
     api<ComparisonResponse>('/api/v1/comparisons', {
       method: 'POST',
-      body: JSON.stringify({ prompt, save }),
+      body: JSON.stringify({ prompt, save, pool }),
     }),
   route: (prompt: string, priority: RoutingPriority, pool: RoutingPool, minContextTokens: number) =>
     api<RouteResponse>('/api/v1/routes', {
@@ -66,9 +67,9 @@ export const client = {
       method: 'POST',
       body: JSON.stringify({ min_context_tokens: minContextTokens }),
     }),
-  latestBenchmark: async () => {
+  latestBenchmark: async (pool: RoutingPool) => {
     try {
-      return await api<BenchmarkView>('/api/v1/benchmarks/runs/latest')
+      return await api<BenchmarkView>(`/api/v1/benchmarks/runs/latest?pool=${pool}`)
     } catch (error) {
       if (error instanceof ApiError && error.status === 404) return null
       throw error
@@ -77,9 +78,11 @@ export const client = {
   benchmark: (runId: string) => api<BenchmarkView>(`/api/v1/benchmarks/runs/${runId}`),
   records: (runId: string) =>
     api<PaginatedRecords>(`/api/v1/benchmarks/runs/${runId}/records?limit=100`),
-  startBenchmark: (mode: 'pilot' | 'full') =>
+  benchmarkEstimate: (pool: RoutingPool, mode: 'pilot' | 'full') =>
+    api<BenchmarkEstimate>(`/api/v1/benchmarks/gsm8k/estimate?pool=${pool}&mode=${mode}`),
+  startBenchmark: (mode: 'pilot' | 'full', pool: RoutingPool, confirmedEstimateUsd?: string) =>
     api<BenchmarkView>('/api/v1/benchmarks/gsm8k/runs', {
       method: 'POST',
-      body: JSON.stringify({ mode }),
+      body: JSON.stringify({ mode, pool, confirmed_estimate_usd: confirmedEstimateUsd ?? null }),
     }),
 }

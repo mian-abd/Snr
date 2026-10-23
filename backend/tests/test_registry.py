@@ -29,3 +29,27 @@ def test_registry_rejects_tampered_checksum(registry: ModelRegistry, tmp_path) -
     path.write_text(json.dumps(payload), encoding="utf-8")
     with pytest.raises(RegistryError, match="checksum"):
         ModelRegistry(path)
+
+
+def test_paid_snapshots_differ_only_in_dated_gemma_price() -> None:
+    from app.config import REPOSITORY_ROOT
+    from app.state import PAID_MODEL_IDS
+
+    def load(day: str) -> ModelRegistry:
+        return ModelRegistry(
+            REPOSITORY_ROOT / "data" / "registry" / f"openrouter-paid-2026-10-{day}.json",
+            expected_model_ids=PAID_MODEL_IDS,
+            require_free=False,
+        )
+
+    first, second = load("22"), load("23")
+    changed = [
+        new.id
+        for old, new in zip(first.models, second.models, strict=True)
+        if old.model_dump(exclude={"snapshot_id", "metadata_as_of"})
+        != new.model_dump(exclude={"snapshot_id", "metadata_as_of"})
+    ]
+    assert changed == ["google/gemma-4-26b-a4b-it"]
+    gemma = second.get("google/gemma-4-26b-a4b-it")
+    assert str(gemma.pricing.prompt_per_token) == "9E-8"
+    assert [model.id for model in second.models] == list(PAID_MODEL_IDS)

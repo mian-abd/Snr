@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.0",
+  "snapshot_id": "openrouter-paid-2026-10-23-cp2",
+  "metadata_as_of": "2026-10-23T00:00:00Z",
+  "source_url": "https://openrouter.ai/api/v1/models",
+  "models_sha256": "fdce62a53c58000505335fa3e82ae60c1fceadc1d8c55912916bb6e6d5df2bd7",
+  "models": [
+    {
+      "id": "google/gemma-4-26b-a4b-it",
+      "display_name": "Google: Gemma 4 26B A4B",
+      "provider": "google",
+      "context_length": 262144,
+      "pricing": {"prompt_per_token": "0.00000009", "completion_per_token": "0.0000003"},
+      "input_modalities": ["text", "image", "video"],
+      "output_modalities": ["text"],
+      "supported_parameters": ["max_tokens", "response_format", "temperature", "tool_choice", "tools", "top_p"],
+      "capabilities": {"tools": true, "structured_output": true},
+      "enabled": true,
+      "snapshot_id": "openrouter-paid-2026-10-23-cp2",
+      "metadata_as_of": "2026-10-23T00:00:00Z",
+      "source_url": "https://openrouter.ai/google/gemma-4-26b-a4b-it"
+    },
+    {
+      "id": "inception/mercury-3",
+      "display_name": "Inception: Mercury 3",
+      "provider": "inception",
+      "context_length": 1000000,
+      "pricing": {"prompt_per_token": "0.0000001", "completion_per_token": "0.00000035"},
+      "input_modalities": ["text"],
+      "output_modalities": ["text"],
+      "supported_parameters": ["max_tokens", "reasoning", "reasoning_effort", "response_format", "temperature", "tool_choice", "tools"],
+      "capabilities": {"tools": true, "structured_output": true},
+      "enabled": true,
+      "snapshot_id": "openrouter-paid-2026-10-23-cp2",
+      "metadata_as_of": "2026-10-23T00:00:00Z",
+      "source_url": "https://openrouter.ai/inception/mercury-3"
+    },
+    {
+      "id": "google/gemini-4-argon",
+      "display_name": "Google: Gemini 4 Argon",
+      "provider": "google",
+      "context_length": 1048576,
+      "pricing": {"prompt_per_token": "0.000002", "completion_per_token": "0.00001"},
+      "input_modalities": ["text", "image", "file", "audio", "video"],
+      "output_modalities": ["text"],
+      "supported_parameters": ["max_tokens", "reasoning", "reasoning_effort", "response_format", "seed", "temperature", "tool_choice", "tools", "top_p"],
+      "capabilities": {"tools": true, "structured_output": true},
+      "enabled": true,
+      "snapshot_id": "openrouter-paid-2026-10-23-cp2",
+      "metadata_as_of": "2026-10-23T00:00:00Z",
+      "source_url": "https://openrouter.ai/google/gemini-4-argon"
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, test, vi } from 'vitest'
 import App from './App'
@@ -59,4 +59,39 @@ test('previews a different route priority without a provider credential', async 
   await user.click(screen.getByRole('button', { name: /preview decision/i }))
   expect(await screen.findByText(/Previewed model/)).toBeInTheDocument()
   expect(screen.getByText('nvidia/nemotron:free')).toBeInTheDocument()
+})
+
+
+test('starts a paid benchmark only after the cost estimate is confirmed', async () => {
+  const estimate = { pool: 'paid', mode: 'pilot', model_ids: ['google/gemma', 'inception/mercury', 'google/gemini'], samples: 2, cells: 6, worst_case_usd: '0.02268', spend_cap_usd: '1.00', within_cap: true, requires_confirmation: true }
+  const runView = { manifest: { run_id: 'gsm8k-paid-pilot-test', mode: 'pilot', status: 'pending', dataset: 'openai/gsm8k', dataset_revision: 'rev', registry_snapshot_id: 'paid', model_ids: estimate.model_ids, generation_config: {}, total_cells: 6, completed_cells: 0, successful_cells: 0, failed_cells: 0, error_message: null }, summary: null }
+  const posts: string[] = []
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = String(input)
+    if (url.includes('/benchmarks/runs/latest')) return new Response(JSON.stringify({ detail: 'No benchmark run found' }), { status: 404, headers: { 'Content-Type': 'application/json' } })
+    if (url.includes('/benchmarks/gsm8k/runs')) posts.push(String(init?.body))
+    const body = url.endsWith('/health')
+      ? { ...health, credential_configured: true }
+      : url.includes('/routing/dashboard')
+        ? dashboard
+        : url.includes('/routing/validation')
+          ? validation
+          : url.includes('/benchmarks/gsm8k/estimate')
+            ? estimate
+            : url.includes('/benchmarks/gsm8k/runs')
+              ? runView
+              : { schema_version: '1.0', snapshot_id: 'snapshot', metadata_as_of: '2026-09-30T00:00:00Z', source_url: 'https://example.com', models_sha256: 'abc', models: [model('google/gemma', 262144), model('inception/mercury', 1000000), model('google/gemini', 1048576)] }
+    return new Response(JSON.stringify(body), { status: 200, headers: { 'Content-Type': 'application/json' } })
+  }))
+  const user = userEvent.setup()
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  render(<QueryClientProvider client={queryClient}><App /></QueryClientProvider>)
+  await screen.findByText('Adaptive LLM Router')
+  await user.click(screen.getByRole('tab', { name: /benchmark/i }))
+  await user.click(await screen.findByRole('button', { name: /run pilot/i }))
+  expect(await screen.findByText(/Worst-case cost \$0\.0227 for 6 cells/)).toBeInTheDocument()
+  expect(posts).toHaveLength(0)
+  await user.click(screen.getByRole('button', { name: /confirm and start/i }))
+  await waitFor(() => expect(posts).toHaveLength(1))
+  expect(JSON.parse(posts[0])).toEqual({ mode: 'pilot', pool: 'paid', confirmed_estimate_usd: '0.02268' })
 })

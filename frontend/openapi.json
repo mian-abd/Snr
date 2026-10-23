@@ -1,6 +1,70 @@
 {
   "components": {
     "schemas": {
+      "BenchmarkEstimate": {
+        "additionalProperties": false,
+        "properties": {
+          "cells": {
+            "title": "Cells",
+            "type": "integer"
+          },
+          "mode": {
+            "$ref": "#/components/schemas/BenchmarkMode"
+          },
+          "model_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Model Ids",
+            "type": "array"
+          },
+          "pool": {
+            "$ref": "#/components/schemas/RoutingPool"
+          },
+          "requires_confirmation": {
+            "title": "Requires Confirmation",
+            "type": "boolean"
+          },
+          "samples": {
+            "title": "Samples",
+            "type": "integer"
+          },
+          "spend_cap_usd": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spend Cap Usd"
+          },
+          "within_cap": {
+            "title": "Within Cap",
+            "type": "boolean"
+          },
+          "worst_case_usd": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Worst Case Usd",
+            "type": "string"
+          }
+        },
+        "required": [
+          "pool",
+          "mode",
+          "model_ids",
+          "samples",
+          "cells",
+          "worst_case_usd",
+          "spend_cap_usd",
+          "within_cap",
+          "requires_confirmation"
+        ],
+        "title": "BenchmarkEstimate",
+        "type": "object"
+      },
       "BenchmarkManifest": {
         "additionalProperties": false,
         "properties": {
@@ -267,9 +331,28 @@
       "BenchmarkStartRequest": {
         "additionalProperties": false,
         "properties": {
+          "confirmed_estimate_usd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confirmed Estimate Usd"
+          },
           "mode": {
             "$ref": "#/components/schemas/BenchmarkMode",
             "default": "full"
+          },
+          "pool": {
+            "$ref": "#/components/schemas/RoutingPool",
+            "default": "baseline"
           }
         },
         "title": "BenchmarkStartRequest",
@@ -336,6 +419,10 @@
       "ComparisonRequest": {
         "additionalProperties": false,
         "properties": {
+          "pool": {
+            "$ref": "#/components/schemas/RoutingPool",
+            "default": "baseline"
+          },
           "prompt": {
             "maxLength": 50000,
             "minLength": 1,
@@ -366,6 +453,10 @@
             "format": "date-time",
             "title": "Created At Utc",
             "type": "string"
+          },
+          "pool": {
+            "$ref": "#/components/schemas/RoutingPool",
+            "default": "baseline"
           },
           "prompt": {
             "title": "Prompt",
@@ -408,6 +499,16 @@
             "minimum": 1.0,
             "title": "Min Context Tokens",
             "type": "integer"
+          },
+          "pool": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RoutingPool"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "title": "EligibilityRequest",
@@ -447,6 +548,16 @@
           "model_snapshot_id": {
             "title": "Model Snapshot Id",
             "type": "string"
+          },
+          "pool": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RoutingPool"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "reasons": {
             "items": {
@@ -681,6 +792,17 @@
               }
             ],
             "title": "Registry Snapshot Id"
+          },
+          "routing_registry_snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Routing Registry Snapshot Id"
           },
           "status": {
             "title": "Status",
@@ -1543,6 +1665,55 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/benchmarks/gsm8k/estimate": {
+      "get": {
+        "description": "Worst-case cost of a run before anything is spent (no provider call).",
+        "operationId": "benchmark_estimate_api_v1_benchmarks_gsm8k_estimate_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "pool",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/RoutingPool",
+              "default": "baseline"
+            }
+          },
+          {
+            "in": "query",
+            "name": "mode",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/BenchmarkMode",
+              "default": "full"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BenchmarkEstimate"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Benchmark Estimate"
+      }
+    },
     "/api/v1/benchmarks/gsm8k/runs": {
       "post": {
         "operationId": "start_benchmark_api_v1_benchmarks_gsm8k_runs_post",
@@ -1584,6 +1755,17 @@
     "/api/v1/benchmarks/runs/latest": {
       "get": {
         "operationId": "latest_benchmark_api_v1_benchmarks_runs_latest_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "pool",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/RoutingPool",
+              "default": "baseline"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -1594,6 +1776,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
         "summary": "Latest Benchmark"
@@ -1797,6 +1989,17 @@
     "/api/v1/models": {
       "get": {
         "operationId": "models_api_v1_models_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "pool",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/RoutingPool",
+              "default": "baseline"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -1807,6 +2010,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
         "summary": "Models"

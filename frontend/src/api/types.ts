@@ -3,6 +3,7 @@ export type Health = {
   version: string
   registry_loaded: boolean
   registry_snapshot_id: string | null
+  routing_registry_snapshot_id: string | null
   credential_configured: boolean
   active_benchmark_run_id: string | null
 }
@@ -56,6 +57,7 @@ export type GenerationResult = {
 export type ComparisonResponse = {
   comparison_id: string
   prompt: string
+  pool: RoutingPool
   saved: boolean
   created_at_utc: string
   results: GenerationResult[]
@@ -155,8 +157,21 @@ export type EligibilityResult = {
   model_id: string
   eligible: boolean
   reasons: string[]
-  evaluated_requirements: { min_context_tokens: number }
+  evaluated_requirements: { min_context_tokens: number; pool: RoutingPool | null }
   model_snapshot_id: string
+  pool: RoutingPool | null
+}
+
+export type BenchmarkEstimate = {
+  pool: RoutingPool
+  mode: 'pilot' | 'full'
+  model_ids: string[]
+  samples: number
+  cells: number
+  worst_case_usd: string
+  spend_cap_usd: string | null
+  within_cap: boolean
+  requires_confirmation: boolean
 }
 
 export type BenchmarkManifest = {

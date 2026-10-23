@@ -1,19 +1,25 @@
 from __future__ import annotations
 
 import asyncio
+from decimal import Decimal
 from pathlib import Path
 from typing import Annotated, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 
 from app import __version__
+from app.benchmarks.costs import PAID_DEMO_NAME, SPEND_CAP_USD, estimate_worst_case_usd
+from app.benchmarks.gsm8k import load_samples
 from app.domain.models import (
+    BenchmarkEstimate,
+    BenchmarkMode,
     BenchmarkRunView,
     BenchmarkStartRequest,
     ComparisonRequest,
     ComparisonResponse,
     EligibilityRequest,
     EligibilityResponse,
+    EligibilityResult,
     GenerationRequest,
     HealthResponse,
     PaginatedRecords,
@@ -26,7 +32,7 @@ from app.domain.models import (
     RoutingValidationReport,
 )
 from app.registry.filtering import evaluate_eligibility
-from app.registry.loader import ModelDriftError
+from app.registry.loader import ModelDriftError, ModelRegistry
 from app.routing import RuleBasedRouter, build_dashboard, build_validation_report
 from app.routing.replay import EVIDENCE_DIRS
 from app.state import AppServices
@@ -50,22 +56,57 @@ def _require_live_services(services: AppServices) -> None:
         )
 
 
+DEMO_DIRS = {RoutingPool.BASELINE: "checkpoint-1", RoutingPool.PAID: PAID_DEMO_NAME}
+
+
+def _registry_for(services: AppServices, pool: RoutingPool) -> ModelRegistry:
+    registry = services.pool_registry(pool)
+    if registry is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="The selected model pool is not configured",
+        )
+    return registry
+
+
+async def _preflight(services: AppServices, registry: ModelRegistry) -> None:
+    assert services.settings.openrouter_api_key is not None
+    try:
+        await registry.validate_live_catalog(
+            services.settings.openrouter_api_key.get_secret_value()
+        )
+    except ModelDriftError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"OpenRouter catalog preflight failed: {type(exc).__name__}",
+        ) from exc
+
+
 @router.get("/health", response_model=HealthResponse)
 async def health(services: Services) -> HealthResponse:
-    coordinator = services.benchmark_coordinator
+    active = next(
+        (item.active_run_id for item in services.coordinators if item.active_run_id), None
+    )
     return HealthResponse(
         status="ok",
         version=__version__,
         registry_loaded=True,
         registry_snapshot_id=services.registry.snapshot.snapshot_id,
+        routing_registry_snapshot_id=(
+            services.routing_registry.snapshot.snapshot_id if services.routing_registry else None
+        ),
         credential_configured=services.settings.credential_configured,
-        active_benchmark_run_id=coordinator.active_run_id if coordinator else None,
+        active_benchmark_run_id=active,
     )
 
 
 @router.get("/models", response_model=RegistrySnapshot)
-async def models(services: Services) -> RegistrySnapshot:
-    return services.registry.snapshot
+async def models(
+    services: Services, pool: RoutingPool = RoutingPool.BASELINE
+) -> RegistrySnapshot:
+    return _registry_for(services, pool).snapshot
 
 
 @router.get("/routing/models", response_model=RegistrySnapshot)
@@ -80,37 +121,41 @@ async def routing_models(services: Services) -> RegistrySnapshot:
 
 @router.post("/eligibility", response_model=EligibilityResponse)
 async def eligibility(payload: EligibilityRequest, services: Services) -> EligibilityResponse:
-    return EligibilityResponse(
-        results=evaluate_eligibility(services.registry.models, payload)
-    )
+    pools = [payload.pool] if payload.pool else [RoutingPool.BASELINE, RoutingPool.PAID]
+    results: list[EligibilityResult] = []
+    for pool in pools:
+        registry = services.pool_registry(pool)
+        if registry is None:
+            continue
+        results.extend(
+            result.model_copy(update={"pool": pool})
+            for result in evaluate_eligibility(registry.models, payload)
+        )
+    return EligibilityResponse(results=results)
 
 
 @router.post("/comparisons", response_model=ComparisonResponse)
 async def compare(payload: ComparisonRequest, services: Services) -> ComparisonResponse:
     _require_live_services(services)
-    assert services.settings.openrouter_api_key is not None
-    assert services.generation_service is not None
-    try:
-        await services.registry.validate_live_catalog(
-            services.settings.openrouter_api_key.get_secret_value()
-        )
-    except ModelDriftError as exc:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
-    except Exception as exc:
+    registry = _registry_for(services, payload.pool)
+    generation_service = services.pool_generation_service(payload.pool)
+    if generation_service is None:
         raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"OpenRouter catalog preflight failed: {type(exc).__name__}",
-        ) from exc
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="The selected model pool is not configured",
+        )
+    await _preflight(services, registry)
 
     requests = [
         GenerationRequest(model_id=model.id, prompt=payload.prompt)
-        for model in services.registry.models
+        for model in registry.models
     ]
     outcomes = await asyncio.gather(
-        *(services.generation_service.generate_with_retries(item) for item in requests)
+        *(generation_service.generate_with_retries(item) for item in requests)
     )
     response = ComparisonResponse(
         prompt=payload.prompt,
+        pool=payload.pool,
         saved=payload.save,
         results=[
             outcome.final.model_copy(update={"provider_request_id": None})
@@ -233,6 +278,38 @@ async def routing_validation(
     return build_validation_report(registry.models, pool=pool)
 
 
+def _estimate(
+    services: AppServices, pool: RoutingPool, mode: BenchmarkMode
+) -> BenchmarkEstimate:
+    registry = _registry_for(services, pool)
+    samples = load_samples(services.settings.data_dir / "benchmarks" / "gsm8k_checkpoint1.jsonl")
+    if mode == BenchmarkMode.PILOT:
+        samples = samples[:2]
+    worst_case = estimate_worst_case_usd(registry.models, samples)
+    paid = pool == RoutingPool.PAID
+    return BenchmarkEstimate(
+        pool=pool,
+        mode=mode,
+        model_ids=[model.id for model in registry.models],
+        samples=len(samples),
+        cells=len(samples) * len(registry.models),
+        worst_case_usd=worst_case,
+        spend_cap_usd=SPEND_CAP_USD if paid else None,
+        within_cap=not paid or worst_case <= SPEND_CAP_USD,
+        requires_confirmation=paid,
+    )
+
+
+@router.get("/benchmarks/gsm8k/estimate", response_model=BenchmarkEstimate)
+async def benchmark_estimate(
+    services: Services,
+    pool: RoutingPool = RoutingPool.BASELINE,
+    mode: BenchmarkMode = BenchmarkMode.FULL,
+) -> BenchmarkEstimate:
+    """Worst-case cost of a run before anything is spent (no provider call)."""
+    return _estimate(services, pool, mode)
+
+
 @router.post(
     "/benchmarks/gsm8k/runs",
     response_model=BenchmarkRunView,
@@ -242,21 +319,37 @@ async def start_benchmark(
     payload: BenchmarkStartRequest, services: Services
 ) -> BenchmarkRunView:
     _require_live_services(services)
-    coordinator = services.benchmark_coordinator
-    runner = services.benchmark_runner
-    assert coordinator is not None and runner is not None
-    assert services.settings.openrouter_api_key is not None
-    try:
-        await services.registry.validate_live_catalog(
-            services.settings.openrouter_api_key.get_secret_value()
-        )
-    except ModelDriftError as exc:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
-    except Exception as exc:
+    coordinator = services.pool_benchmark_coordinator(payload.pool)
+    runner = services.pool_benchmark_runner(payload.pool)
+    if coordinator is None or runner is None:
         raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"OpenRouter catalog preflight failed: {type(exc).__name__}",
-        ) from exc
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="The selected model pool has no benchmark runner",
+        )
+    if any(item.is_running for item in services.coordinators):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="A benchmark is already running"
+        )
+    estimate = _estimate(services, payload.pool, payload.mode)
+    if estimate.requires_confirmation:
+        if not estimate.within_cap:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=(
+                    f"Estimated ${estimate.worst_case_usd:.4f} exceeds the "
+                    f"${estimate.spend_cap_usd} spending cap"
+                ),
+            )
+        if payload.confirmed_estimate_usd is None or (
+            payload.confirmed_estimate_usd.quantize(Decimal("0.0001"))
+            != estimate.worst_case_usd.quantize(Decimal("0.0001"))
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Confirm the current cost estimate before starting a paid run",
+            )
+    registry = _registry_for(services, payload.pool)
+    await _preflight(services, registry)
     try:
         run_id = coordinator.start(payload.mode)
     except RuntimeError as exc:
@@ -269,20 +362,19 @@ async def start_benchmark(
         from app.benchmarks.runner import GENERATION_CONFIG, _config_hash
         from app.domain.models import BenchmarkManifest, BenchmarkStatus
 
-        samples_count = 2 if payload.mode.value == "pilot" else 12
         manifest = BenchmarkManifest(
             run_id=run_id,
             mode=payload.mode,
             status=BenchmarkStatus.PENDING,
             dataset="openai/gsm8k",
             dataset_revision="b0bb162abedc65e1fdd8e93ed090fd7598ee68bc",
-            registry_snapshot_id=services.registry.snapshot.snapshot_id,
-            registry_models_sha256=services.registry.snapshot.models_sha256,
-            model_ids=[model.id for model in services.registry.models],
+            registry_snapshot_id=registry.snapshot.snapshot_id,
+            registry_models_sha256=registry.snapshot.models_sha256,
+            model_ids=[model.id for model in registry.models],
             generation_config=GENERATION_CONFIG,
             generation_config_hash=_config_hash(),
             git_commit=None,
-            total_cells=samples_count * 2,
+            total_cells=estimate.cells,
             created_at_utc=datetime.now(UTC),
             updated_at_utc=datetime.now(UTC),
         )
@@ -290,34 +382,36 @@ async def start_benchmark(
 
 
 @router.get("/benchmarks/runs/latest", response_model=BenchmarkRunView)
-async def latest_benchmark(services: Services) -> BenchmarkRunView:
-    runner = services.benchmark_runner
-    if runner is None:
-        # A committed demo remains readable without a credential.
-        demo = services.settings.data_dir / "demo" / "checkpoint-1"
+async def latest_benchmark(
+    services: Services, pool: RoutingPool = RoutingPool.BASELINE
+) -> BenchmarkRunView:
+    runner = services.pool_benchmark_runner(pool)
+    result = runner.latest_run() if runner else None
+    if result is None:
+        # Committed evidence remains readable without a credential or a local run.
+        demo = services.settings.data_dir / "demo" / DEMO_DIRS[pool]
         if not (demo / "manifest.json").exists():
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="No benchmark run found"
             )
         return _load_demo(demo)
-    result = runner.latest_run()
-    if result is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No benchmark run found")
     return result
 
 
 @router.get("/benchmarks/runs/{run_id}", response_model=BenchmarkRunView)
 async def benchmark_run(run_id: str, services: Services) -> BenchmarkRunView:
-    if services.benchmark_runner:
-        try:
-            return services.benchmark_runner.load_run(run_id)
-        except FileNotFoundError:
-            pass
-    demo = services.settings.data_dir / "demo" / "checkpoint-1"
-    if (demo / "manifest.json").exists():
-        view = _load_demo(demo)
-        if view.manifest.run_id == run_id:
-            return view
+    for pool in RoutingPool:
+        runner = services.pool_benchmark_runner(pool)
+        if runner:
+            try:
+                return runner.load_run(run_id)
+            except FileNotFoundError:
+                pass
+        demo = services.settings.data_dir / "demo" / DEMO_DIRS[pool]
+        if (demo / "manifest.json").exists():
+            view = _load_demo(demo)
+            if view.manifest.run_id == run_id:
+                return view
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Benchmark run not found")
 
 
@@ -328,21 +422,25 @@ async def benchmark_records(
     offset: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 25,
 ) -> PaginatedRecords:
-    if services.benchmark_runner:
-        try:
-            return services.benchmark_runner.records(run_id, offset, limit)
-        except FileNotFoundError:
-            pass
-    demo = services.settings.data_dir / "demo" / "checkpoint-1"
     from app.domain.models import BenchmarkRecord
     from app.storage import read_jsonl
 
-    rows = [BenchmarkRecord.model_validate(row) for row in read_jsonl(demo / "results.jsonl")]
-    if not rows or rows[0].run_id != run_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Benchmark run not found")
-    return PaginatedRecords(
-        items=rows[offset : offset + limit], total=len(rows), offset=offset, limit=limit
-    )
+    for pool in RoutingPool:
+        runner = services.pool_benchmark_runner(pool)
+        if runner:
+            try:
+                return runner.records(run_id, offset, limit)
+            except FileNotFoundError:
+                pass
+        demo = services.settings.data_dir / "demo" / DEMO_DIRS[pool]
+        rows = [
+            BenchmarkRecord.model_validate(row) for row in read_jsonl(demo / "results.jsonl")
+        ]
+        if rows and rows[0].run_id == run_id:
+            return PaginatedRecords(
+                items=rows[offset : offset + limit], total=len(rows), offset=offset, limit=limit
+            )
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Benchmark run not found")
 
 
 def _load_demo(path: Path) -> BenchmarkRunView:

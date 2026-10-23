@@ -19,7 +19,8 @@ Adaptive LLM Router is a local, reproducible console for comparing pinned OpenRo
 - Verify each pool's policy against deterministic expected-versus-actual acceptance cases (5 free, 7 paid) without a provider call.
 - Replay two fixed baselines and four policy variants over the committed 24-cell free matrix or the 36-cell paid matrix, without making another provider call.
 - Compare selected-model counts, accuracy, availability, median and p95 latency, total cost, and cost per correct answer, and inspect the model chosen for every prompt and why.
-- Collect the paid matrix with `uv run --project backend python -m app.benchmarks.paid_matrix`, which prints a worst-case cost estimate, enforces a $1 cap, and only spends with `--confirm`.
+- Collect the paid matrix with `uv run --project backend python -m app.benchmarks.paid_matrix`, which prints a worst-case cost estimate, enforces a $1 cap, and only spends with `--confirm`, or from the Benchmark tab, which shows the same estimate and requires **Confirm and start**.
+- Use both pools on every tab: Compare sends one prompt to every model in the selected pool, Eligibility lists all five registry entries, and Benchmark shows either saved matrix.
 
 Checkpoint 2 is deliberately a simple, rule-based policy—not a learned router or a claim of statistically conclusive model rankings.
 

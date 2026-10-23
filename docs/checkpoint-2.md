@@ -17,9 +17,21 @@ The Route view has a pool selector. Each pool has its own frozen registry snapsh
 | Pool | Registry snapshot | Models | Saved matrix |
 | --- | --- | --- | --- |
 | Checkpoint 1 free pool | `data/registry/openrouter-2026-09-30.json` | `google/gemma-4-26b-a4b-it:free`, `nvidia/nemotron-3-ultra-550b-a55b:free` | `data/demo/checkpoint-1/` (24 cells) |
-| Checkpoint 2 paid pool | `data/registry/openrouter-paid-2026-10-22.json` | `google/gemma-4-26b-a4b-it`, `inception/mercury-3`, `google/gemini-4-argon` | `data/demo/checkpoint-2-paid/` (36 cells) |
+| Checkpoint 2 paid pool | `data/registry/openrouter-paid-2026-10-23.json` (live calls); `openrouter-paid-2026-10-22.json` (recorded by the saved matrix) | `google/gemma-4-26b-a4b-it`, `inception/mercury-3`, `google/gemini-4-argon` | `data/demo/checkpoint-2-paid/` (36 cells, collected on the 10-22 snapshot) |
 
 The paid snapshot records each model's catalog price and context length. Before any live paid call, the catalog preflight compares the live price and context length against the snapshot as decimals and fails closed on drift.
+
+On 2026-10-23 that check caught a real change: OpenRouter raised paid Gemma 4 26B from $0.0765 / $0.255 to $0.09 / $0.30 per million input / output tokens, and every live paid call was refused. A new dated snapshot, `openrouter-paid-2026-10-23.json`, differs from 10-22 only in those two prices and is now the live paid registry. The 10-22 snapshot stays as the record for the saved 36-cell matrix, whose manifest names it. Gemma is still the cheapest paid model, so routing roles did not change.
+
+## Both pools on every tab
+
+Every tab works with both pools (four distinct models: Gemma 4 26B in free and paid form, Nemotron, Mercury 3, and Gemini 4 Argon):
+
+- **Route:** pool switch, pool-specific acceptance matrix, and results dashboard.
+- **Compare:** pool switch; one prompt goes to every model in the selected pool (2 free or 3 paid calls).
+- **Eligibility:** all five registry entries, labeled by pool, with per-million prices; `POST /api/v1/eligibility` evaluates both pools unless `pool` is given.
+- **Benchmark:** pool switch showing either saved matrix and its records. A paid run first shows the worst-case estimate (`GET /api/v1/benchmarks/gsm8k/estimate`) and the $1 cap, and starts only after **Confirm and start**. The server recomputes the estimate and rejects a paid start whose `confirmed_estimate_usd` does not match, or whose estimate exceeds the cap.
+- **Header:** both registry snapshot IDs.
 
 ## Routing policy
 

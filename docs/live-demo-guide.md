@@ -48,7 +48,13 @@ Scroll to **Results dashboard**. Walk through the six strategies over the 36 sav
 
 In **Per-prompt routing decisions**, keep **Rule router: balanced priority**. Show one question routed to Mercury with two signals and one routed to Gemini with three, and point to the outcome chips that show what every saved model did on that question (GSM8K #1227 and #1251 show Mercury’s empty responses).
 
-### 7. Optional: compare with Checkpoint 1
+### 7. Optional: the other tabs
+
+- **02 Compare** (paid pool): **Compare 3 models** sends the same prompt to Gemma, Mercury, and Gemini Argon and shows three result cards with latency, tokens, and cost.
+- **03 Eligibility:** all five registry entries from both pools; at 500,000 tokens both Gemma entries are excluded.
+- **04 Benchmark** (paid pool): the saved 36-cell run and its records. **Run pilot** shows the worst-case estimate and cap first. Click **Cancel** during a presentation unless you mean to spend.
+
+### 8. Optional: compare with Checkpoint 1
 
 Scroll up, click **Checkpoint 1 free pool**. The acceptance matrix becomes 5/5 and the dashboard replays the original 24 free-tier cells, where Gemma’s nine rate limits dominate. Open **04 Benchmark** to expand a raw saved record if asked.
 

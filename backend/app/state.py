@@ -4,14 +4,20 @@ import asyncio
 from dataclasses import dataclass
 from pathlib import Path
 
+from app.benchmarks.costs import (
+    PAID_BUDGET_FILE,
+    PAID_DEMO_NAME,
+    PAID_MAX_REQUESTS,
+    PAID_RUN_PREFIX,
+)
 from app.benchmarks.runner import BenchmarkRunner
 from app.config import REPOSITORY_ROOT, Settings
-from app.domain.models import BenchmarkMode, BenchmarkStatus
+from app.domain.models import BenchmarkMode, BenchmarkStatus, RoutingPool
 from app.providers import GenerationService
 from app.registry import ModelRegistry
 
 REGISTRY_PATH = REPOSITORY_ROOT / "data" / "registry" / "openrouter-2026-09-30.json"
-PAID_REGISTRY_PATH = REPOSITORY_ROOT / "data" / "registry" / "openrouter-paid-2026-10-22.json"
+PAID_REGISTRY_PATH = REPOSITORY_ROOT / "data" / "registry" / "openrouter-paid-2026-10-23.json"
 PAID_MODEL_IDS = (
     "google/gemma-4-26b-a4b-it",
     "inception/mercury-3",
@@ -28,6 +34,36 @@ class AppServices:
     benchmark_coordinator: BenchmarkCoordinator | None = None
     routing_registry: ModelRegistry | None = None
     routing_generation_service: GenerationService | None = None
+    paid_benchmark_runner: BenchmarkRunner | None = None
+    paid_benchmark_coordinator: BenchmarkCoordinator | None = None
+
+    def pool_registry(self, pool: RoutingPool) -> ModelRegistry | None:
+        return self.routing_registry if pool == RoutingPool.PAID else self.registry
+
+    def pool_generation_service(self, pool: RoutingPool) -> GenerationService | None:
+        return (
+            self.routing_generation_service
+            if pool == RoutingPool.PAID
+            else self.generation_service
+        )
+
+    def pool_benchmark_runner(self, pool: RoutingPool) -> BenchmarkRunner | None:
+        return self.paid_benchmark_runner if pool == RoutingPool.PAID else self.benchmark_runner
+
+    def pool_benchmark_coordinator(self, pool: RoutingPool) -> BenchmarkCoordinator | None:
+        return (
+            self.paid_benchmark_coordinator
+            if pool == RoutingPool.PAID
+            else self.benchmark_coordinator
+        )
+
+    @property
+    def coordinators(self) -> list[BenchmarkCoordinator]:
+        return [
+            item
+            for item in (self.benchmark_coordinator, self.paid_benchmark_coordinator)
+            if item is not None
+        ]
 
 
 class BenchmarkCoordinator:
@@ -106,6 +142,17 @@ def build_services(settings: Settings) -> AppServices:
         repository_root=Path(REPOSITORY_ROOT),
     )
     coordinator = BenchmarkCoordinator(runner)
+    paid_runner = BenchmarkRunner(
+        service=routing_service,
+        registry=routing_registry,
+        data_dir=settings.data_dir,
+        api_key=api_key,
+        max_daily_requests=PAID_MAX_REQUESTS,
+        repository_root=Path(REPOSITORY_ROOT),
+        demo_name=PAID_DEMO_NAME,
+        run_prefix=PAID_RUN_PREFIX,
+        budget_file=PAID_BUDGET_FILE,
+    )
     return AppServices(
         settings=settings,
         registry=registry,
@@ -114,4 +161,6 @@ def build_services(settings: Settings) -> AppServices:
         benchmark_coordinator=coordinator,
         routing_registry=routing_registry,
         routing_generation_service=routing_service,
+        paid_benchmark_runner=paid_runner,
+        paid_benchmark_coordinator=BenchmarkCoordinator(paid_runner),
     )

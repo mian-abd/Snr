@@ -252,6 +252,8 @@ All three IDs, prices, and context lengths were confirmed against the live publi
 
 The free pool remains the immutable Checkpoint 1 evidence pool. The paid pool is a separately versioned addition; nothing in Checkpoint 1 was rewritten.
 
+Second paid snapshot (live calls since 2026-10-23): `data/registry/openrouter-paid-2026-10-23.json` (snapshot ID `openrouter-paid-2026-10-23-cp2`, checksum `fdce62a53c58000505335fa3e82ae60c1fceadc1d8c55912916bb6e6d5df2bd7`). On 2026-10-23 the live preflight refused every paid call because OpenRouter had raised `google/gemma-4-26b-a4b-it` to $0.00000009 per prompt token and $0.0000003 per completion token. The new snapshot differs from 10-22 only in those two prices (`test_paid_snapshots_differ_only_in_dated_gemma_price`). `PAID_REGISTRY_PATH` points at it. The 10-22 snapshot is kept because the committed 36-cell matrix and its manifest were collected on it; the paid runner's "latest run" view therefore falls back to that committed evidence. Gemma remains the cheapest paid model, so the registry's ascending price order and every routing role are unchanged. Future price changes should get a new dated snapshot the same way, never an in-place edit.
+
 ## 9. Backend contracts
 
 ### Generation request
@@ -306,16 +308,17 @@ All application routes use the `/api/v1` prefix.
 | Method and route | Purpose | Provider call |
 | --- | --- | --- |
 | `GET /health` | Server, registry, credential-configured, and benchmark state | No |
-| `GET /models` | Frozen registry and snapshot metadata | No |
-| `POST /eligibility` | Deterministic minimum-context filtering | No |
-| `POST /comparisons` | Send the same prompt concurrently to both pinned models | Yes |
+| `GET /models?pool=` | Frozen registry and snapshot metadata for one pool (default free) | No |
+| `POST /eligibility` | Deterministic minimum-context filtering across both pools, or one pool with `pool` | No |
+| `POST /comparisons` | Send the same prompt concurrently to every model in the chosen pool | Yes |
+| `GET /benchmarks/gsm8k/estimate?pool=&mode=` | Worst-case cost, cells, cap, and whether confirmation is required | No |
 | `GET /routing/models` | Paid-pool registry snapshot | No |
 | `POST /routing/decisions` | Preview one routing decision (`pool`: `baseline` or `paid`) | No |
 | `GET /routing/validation?pool=` | Run the pool's deterministic acceptance cases (5 free, 7 paid) | No |
 | `GET /routing/dashboard?pool=` | Replay six strategies over the pool's saved matrix, with per-prompt decisions | No |
 | `POST /routes` | Select one model in the chosen pool and send exactly one live generation request | Yes |
-| `POST /benchmarks/gsm8k/runs` | Start or resume pilot/full benchmark | Yes |
-| `GET /benchmarks/runs/latest` | Load latest local or committed run | No |
+| `POST /benchmarks/gsm8k/runs` | Start or resume a pilot/full run for a pool; paid runs need `confirmed_estimate_usd` equal to the current estimate and within the cap | Yes |
+| `GET /benchmarks/runs/latest?pool=` | Load the pool's latest local or committed run | No |
 | `GET /benchmarks/runs/{run_id}` | Load manifest and aggregate summary | No |
 | `GET /benchmarks/runs/{run_id}/records` | Load paginated result records | No |
 
@@ -542,7 +545,7 @@ Because every strategy selects from the same saved matrix, comparisons are contr
 
 ### Persistent header
 
-The header shows project name, checkpoint label, backend state, key-configured state, and registry state. It never displays the key.
+The header shows project name, checkpoint label, backend state, key-configured state, and both registry snapshot IDs (free and paid). It never displays the key.
 
 ### Route
 
@@ -562,26 +565,26 @@ The header shows project name, checkpoint label, backend state, key-configured s
 
 ### Compare
 
-- one prompt sent concurrently to both fixed models;
-- independent result cards, so one failure does not hide the other;
+- pool switch (paid by default); one prompt sent concurrently to every model in the selected pool (2 free or 3 paid calls);
+- independent result cards, so one failure does not hide the others; three columns for the paid pool;
 - response, latency, tokens, cost, requested model, served model, and normalized error state;
 - manual-save control off by default.
 
 ### Eligibility
 
-- frozen model metadata table;
-- minimum-context input;
+- all five registry entries from both pools (four distinct models), with a pool column, context, modalities, capabilities, and per-million input and output prices;
+- minimum-context input evaluated across both pools;
 - explicit eligible/excluded result and reason;
-- 500,000-token demonstration.
+- 500,000-token demonstration: both Gemma entries excluded; Nemotron, Mercury 3, and Gemini 4 Argon eligible.
 
 ### Benchmark
 
-- locked protocol summary;
-- pilot, full-run, and resume controls;
+- pool switch (paid by default) with a pool-aware protocol summary (models and cells);
+- pilot, full-run, and resume controls; a free run asks for a browser confirmation; a paid run first shows an inline box with the worst-case estimate, cell count, and $1 cap and starts only on **Confirm and start**;
 - progress polling;
 - saved summary metrics;
 - expandable per-question evidence;
-- automatic loading of committed evidence when no newer local run exists.
+- automatic loading of the pool's committed evidence when no newer local run exists.
 
 ### Visual system
 
@@ -768,9 +771,12 @@ Important commits currently in `main`:
 - `3f47647` added transparent Checkpoint 2 routing;
 - `d32c0ee` added provider-free routing decision preview;
 - `4825477` packaged the first Checkpoint 2 deck, script, demo guide, progress record, and backup recording;
-- `13ccb23` added the paid three-model pool, the 36-cell paid matrix, paid acceptance cases, the extended results dashboard, the decimal price-drift fix, and this document;
-- `9758beb` rebuilt the deck, re-recorded the backup demo, and rewrote the Checkpoint 2 documents; it is tagged `checkpoint-2`, and the GitHub release `https://github.com/mian-abd/Snr/releases/tag/checkpoint-2` (published 2026-10-23 by mian-abd, with `checkpoint-2-demo.webm` attached) follows the Checkpoint 1 release format;
-- the next commit on `main` (2026-10-23) rebuilt the deck in the owner's original Checkpoint 2 format and updated the speaking script. It is after the tag.
+- `3797971` added the paid three-model pool, the 36-cell paid matrix, paid acceptance cases, the extended results dashboard, the decimal price-drift fix, and this document;
+- `c9be064` rebuilt the deck, re-recorded the backup demo, and rewrote the Checkpoint 2 documents;
+- `9dcbf82` rebuilt the deck in the owner's original Checkpoint 2 format and updated the speaking script. It is tagged `checkpoint-2`. The GitHub release `https://github.com/mian-abd/Snr/releases/tag/checkpoint-2` (published 2026-10-23 by mian-abd, with `checkpoint-2-demo.webm` attached) follows the Checkpoint 1 release format and links the CI run for this commit;
+- the next commit on `main` (2026-10-23) put both pools on every tab and added the 2026-10-23 paid snapshot. It is after the tag.
+
+History rewrite (2026-10-23, approved by the owner): the original `13ccb23`, `9758beb`, and `bcda7cb` were rebuilt as `3797971`, `c9be064`, and `9dcbf82`. Two leaks were removed: a local temp-folder path in image alt text inside the deck committed in `9758beb`, and a tool-specific filename reference in that version of this file. Authors, dates, and messages were preserved and the final tree is byte-identical. `main` was force-pushed with a lease, and the `checkpoint-2` tag was force-updated in place so the release stayed attached. GitHub may keep serving the old commits by direct SHA until it garbage-collects them; removing them completely requires a GitHub Support request. Older versions of `docs/presentation-script.md` (Oct 1–19) still quote two third-party model names that an early Checkpoint 1 slide used as placeholders; those are model names, not attribution, and were left in history.
 
 ### Build log, 2026-10-22 evening session
 
@@ -785,6 +791,17 @@ Important commits currently in `main`:
 9. Made three live routed calls through `POST /api/v1/routes` on the paid pool: cost → Gemma (1,104 ms, $0.000019), latency → Mercury (633 ms, $0.000044), quality → Gemini Argon (4,714 ms, $0.000674), all served with provider-reported cost.
 10. Verified `./scripts/check.ps1` (Ruff, mypy strict, 30 backend tests, ESLint, 2 Vitest tests, production build), the 2 Playwright smoke tests, desktop rendering, and no horizontal overflow at 390 px with real data. Scanned the staged diff for key patterns before each commit.
 11. Committed and pushed only as Mian Abdullah with no co-author or tool attribution, then rebuilt the deck, re-recorded the backup demo, rewrote the docs, and tagged the release.
+
+### Build log, 2026-10-23
+
+1. Published the `checkpoint-2` GitHub release in the Checkpoint 1 format, with the backup demo attached.
+2. Rebuilt the deck in the owner's original Checkpoint 2 format (section 21).
+3. Rewrote history to remove the two leaks (section 22), re-verified, and repointed the release's CI link.
+4. Re-read the proposal on model counts. It plans five base models (unnamed), a gateway with at least three models by Sept 24, a Model Registry view of every available model, and a Benchmark page that shows an estimated cost and requires confirmation. The owner chose: use the current four distinct models on every tab, allow paid runs from the Benchmark tab behind the estimate and confirmation, and give Compare a pool switch.
+5. Backend: `AppServices` gained a paid `BenchmarkRunner` and coordinator plus `pool_*` helpers; `app/benchmarks/costs.py` holds the paid-run constants and estimate shared by the CLI and API; `/models`, `/comparisons`, `/eligibility`, `/benchmarks/runs/latest`, and `/benchmarks/gsm8k/runs` take a pool; a new `/benchmarks/gsm8k/estimate` endpoint returns the worst-case cost; paid starts require `confirmed_estimate_usd` to match the server's estimate and refuse estimates above the cap; only one benchmark of either pool can run at a time; health reports both snapshot IDs.
+6. Frontend: shared `PoolSwitch`; Compare sends one prompt to every model in the selected pool with a three-column grid for the paid pool; Eligibility lists all five registry entries with a pool column and per-million prices; Benchmark has a pool switch and an inline confirmation box with the estimate and cap; the header shows both snapshots.
+7. Live verification caught OpenRouter's overnight Gemma price increase ($0.0765 / $0.255 → $0.09 / $0.30 per million tokens): the drift check refused every paid call. With the owner's approval, added `openrouter-paid-2026-10-23.json` (only Gemma's prices changed; checksum `fdce62a53c58000505335fa3e82ae60c1fceadc1d8c55912916bb6e6d5df2bd7`) as the live paid registry and kept the 10-22 snapshot as the record of the saved matrix. Slide 4 now shows Gemma's $0.30 output price.
+8. Verified 33 backend tests (including a test that the two paid snapshots differ only in Gemma's price), 3 Vitest tests (including the paid confirmation flow), 2 Playwright smoke tests, lint, types, and the build; a live paid comparison (Gemma 3,310 ms $0.000039, Mercury 747 ms $0.000073, Gemini Argon 6,681 ms $0.0018) and a live paid route (cost → Gemma, 819 ms, $0.0000115); every tab in the browser; and no horizontal overflow at 390 px. No paid benchmark run was started from the UI during verification.
 
 ## 23. Key decisions and rejected alternatives
 

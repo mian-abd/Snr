@@ -3,11 +3,12 @@ import { useMutation } from '@tanstack/react-query'
 import { Clock3, Database, Send, TriangleAlert } from 'lucide-react'
 import { useState } from 'react'
 import { client } from '../api/client'
-import type { GenerationResult, ModelSpec } from '../api/types'
+import type { GenerationResult, ModelSpec, RoutingPool } from '../api/types'
 import { StatusBadge } from '../components/StatusBadge'
 import styles from './Panels.module.css'
+import { PoolSwitch } from './PoolSwitch'
 
-type Props = { models: ModelSpec[]; credentialConfigured: boolean }
+type Props = { pools: Record<RoutingPool, ModelSpec[]>; credentialConfigured: boolean }
 
 const samplePrompt =
   'Explain why alternating model order matters in a small latency benchmark. Keep the answer under 120 words.'
@@ -75,23 +76,38 @@ function ResultCard({ result, model }: { result: GenerationResult; model?: Model
   )
 }
 
-export function ComparePanel({ models, credentialConfigured }: Props) {
+export function ComparePanel({ pools, credentialConfigured }: Props) {
   const [prompt, setPrompt] = useState(samplePrompt)
   const [save, setSave] = useState(false)
-  const mutation = useMutation({ mutationFn: () => client.compare(prompt.trim(), save) })
+  const [pool, setPool] = useState<RoutingPool>('paid')
+  const mutation = useMutation({ mutationFn: () => client.compare(prompt.trim(), save, pool) })
+  const models = pools[pool]
+  const choosePool = (next: RoutingPool) => {
+    setPool(next)
+    mutation.reset()
+  }
 
   return (
     <section className={styles.panel} aria-labelledby="compare-heading">
       <div className={styles.sectionHeading}>
         <div>
           <span className={styles.index}>02 / COMPARE</span>
-          <h2 id="compare-heading">One prompt. Two fixed models.</h2>
-          <p>Calls run concurrently for interaction speed. Benchmark timing uses a separate sequential protocol.</p>
+          <h2 id="compare-heading">One prompt. Every model in the pool.</h2>
+          <p>The same prompt goes to each pinned model in the selected pool. Calls run concurrently for interaction speed; benchmark timing uses a separate sequential protocol.</p>
         </div>
         <div className={styles.modelPair} aria-label="Pinned comparison models">
-          {models.map((model) => <span key={model.id}>{model.provider} · {(model.context_length / 1000).toLocaleString()}k</span>)}
+          {models.map((model) => <span key={model.id}>{model.id.split('/')[1] ?? model.id} · {(model.context_length / 1000).toLocaleString()}k</span>)}
         </div>
       </div>
+
+      <PoolSwitch
+        value={pool}
+        onChange={choosePool}
+        descriptions={{
+          paid: `Gemma, Mercury, and Gemini Argon: ${pools.paid.length} calls per comparison at catalog prices.`,
+          baseline: `The original free Gemma and Nemotron: ${pools.baseline.length} calls on shared free capacity.`,
+        }}
+      />
 
       <label className={styles.fieldLabel} htmlFor="comparison-prompt">Prompt</label>
       <textarea
@@ -115,7 +131,7 @@ export function ComparePanel({ models, credentialConfigured }: Props) {
           onClick={() => mutation.mutate()}
         >
           {mutation.isPending ? <Clock3 className={styles.spin} size={16} /> : <Send size={16} />}
-          {mutation.isPending ? 'Comparing…' : 'Compare models'}
+          {mutation.isPending ? 'Comparing…' : `Compare ${models.length} models`}
         </button>
       </div>
       {!credentialConfigured && (
@@ -123,7 +139,7 @@ export function ComparePanel({ models, credentialConfigured }: Props) {
       )}
       {mutation.error && <p className={styles.errorBox} role="alert">{mutation.error.message}</p>}
       {mutation.data && (
-        <div className={styles.resultsGrid} aria-live="polite">
+        <div className={mutation.data.results.length > 2 ? styles.resultsGridThree : styles.resultsGrid} aria-live="polite">
           {mutation.data.results.map((result) => (
             <ResultCard key={result.request_id} result={result} model={models.find((model) => model.id === result.requested_model_id)} />
           ))}

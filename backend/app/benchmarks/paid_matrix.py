@@ -15,37 +15,22 @@ from __future__ import annotations
 import argparse
 import asyncio
 import sys
-from decimal import Decimal
 
-from app.benchmarks.gsm8k import SYSTEM_PROMPT, load_samples, render_prompt
-from app.benchmarks.runner import GENERATION_CONFIG, BenchmarkRunner
+from app.benchmarks.costs import (
+    PAID_BUDGET_FILE,
+    PAID_DEMO_NAME,
+    PAID_MAX_REQUESTS,
+    PAID_RUN_PREFIX,
+    SPEND_CAP_USD,
+    estimate_worst_case_usd,
+)
+from app.benchmarks.gsm8k import load_samples
+from app.benchmarks.runner import BenchmarkRunner
 from app.config import REPOSITORY_ROOT, get_settings
-from app.domain.models import BenchmarkMode, BenchmarkSample
+from app.domain.models import BenchmarkMode
 from app.providers import GenerationService
 from app.registry import ModelRegistry
 from app.state import PAID_MODEL_IDS, PAID_REGISTRY_PATH
-
-PAID_DEMO_NAME = "checkpoint-2-paid"
-PAID_RUN_PREFIX = "gsm8k-paid"
-PAID_BUDGET_FILE = "paid-provider-request-budget.json"
-PAID_MAX_REQUESTS = 100
-SPEND_CAP_USD = Decimal("1.00")
-MAX_ATTEMPTS_PER_CELL = 2
-
-
-def estimate_worst_case_usd(registry: ModelRegistry, samples: list[BenchmarkSample]) -> Decimal:
-    """Upper bound: ~4 characters per prompt token, full completion budget, every retry."""
-    completion_tokens = Decimal(int(GENERATION_CONFIG["max_tokens"]))
-    total = Decimal("0")
-    for sample in samples:
-        prompt_chars = len(SYSTEM_PROMPT) + len(render_prompt(sample.question))
-        prompt_tokens = Decimal(prompt_chars // 4 + 16)
-        for model in registry.models:
-            prompt_price = model.pricing.prompt_per_token or Decimal("0")
-            completion_price = model.pricing.completion_per_token or Decimal("0")
-            cell = prompt_tokens * prompt_price + completion_tokens * completion_price
-            total += cell * MAX_ATTEMPTS_PER_CELL
-    return total
 
 
 async def _run(mode: BenchmarkMode, run_id: str | None) -> int:
@@ -110,7 +95,7 @@ def main() -> int:
     samples = load_samples(REPOSITORY_ROOT / "data" / "benchmarks" / "gsm8k_checkpoint1.jsonl")
     if mode == BenchmarkMode.PILOT:
         samples = samples[:2]
-    estimate = estimate_worst_case_usd(registry, samples)
+    estimate = estimate_worst_case_usd(registry.models, samples)
     cells = len(samples) * len(registry.models)
     print(
         f"{mode.value}: {cells} cells, worst-case estimate ${estimate:.4f} "

@@ -116,8 +116,14 @@ class GenerationOutcome(StrictModel):
     attempts: list[GenerationResult]
 
 
+class RoutingPool(StrEnum):
+    BASELINE = "baseline"
+    PAID = "paid"
+
+
 class ComparisonRequest(StrictModel):
     prompt: str = Field(min_length=1, max_length=50_000)
+    pool: RoutingPool = RoutingPool.BASELINE
     save: bool = False
 
     @field_validator("prompt")
@@ -131,6 +137,7 @@ class ComparisonRequest(StrictModel):
 class ComparisonResponse(StrictModel):
     comparison_id: UUID = Field(default_factory=uuid4)
     prompt: str
+    pool: RoutingPool = RoutingPool.BASELINE
     saved: bool
     created_at_utc: datetime = Field(default_factory=utc_now)
     results: list[GenerationResult]
@@ -141,11 +148,6 @@ class RoutingPriority(StrEnum):
     QUALITY = "quality"
     LATENCY = "latency"
     BALANCED = "balanced"
-
-
-class RoutingPool(StrEnum):
-    BASELINE = "baseline"
-    PAID = "paid"
 
 
 class RouteRequest(StrictModel):
@@ -253,6 +255,8 @@ class RoutingDashboard(StrictModel):
 
 class EligibilityRequest(StrictModel):
     min_context_tokens: int = Field(default=500_000, ge=1)
+    # None evaluates every registered pool.
+    pool: RoutingPool | None = None
 
 
 class EligibilityResult(StrictModel):
@@ -261,6 +265,7 @@ class EligibilityResult(StrictModel):
     reasons: list[str]
     evaluated_requirements: EligibilityRequest
     model_snapshot_id: str
+    pool: RoutingPool | None = None
 
 
 class EligibilityResponse(StrictModel):
@@ -272,6 +277,7 @@ class HealthResponse(StrictModel):
     version: str
     registry_loaded: bool
     registry_snapshot_id: str | None
+    routing_registry_snapshot_id: str | None = None
     credential_configured: bool
     active_benchmark_run_id: str | None
 
@@ -376,6 +382,21 @@ class BenchmarkRunView(StrictModel):
 
 class BenchmarkStartRequest(StrictModel):
     mode: BenchmarkMode = BenchmarkMode.FULL
+    pool: RoutingPool = RoutingPool.BASELINE
+    # Paid runs must echo the estimate the user confirmed; the server recomputes and compares.
+    confirmed_estimate_usd: Decimal | None = None
+
+
+class BenchmarkEstimate(StrictModel):
+    pool: RoutingPool
+    mode: BenchmarkMode
+    model_ids: list[str]
+    samples: int
+    cells: int
+    worst_case_usd: Decimal
+    spend_cap_usd: Decimal | None
+    within_cap: bool
+    requires_confirmation: bool
 
 
 class PaginatedRecords(StrictModel):
