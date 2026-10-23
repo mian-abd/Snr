@@ -1,6 +1,6 @@
 # Checkpoint 2 presentation script
 
-This script follows `docs/presentations/Adaptive_LLM_Router_Checkpoint_2_Final.pptx` (9 slides). It runs about seven minutes before the live demo, at roughly 45 seconds per slide. The same text is in each slide's speaker notes in shorter form.
+This script follows `docs/presentations/Adaptive_LLM_Router_Checkpoint_2_Final.pptx` (9 slides, in the format of the original Checkpoint 2 deck). It runs about seven minutes plus the live demo, which happens after slide 8. Each slide's speaker notes hold a shorter version of the same text.
 
 ## The simple explanation
 
@@ -19,49 +19,47 @@ It then compares that router against two fixed baselines on the same saved bench
 
 “Hi, I’m Mian Abdullah. In Checkpoint 1 I built the measurement layer for my Adaptive LLM Router: pinned models, a registry, a context filter, and a saved GSM8K benchmark. In Checkpoint 2 I built the routing layer on top of that evidence, and I’ll show it working live.”
 
-## Slide 2 — Three Checkpoint 2 commitments, all delivered
+## Slide 2 — Today
 
-“My proposal listed three things for today. First, two fixed-model baselines and a rule-based router compared on the same benchmark data for accuracy, response time, and cost. Second, priority controls, so the same prompt routes differently when the user changes what matters. Third, a results dashboard that shows the selected model and summary results. All three are in the Route tab, and the bottom of each card says where.”
+“Four parts, then the demo. What changed since Checkpoint 1, how the rule-based router decides, the benchmark evidence and results dashboard, and the tests that show priorities and hard requirements working.”
 
-## Slide 3 — Hard requirements first, priority second, one model out
+## Slide 3 — Evidence → decision
 
-“Every request goes through the same four steps. The hard filter runs first, so a preference can never pick a model that fails a requirement. Then the priority decides, and the system returns exactly one pinned model with its reason. There is no hidden fallback.
+“Every request goes through the same four steps. The prompt comes in with the user’s priority. The filters run first, so a preference can never pick a model that fails a hard requirement. Then the rule applies the priority and some visible prompt signals, and the system returns exactly one pinned model with its reason. There is no hidden fallback to another model.”
 
-For this checkpoint I added a dated three-model paid pool, so each priority now has a distinct role. Lower cost goes to Gemma 4 26B, the cheapest. Faster response goes to Mercury 3. Higher quality goes to Gemini 4 Argon. Balanced counts visible prompt signals, such as math, code, long prompts, or many numbers: no signals uses Gemma, one or two uses Mercury, three or more uses Gemini. It is hand-written and every signal is shown.”
+## Slide 4 — Rule routing · three roles
 
-## Slide 4 — Change one setting, get a different model
+“For this checkpoint I added a dated three-model paid pool, so each priority now has a distinct role. Lower cost goes to Gemma 4 26B, the cheapest. Faster response goes to Mercury 3. Higher quality goes to Gemini 4 Argon. Balanced counts visible signals such as math, code, long prompts, or many numbers: no signals uses Gemma, one or two uses Mercury, three or more uses Gemini. The GSM8K, latency, and price rows are measured, and the next slide shows where they come from.”
 
-“Here is the same prompt with one change. With Lower cost, the router previews Gemma. With Higher quality, it previews Gemini Argon. Preview runs the real policy locally and makes no provider call.
+## Slide 5 — CP2 • Benchmark evidence
 
-The bottom left is the hard requirement. If I require 500,000 tokens of context, Gemma is removed first because it supports 262,144. Even with a cost preference, it can’t be chosen, so the next-cheapest eligible model, Mercury, is selected, and the explanation says so. Twelve fixed acceptance cases check these behaviors automatically: five for the free pool and seven for the paid pool.”
+“To compare strategies fairly I need saved results. I ran the exact same twelve GSM8K questions, prompt, and settings as Checkpoint 1 through the paid pool: 36 results. Gemini got all twelve, Gemma eleven, Mercury ten. Mercury’s two misses were empty provider responses, and I kept them as failures instead of dropping them. The runner showed a worst-case cost estimate first and has a one-dollar cap; the whole run cost about two cents. The Checkpoint 1 free-pool evidence, where Gemma hit nine rate limits, is kept unchanged.”
 
-## Slide 5 — Same 12 GSM8K questions, two model pools
+## Slide 6 — Results dashboard
 
-“The strategies are compared on saved benchmark results, so the data matters. Checkpoint 1 used two free models, and availability dominated: nine of Gemma’s twelve cells were shared free-tier rate limits, not wrong answers.
+“This is the results dashboard. Each strategy picks one saved result per question, so the comparison is controlled and costs nothing to rerun. Cost priority matches the fixed cheapest baseline and quality priority matches the fixed strongest baseline, which is what the rules say should happen. Balanced got all twelve right, the same as always using Gemini, for about 45 percent less cost and a six-times faster median.
 
-So for Checkpoint 2 I ran the exact same twelve questions, prompt, and settings through the paid pool. Gemini got all twelve, Gemma eleven, and Mercury ten. Mercury’s two misses were empty provider responses, and I kept them as failures instead of dropping them. The runner showed a worst-case estimate first and has a one-dollar cap. The whole paid run actually cost about two cents.”
+I want to be careful about that. Mercury’s two failures happened on prompts the rule had already sent to Gemini, which helped, and part of that is luck. Twelve math questions are evidence for this setup, not a general ranking, and I didn’t tune the thresholds on these outcomes.”
 
-## Slide 6 — Six strategies on the same 36 saved cells
+## Slide 7 — Policy tests • same prompt
 
-“This is the results dashboard. Each strategy chooses one saved result per question, so the comparison is controlled and costs nothing to rerun. Cost priority matches the fixed cheapest baseline and quality priority matches the fixed strongest baseline, which is what the rules say should happen. The highlighted row is balanced. In the app I can also switch to the free Checkpoint 1 matrix and see the same six strategies there.”
+“Here is the priority control. Same prompt, one change. Lower cost previews Gemma. Higher quality previews Gemini Argon. If I keep Lower cost but require 500,000 tokens of context, Gemma is filtered out first because it supports 262,144, so the next-cheapest eligible model, Mercury, is chosen and the explanation says why. Every preview shows the selected model, the eligible set, and the reason, without a provider call. Twelve fixed acceptance cases check this automatically: five for the free pool and seven for the paid pool.”
 
-## Slide 7 — Balanced routing matched the strongest model for less
+## Slide 8 — What shipped
 
-“On this matrix, balanced routing got all twelve right, the same as always using Gemini, for about 45 percent less cost and a six-times faster median response.
+“This is the real Route screen. Everything my proposal listed for Checkpoint 2 runs in the app: the fixed and rule baselines, the priority and context controls, the paid pool with its 36-cell matrix, and the results dashboard with the per-prompt view. Let me show it.”
 
-I want to be careful about what that means. The seven prompts with fewer signals went to Mercury and were all correct. Mercury’s two failures happened on prompts the rule had already sent to Gemini, which helped, and part of that is luck. Twelve math questions are evidence for this setup, not a general ranking. The thresholds were set before the paid run finished and I didn’t tune them afterward.”
+Switch to the browser and follow [the live demo guide](live-demo-guide.md):
 
-## Slide 8 — What I will show, in order
+1. Paid-pool acceptance matrix, 7/7.
+2. Same prompt: Lower cost → Gemma, Higher quality → Gemini Argon.
+3. 500,000-token requirement → Mercury, with the override reason.
+4. One real routed call: response, latency, tokens, cost.
+5. Results dashboard, then the per-prompt view for the balanced strategy.
 
-“Now the live demo. I’ll show the acceptance matrix, the same prompt under two priorities, the 500,000-token override, one real routed call, the dashboard, and the per-prompt decisions. Everything except the one real call works offline from committed evidence, and there’s a backup recording in the repository.”
+## Slide 9 — What I learned
 
-Switch to the browser and follow [the live demo guide](live-demo-guide.md).
-
-## Slide 9 — What this does not show yet, and what comes next
-
-“The limits are part of the result: twelve questions from one task family, hand-written signals, and priorities that map to model roles instead of predicted success.
-
-Checkpoint 3 is the learned router: a train, validation, and held-out test split, prompt and model features, logistic regression and gradient boosting, and a second task category, all compared against these baselines on held-out prompts. Thank you. I’m happy to take questions.”
+“The main lesson was that shared free endpoints made availability, not answer quality, the dominant result. My response was to add a dated paid pool on the same protocol, keep every failure visible, and compare strategies offline on saved results. Next, for Checkpoint 3, is a learned router: a train, validation, and held-out split, prompt and model features, and a second task category, compared against these baselines. Thank you. I’m happy to take questions.”
 
 ## Likely questions
 
