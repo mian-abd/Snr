@@ -31,9 +31,18 @@ This document maps the implemented repository state to the October milestones in
 - Updated API contracts, OpenAPI schema, generated frontend types, tests, and documentation.
 - Completed the Checkpoint 2 presentation deck, speaking script, live-demo guide, and backup walkthrough recording.
 
+## October 22 checkpoint update
+
+- Added a dated three-model paid pool (Gemma 4 26B, Mercury 3, Gemini 4 Argon) beside the preserved free pool, with live price and context drift checks.
+- Collected the first paid model-by-prompt matrix: the same 12 GSM8K questions and protocol, 36 cells, about $0.023 spent against a $1 cap.
+- Extended the dashboard with median and p95 latency, cost per correct answer, and per-prompt decisions with reasons.
+- Added three-tier balanced routing for the paid pool and seven paid acceptance cases.
+- Rebuilt the presentation deck, re-recorded the backup demo, and rewrote the Checkpoint 2 documents.
+- On the paid matrix the balanced rule router matched the always-strongest baseline (12/12) for about 45% less cost and a roughly six times faster median; the documents explain why this small sample is not yet a general result.
+
 ## Verification snapshot
 
-- Backend: Ruff, mypy, and 25 pytest tests pass.
+- Backend: Ruff, mypy, and 30 pytest tests pass (25 at the October 15 snapshot).
 - Frontend: ESLint, 2 Vitest unit tests, production build, and 2 Playwright smoke tests pass.
 - Demo URL: `http://127.0.0.1:8000` when `./scripts/demo.ps1` is running.
 - Presentation: `docs/presentations/Adaptive_LLM_Router_Checkpoint_2_Final.pptx`.

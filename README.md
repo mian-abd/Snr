@@ -15,9 +15,11 @@ Adaptive LLM Router is a local, reproducible console for comparing pinned OpenRo
 
 - Route one prompt to a single eligible pinned model using a visible priority: balanced, lower cost, higher quality, or faster response.
 - Keep hard capability requirements separate from soft user priorities.
-- Verify the policy against five deterministic expected-versus-actual acceptance cases without a provider call.
-- Replay two fixed baselines and four policy variants over the committed 24-cell GSM8K matrix, without making another provider call.
-- Compare selected-model counts, accuracy, availability, latency, and cost using the same saved evidence.
+- Choose between the preserved Checkpoint 1 free pool and a dated three-model paid pool (Gemma 4 26B, Mercury 3, Gemini 4 Argon) whose prices and context lengths are checked against the live catalog before any paid call.
+- Verify each pool's policy against deterministic expected-versus-actual acceptance cases (5 free, 7 paid) without a provider call.
+- Replay two fixed baselines and four policy variants over the committed 24-cell free matrix or the 36-cell paid matrix, without making another provider call.
+- Compare selected-model counts, accuracy, availability, median and p95 latency, total cost, and cost per correct answer, and inspect the model chosen for every prompt and why.
+- Collect the paid matrix with `uv run --project backend python -m app.benchmarks.paid_matrix`, which prints a worst-case cost estimate, enforces a $1 cap, and only spends with `--confirm`.
 
 Checkpoint 2 is deliberately a simple, rule-based policy—not a learned router or a claim of statistically conclusive model rankings.
 

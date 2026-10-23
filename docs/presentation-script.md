@@ -1,154 +1,78 @@
 # Checkpoint 2 presentation script
 
-This script follows `docs/presentations/Adaptive_LLM_Router_Checkpoint_2_Final.pptx`. It is written for about seven minutes plus the live demo and questions. The safest demo is the local **decision preview** and saved benchmark replay; neither one spends provider calls or depends on free-provider availability.
+This script follows `docs/presentations/Adaptive_LLM_Router_Checkpoint_2_Final.pptx` (9 slides). It runs about seven minutes before the live demo, at roughly 45 seconds per slide. The same text is in each slide's speaker notes in shorter form.
 
 ## The simple explanation
 
-Checkpoint 1 built an evidence layer: two fixed models, one normalized interface, a hard eligibility filter, a fixed GSM8K sample, objective scoring, and saved experiment records.
+Checkpoint 1 built the evidence layer: pinned models, one normalized interface, a hard eligibility filter, a fixed GSM8K sample, exact scoring, and saved experiment records.
 
-Checkpoint 2 puts a transparent decision layer on top of that evidence. A request now follows this order:
+Checkpoint 2 puts a transparent decision layer on top of that evidence:
 
 1. Check hard requirements, such as minimum context length.
-2. Remove models that cannot satisfy those requirements.
+2. Remove models that cannot satisfy them.
 3. Apply a visible priority: lower cost, higher quality, faster response, or balanced.
-4. Select exactly one pinned model.
-5. Return the selected model and a human-readable reason.
+4. Select exactly one pinned model and return a human-readable reason.
 
-This is an understandable baseline, not a learned router. That distinction is important.
+It then compares that router against two fixed baselines on the same saved benchmark results. This is an understandable baseline, not a learned router.
 
 ## Slide 1 — Adaptive LLM Router, Checkpoint 2
 
-Say:
+“Hi, I’m Mian Abdullah. In Checkpoint 1 I built the measurement layer for my Adaptive LLM Router: pinned models, a registry, a context filter, and a saved GSM8K benchmark. In Checkpoint 2 I built the routing layer on top of that evidence, and I’ll show it working live.”
 
-“Hi, I’m Mian Abdullah. In Checkpoint 1 I built the measurement layer for my Adaptive LLM Router. In this checkpoint I moved from comparing models to making a transparent routing decision. The system now filters incompatible models, applies an explicit user priority, selects one fixed model, and explains why it made that choice.”
+## Slide 2 — Three Checkpoint 2 commitments, all delivered
 
-## Slide 2 — Today
+“My proposal listed three things for today. First, two fixed-model baselines and a rule-based router compared on the same benchmark data for accuracy, response time, and cost. Second, priority controls, so the same prompt routes differently when the user changes what matters. Third, a results dashboard that shows the selected model and summary results. All three are in the Route tab, and the bottom of each card says where.”
 
-Say:
+## Slide 3 — Hard requirements first, priority second, one model out
 
-“I will show four things. First, what changed since Checkpoint 1. Second, how the rule-based router works. Third, how the same prompt produces different decisions when the priority or requirement changes. Finally, I will connect those choices to the saved benchmark evidence and show the live application.”
+“Every request goes through the same four steps. The hard filter runs first, so a preference can never pick a model that fails a requirement. Then the priority decides, and the system returns exactly one pinned model with its reason. There is no hidden fallback.
 
-## Slide 3 — Evidence to decision
+For this checkpoint I added a dated three-model paid pool, so each priority now has a distinct role. Lower cost goes to Gemma 4 26B, the cheapest. Faster response goes to Mercury 3. Higher quality goes to Gemini 4 Argon. Balanced counts visible prompt signals, such as math, code, long prompts, or many numbers: no signals uses Gemma, one or two uses Mercury, three or more uses Gemini. It is hand-written and every signal is shown.”
 
-Say:
+## Slide 4 — Change one setting, get a different model
 
-“The key architectural change is this four-step pipeline. The prompt enters first. Hard filters run before any preference. For example, if a request needs at least 500,000 context tokens, Gemma is removed because its context window is 262,144, while Nemotron remains because it supports one million.
+“Here is the same prompt with one change. With Lower cost, the router previews Gemma. With Higher quality, it previews Gemini Argon. Preview runs the real policy locally and makes no provider call.
 
-After filtering, the policy rule applies the user’s priority. It then selects one model and returns an explanation. The important design decision is that requirements and preferences are separate. A lower-cost preference is allowed to choose only among models that can actually satisfy the request.”
+The bottom left is the hard requirement. If I require 500,000 tokens of context, Gemma is removed first because it supports 262,144. Even with a cost preference, it can’t be chosen, so the next-cheapest eligible model, Mercury, is selected, and the explanation says so. Twelve fixed acceptance cases check these behaviors automatically: five for the free pool and seven for the paid pool.”
 
-Transition:
+## Slide 5 — Same 12 GSM8K questions, two model pools
 
-“Now I will explain what the current rules mean.”
+“The strategies are compared on saved benchmark results, so the data matters. Checkpoint 1 used two free models, and availability dominated: nine of Gemma’s twelve cells were shared free-tier rate limits, not wrong answers.
 
-## Slide 4 — Rule routing and transparent decisions
+So for Checkpoint 2 I ran the exact same twelve questions, prompt, and settings through the paid pool. Gemini got all twelve, Gemma eleven, and Mercury ten. Mercury’s two misses were empty provider responses, and I kept them as failures instead of dropping them. The runner showed a worst-case estimate first and has a one-dollar cap. The whole paid run actually cost about two cents.”
 
-Say:
+## Slide 6 — Six strategies on the same 36 saved cells
 
-“The two candidates stay pinned to the same exact OpenRouter model IDs used in Checkpoint 1: Google Gemma 4 26B and NVIDIA Nemotron 3 Ultra.
+“This is the results dashboard. Each strategy chooses one saved result per question, so the comparison is controlled and costs nothing to rerun. Cost priority matches the fixed cheapest baseline and quality priority matches the fixed strongest baseline, which is what the rules say should happen. The highlighted row is balanced. In the app I can also switch to the free Checkpoint 1 matrix and see the same six strategies there.”
 
-The cost-oriented and latency-oriented baselines prefer Gemma, the smaller model. Both endpoints were free in this experiment, so the cost rule is currently a transparent smaller-model proxy, not proof of a measured price advantage. The latency rule is supported only by the successful calls in this small run: Gemma averaged about 5.6 seconds when it was served, while Nemotron averaged about 19.9 seconds. Gemma was available for only three of twelve cells, so I do not present latency without that reliability caveat.
+## Slide 7 — Balanced routing matched the strongest model for less
 
-The quality-oriented baseline prefers Nemotron because it scored eight correct answers out of twelve logical cells, compared with Gemma’s three out of twelve. A 500,000-token hard requirement also leaves only Nemotron eligible.
+“On this matrix, balanced routing got all twelve right, the same as always using Gemini, for about 45 percent less cost and a six-times faster median response.
 
-Every decision records the priority, required context, eligible models, excluded models, selected model, policy version, and explanation. There is no hidden fallback.”
+I want to be careful about what that means. The seven prompts with fewer signals went to Mercury and were all correct. Mercury’s two failures happened on prompts the rule had already sent to Gemini, which helped, and part of that is luck. Twelve math questions are evidence for this setup, not a general ranking. The thresholds were set before the paid run finished and I didn’t tune them afterward.”
 
-## Slide 5 — Baseline evidence
+## Slide 8 — What I will show, in order
 
-Say:
+“Now the live demo. I’ll show the acceptance matrix, the same prompt under two priorities, the 500,000-token override, one real routed call, the dashboard, and the per-prompt decisions. Everything except the one real call works offline from committed evidence, and there’s a backup recording in the repository.”
 
-“These rules are connected to the saved Checkpoint 1 matrix rather than invented performance claims. The experiment contains twelve fixed GSM8K questions for each of two models, so there are twenty-four logical result cells.
+Switch to the browser and follow [the live demo guide](live-demo-guide.md).
 
-Nemotron successfully served all twelve cells and scored eight exact numeric matches, which is 66.7 percent across the fixed sample. Its mean successful latency was about 19.9 seconds.
+## Slide 9 — What this does not show yet, and what comes next
 
-Gemma served three of twelve cells and those three answers were correct. Nine cells ended in upstream shared-pool rate limits. Because failed cells remain in the twelve-cell denominator, the demonstrated accuracy is three out of twelve, or 25 percent, and availability is shown separately.
+“The limits are part of the result: twelve questions from one task family, hand-written signals, and priorities that map to model roles instead of predicted success.
 
-The important point is not that this tiny sample proves one model is universally better. The point is that quality, latency, cost, and availability are preserved as separate evidence instead of being hidden.”
+Checkpoint 3 is the learned router: a train, validation, and held-out test split, prompt and model features, logistic regression and gradient boosting, and a second task category, all compared against these baselines on held-out prompts. Thank you. I’m happy to take questions.”
 
-## Slide 6 — Policy tests
+## Likely questions
 
-Say:
+**Why not just always use the strongest model?** On this matrix it costs about 1.8 times as much as balanced routing for the same 12/12 and is about six times slower at the median. The project is about when that extra cost is worth it.
 
-“This slide shows the same behavior as the five-case acceptance matrix in the application. The matrix automatically verifies cost, latency, and quality priorities, a balanced math prompt, and the 500,000-token hard-requirement override. It shows expected and actual models, and all five cases pass locally without an OpenRouter call.
+**Isn’t 12/12 for balanced routing just luck?** Partly. Mercury’s two failures landed on prompts the rule had already sent to Gemini. That is why I report it as evidence for this setup and why Checkpoint 3 adds held-out prompts and another task category.
 
-For the interactive test, I keep the prompt unchanged and change one control at a time.
+**Did you tune the rule on the test data?** No. The signal definitions are unchanged from Checkpoint 1, and the three-signal tier was written before the paid run finished. With only 12 prompts there is no separate tuning set yet; Checkpoint 3 adds one.
 
-With no restrictive context requirement, the lower-cost or faster-response priority selects Gemma. The higher-quality priority selects Nemotron. Then I choose lower cost again but require at least 500,000 context tokens. Gemma is filtered out first, so Nemotron is selected even though the preference asked for the smaller model.
+**Why keep the free pool?** It is the preserved Checkpoint 1 evidence. Changing it would break comparability. The paid pool is a separately versioned snapshot.
 
-That behavior proves the router treats a hard requirement as non-negotiable and a priority as a preference. The preview endpoint returns the full decision explanation locally and does not call OpenRouter. The acceptance matrix makes the test repeatable instead of depending only on my manual clicks.”
+**What happens if a model’s price changes?** The live preflight compares catalog price and context length with the dated snapshot and refuses to route on drift rather than silently using different terms.
 
-### Live demo at this point
-
-Use the **Route** tab.
-
-1. Scroll briefly to the **Deterministic acceptance matrix** and point out **5/5 passed**.
-2. Return to the default prompt.
-3. Select **Lower cost**, keep minimum context at `1`, and click **Preview decision**. Point out that Gemma is selected.
-4. Select **Higher quality** and preview again. Point out that Nemotron is selected for the same prompt.
-5. Select **Lower cost**, click **Use 500,000 demo**, and preview again. Read the explanation: the lower-cost rule would prefer Gemma, but the hard requirement removes it, so Nemotron is selected.
-6. Scroll to the strategy replay table. Explain that it replays the saved twenty-four-cell matrix and makes no provider calls.
-
-Do not rely on **Route prompt** for the main presentation. It is a real provider call and free capacity may be rate-limited. The live UI and local preview are real application behavior even though inference is not called.
-
-## Slide 7 — What shipped by October 15
-
-Say:
-
-“By the October 15 milestone, the application included fixed baselines, a rule router, four priority controls, the context requirement control, an explanation view, and an offline strategy dashboard. The final checkpoint build also includes a five-case expected-versus-actual acceptance matrix, so the policy rules are visible and repeatable in the UI.
-
-The screenshot is the actual production UI. The dashboard replays the same saved evidence under six strategies: two fixed baselines plus cost, quality, latency, and balanced rule policies. Because it uses committed records, I can demonstrate routing behavior even when a free provider is unavailable.
-
-The implementation also has automated backend, frontend, and end-to-end tests. The policy can be previewed without a key, while a live routed response still keeps the credential on the backend.”
-
-## Slide 8 — What I learned
-
-Say:
-
-“The main lesson is that model quality and provider availability are different measurements. A capable model may still be unavailable through a shared free endpoint. A robust router must preserve that distinction.
-
-My response was to add a deterministic preview and saved-evidence replay. That gives me a reliable demo path without hiding real provider failures.
-
-The next phase is learned routing. I will keep these fixed and rule-based strategies as baselines, expand the evaluation evidence, and measure whether a trained policy actually improves the quality, latency, cost, and availability trade-off.”
-
-Close with:
-
-“That is Checkpoint 2: evidence first, then a transparent decision. I’m happy to take questions.”
-
-## Questions you may receive
-
-### Is this already an intelligent or learned router?
-
-“No. It is a deterministic and explainable baseline. I need that baseline before I can claim that a learned policy improves anything. The next phase compares learned routing against the same fixed evidence and metrics.”
-
-### Why does lower cost choose Gemma if both models are free?
-
-“In this checkpoint it is explicitly a smaller-model proxy. The current run reports zero cost for both free endpoints, so I do not claim a measured dollar advantage. The interface and policy are structured so real price metadata can replace that proxy in a later benchmark version.”
-
-### Does 66.7 percent prove Nemotron is better?
-
-“No. Twelve GSM8K questions are a functional checkpoint, not a statistically conclusive leaderboard. The result supports this small baseline demonstration and shows that the evidence pipeline works.”
-
-### Why count provider failures in accuracy?
-
-“The dashboard treats each model-question pair as a logical routing outcome. If the chosen route cannot return an answer, that route did not solve the request. I still show availability separately so the audience can distinguish reasoning quality from service reliability.”
-
-### Why not keep retrying Gemma until it answers?
-
-“Unlimited retries would hide the operational cost of choosing an unavailable route and make latency comparisons misleading. Retries are bounded and every attempt is preserved.”
-
-### What does balanced mean?
-
-“Balanced is a small visible rule set. Math, code, long prompts, or prompts with several numeric values prefer Nemotron; simpler prompts prefer Gemma. It is intentionally easy to inspect and is not presented as a learned quality predictor.”
-
-### What happens if the live provider fails during the presentation?
-
-“The decision preview and strategy replay remain fully functional because they are local and based on versioned metadata and saved results. Provider failure is displayed honestly rather than hidden.”
-
-## Final presenter checklist
-
-- Start the app with `./scripts/demo.ps1` and open `http://127.0.0.1:8000`.
-- Use **Preview decision**, not repeated live routing, for the main demonstration.
-- Show the **5/5 passed** policy matrix before the manual preview.
-- Keep the backup video `docs/demo/checkpoint-2-backup-demo.webm` open in another window.
-- Keep the PowerPoint deck in `docs/presentations/Adaptive_LLM_Router_Checkpoint_2_Final.pptx`.
-- Do not show `backend/.env` or any API credential.
-- Do not start a new full benchmark during the presentation.
+**What does the router do if the chosen model fails?** It reports the failure. It never quietly calls a different model.

@@ -8,69 +8,57 @@ From the repository root in PowerShell:
 ./scripts/demo.ps1
 ```
 
-Open `http://127.0.0.1:8000` and leave the PowerShell window running. FastAPI serves both the built React application and the API from this address.
+Open `http://127.0.0.1:8000` and leave the PowerShell window running. FastAPI serves both the built React application and the API from this address. The header should show **Backend online** and **OpenRouter ready**.
 
-The main Checkpoint 2 demonstration does not require a working provider call. Decision previews, eligibility, the saved benchmark, and strategy replay all work locally.
+Everything except step 4 works without a provider call: decision previews, acceptance matrices, both saved matrices, the dashboard, and the Benchmark records.
 
-## Recommended three-minute walkthrough
+## Walkthrough (about four minutes)
 
-### 1. Show repeatable policy evidence
+### 1. Paid-pool acceptance matrix
 
-Open **01 Route**, scroll to **Deterministic acceptance matrix**, and show **5/5 passed**. Point out that the table covers cost, latency, quality, a balanced math task, and a 500,000-token requirement override. The expected and actual model columns match, and the checks make no provider calls.
+Open **01 Route**. Make sure **Checkpoint 2 paid pool** is selected (it is the default). Scroll to the policy acceptance matrix and show **7/7 passed**. Point out the expected and actual model columns and the 500,000-token override case.
 
-### 2. Prove that priority changes the decision
+Say: “These are fixed reference prompts. They make no provider call and prove the rules behave as documented.”
 
-Open **01 Route** and keep the minimum context at `1`.
+### 2. Same prompt, two priorities
 
-1. Select **Lower cost**.
-2. Click **Preview decision**.
-3. Show that Gemma is selected and that the card says no provider call was made.
-4. Select **Higher quality** and preview again.
-5. Show that Nemotron is selected for the same prompt.
+1. Paste: `A store sells 3 notebooks for $4.50 each and 2 pens for $1.25 each. Calculate the total cost.`
+2. Keep minimum context at `1`, select **Lower cost**, click **Preview decision**. Gemma 4 26B A4B is selected.
+3. Select **Higher quality**, preview again. Gemini 4 Argon is selected.
 
-Explain: “I am changing the decision policy, not the prompt or model identities.”
+Say: “I changed only the priority, not the prompt.”
 
-### 3. Prove that hard requirements override preferences
+### 3. Hard requirement overrides the preference
 
 1. Select **Lower cost**.
-2. Click **Use 500,000 demo**.
-3. Click **Preview decision**.
-4. Read the explanation: Gemma would satisfy the preference, but it is excluded because `262144 < 500000`; Nemotron remains because `1000000 >= 500000`.
+2. Click **Use 500,000 demo**, then **Preview decision**.
+3. Read the reason: the cost preference would pick Gemma, but Gemma (262,144) is excluded first, so the next-cheapest eligible model, Mercury 3, is selected. The eligibility line shows two eligible models.
 
-Explain: “The filter is a hard constraint. The priority is evaluated only among eligible models.”
+### 4. One real routed call
 
-### 4. Connect the decision to evidence
+Set the minimum context back to `1`, keep **Lower cost**, and click **Route prompt**. One request goes to Gemma after credential and catalog preflight. Show the response, latency, tokens, and provider-reported cost (a tiny fraction of a cent).
 
-Scroll to **Offline strategy replay**. Show:
+If the provider fails, leave the failure visible and explain that the system reports real failures and never substitutes another model. Do not retry repeatedly.
 
-- fixed smaller-model baseline;
-- fixed stronger-model baseline;
-- cost, quality, latency, and balanced rule strategies;
-- selected-model counts;
-- exact-match accuracy;
-- availability;
-- mean successful latency;
-- known cost.
+### 5. Results dashboard
 
-Explain that this table replays `data/demo/checkpoint-1/results.jsonl` and makes no OpenRouter calls.
+Scroll to **Results dashboard**. Walk through the six strategies over the 36 saved paid cells: accuracy, served cells, median and p95 latency, total cost, and cost per correct answer. Point to the balanced row: 12/12 for $0.0116 against $0.0209 for always-Gemini.
 
-### 5. Show the source records
+### 6. Per-prompt decisions
 
-Open **04 Benchmark**. Point out the locked protocol and the saved 24 logical cells. Expand one record to show expected answer, extracted answer, score, model response or normalized provider failure, and attempt history.
+In **Per-prompt routing decisions**, keep **Rule router: balanced priority**. Show one question routed to Mercury with two signals and one routed to Gemini with three, and point to the outcome chips that show what every saved model did on that question (GSM8K #1227 and #1251 show Mercury’s empty responses).
 
-## Optional live inference
+### 7. Optional: compare with Checkpoint 1
 
-Use **Route prompt** only if you already confirmed provider capacity. It sends one request to the selected model after credential and model-catalog preflight. If the provider returns a rate limit or overload, keep the result visible and explain that the system preserves real operational failures.
-
-Do not repeatedly retry and do not start the full benchmark while presenting.
+Scroll up, click **Checkpoint 1 free pool**. The acceptance matrix becomes 5/5 and the dashboard replays the original 24 free-tier cells, where Gemma’s nine rate limits dominate. Open **04 Benchmark** to expand a raw saved record if asked.
 
 ## Fallbacks
 
-1. If OpenRouter is unavailable, continue with **Preview decision** and the saved dashboard.
-2. If the local browser is closed, reopen `http://127.0.0.1:8000`.
+1. If OpenRouter is unavailable, skip step 4. Everything else is local.
+2. If the browser closes, reopen `http://127.0.0.1:8000`.
 3. If the server stops, rerun `./scripts/demo.ps1`.
 4. If the application cannot be restarted, play `docs/demo/checkpoint-2-backup-demo.webm`.
-5. Keep the deck `docs/presentations/Adaptive_LLM_Router_Checkpoint_2_Final.pptx` available locally.
+5. Keep the deck `docs/presentations/Adaptive_LLM_Router_Checkpoint_2_Final.pptx` open locally.
 
 ## Security rules
 
@@ -78,4 +66,4 @@ Do not repeatedly retry and do not start the full benchmark while presenting.
 - Never paste the OpenRouter key into the browser UI.
 - Keep manual prompt saving off unless the prompt is safe to store.
 - Do not claim the 12-question sample is a statistically conclusive ranking.
-- Describe Gemma’s nine missing answers as provider rate limits, not wrong math answers.
+- Describe Gemma’s nine Checkpoint 1 failures as provider rate limits, and Mercury’s two as empty provider responses, not wrong math answers.

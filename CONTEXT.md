@@ -29,7 +29,7 @@ The project deliberately begins with evidence collection instead of jumping dire
 The milestone sequence therefore follows this logic:
 
 1. **Checkpoint 1: evidence layer.** Compare two fixed models, preserve a versioned registry, demonstrate hard eligibility filtering, run a fixed benchmark, and store inspectable results.
-2. **Checkpoint 2: transparent routing layer.** Add fixed baselines, an explainable rule policy, user priority controls, hard-requirement precedence, offline replay, and a visible policy acceptance matrix.
+2. **Checkpoint 2: transparent routing layer.** Add fixed baselines, an explainable rule policy, user priority controls, hard-requirement precedence, a second dated paid model pool with its own saved benchmark matrix, offline replay with a results dashboard, and visible policy acceptance matrices.
 3. **Later work: broader and learned routing.** Expand the task matrix, create better quality and confidence estimates, compare stronger routing methods against the fixed and rule baselines, and only then consider learned or multi-objective routing.
 
 The current application completes the first two layers. It does not claim that a small rule policy is the final adaptive router.
@@ -68,21 +68,31 @@ Checkpoint 1 release information:
 - tagged commit: `be52231a98dabc8cd4fa687457951267e9842fcf`
 - release: `https://github.com/mian-abd/Snr/releases/tag/checkpoint-1`
 
-### Checkpoint 2: implementation complete, final release packaging in progress
+### Checkpoint 2: complete
 
-Checkpoint 2 adds the routing layer required by the proposal schedule through the week of October 15 and the October 22 checkpoint:
+Checkpoint 2 adds the routing layer required by the proposal schedule through the week of October 15 and the October 22 checkpoint. The proposal's three Checkpoint 2 commitments map to the application as follows:
+
+| Proposal commitment (Oct 22) | Delivered as |
+| --- | --- |
+| Two fixed-model baselines and a simple rule-based router on the same benchmark data, compared on accuracy, response time, and cost | Six strategies replayed over the same saved matrix for each pool, with accuracy, median/p95 latency, total cost, and cost per correct answer |
+| Same prompt routed differently under at least two priorities | Four priorities plus a hard minimum-context requirement, local preview, and acceptance matrices |
+| Basic results dashboard showing the selected model and summary results | Results dashboard plus a per-prompt table showing the selected model, reason, and outcome for every question |
+
+Implemented:
 
 - fixed model baselines;
 - four visible priorities: balanced, lower cost, higher quality, and faster response;
 - hard requirements evaluated before preferences;
 - an inspectable rule-based policy with visible task signals and explanation text;
+- two pools: the preserved Checkpoint 1 free pool (`rule_based_v1`) and a dated three-model paid pool (`rule_based_paid_v1`);
+- a 36-cell paid GSM8K matrix on the identical Checkpoint 1 protocol, collected behind a cost estimate and a $1 cap;
 - local decision preview with no key and no provider call;
-- a one-model live route path that never calls an unselected fallback;
-- an offline strategy replay over the exact Checkpoint 1 evidence matrix;
-- a deterministic five-case acceptance matrix showing expected and actual choices;
-- a Checkpoint 2 presentation, full speaking script, live demo guide, progress record, and backup demo recording.
+- a one-model live route path that never calls an unselected fallback, verified live on all three paid models;
+- offline strategy replay over either saved matrix, with per-prompt decisions;
+- deterministic acceptance matrices (5 free-pool cases, 7 paid-pool cases);
+- a rebuilt 9-slide Checkpoint 2 deck, full speaking script, live demo guide, progress record, and backup demo recording.
 
-The remaining release operation is to complete final verification, push the synchronized code and documents, and publish the `checkpoint-2` tag/release.
+The proposal's next items (train/validation/test split, feature extraction, learned router) belong to the week of October 22 onward and Checkpoint 3. They were deliberately not started.
 
 ## 5. Current system architecture
 
@@ -115,8 +125,13 @@ FastAPI
           │
           ▼
 OpenRouter
-  ├── google/gemma-4-26b-a4b-it:free
-  └── nvidia/nemotron-3-ultra-550b-a55b:free
+  ├── free pool (Checkpoint 1 evidence)
+  │   ├── google/gemma-4-26b-a4b-it:free
+  │   └── nvidia/nemotron-3-ultra-550b-a55b:free
+  └── paid pool (Checkpoint 2 evidence)
+      ├── google/gemma-4-26b-a4b-it
+      ├── inception/mercury-3
+      └── google/gemini-4-argon
 ```
 
 The production demo builds the React bundle and serves it from FastAPI, so the complete application uses one local URL: `http://127.0.0.1:8000`.
@@ -152,9 +167,10 @@ frontend/
 
 data/
   benchmarks/         Fixed GSM8K sample and provenance metadata
-  registry/           Frozen OpenRouter model snapshot
-  demo/checkpoint-1/  Committed sanitized 24-cell benchmark evidence
-  local/              Ignored local runs and opt-in manual comparisons
+  registry/           Frozen free (2026-09-30) and paid (2026-10-22) OpenRouter snapshots
+  demo/checkpoint-1/  Committed sanitized 24-cell free-pool benchmark evidence
+  demo/checkpoint-2-paid/  Committed sanitized 36-cell paid-pool benchmark evidence
+  local/              Ignored local runs, request budgets, and opt-in manual comparisons
 
 docs/
   checkpoint-1.md
@@ -222,6 +238,20 @@ Tracked model identities:
 
 The registry is immutable at normal runtime. A real comparison, route, or benchmark first checks the live OpenRouter catalog. The check confirms that both exact slugs still exist, still expose a free route, still support text output, and still match the tracked metadata. Drift fails closed before generation. The application never silently replaces a missing model.
 
+### Paid routing pool (Checkpoint 2)
+
+The second snapshot is `data/registry/openrouter-paid-2026-10-22.json` (snapshot ID `openrouter-paid-2026-10-22-cp2`, models checksum `3e721e74b00de139a8629b131c92c7e6a48fd61d443bb1632e522194825d6a06`). It is loaded with `expected_model_ids=PAID_MODEL_IDS` and `require_free=False` (`backend/app/state.py`). Models are stored in ascending price order, which the policy relies on for hard-requirement fallbacks.
+
+| Model | Context | Prompt $/token | Completion $/token | Policy role |
+| --- | ---: | ---: | ---: | --- |
+| `google/gemma-4-26b-a4b-it` | 262,144 | 0.0000000765 | 0.000000255 | lowest cost |
+| `inception/mercury-3` | 1,000,000 | 0.0000001 | 0.00000035 | low latency / balanced mid tier |
+| `google/gemini-4-argon` | 1,048,576 | 0.000002 | 0.00001 | higher quality |
+
+All three IDs, prices, and context lengths were confirmed against the live public catalog (`https://openrouter.ai/api/v1/models`, 468 models listed) on 2026-10-22 before any paid call. For the paid pool the live preflight checks prices for equality with the snapshot instead of requiring zero. Prices are compared as `Decimal` values: a string comparison would always report drift because `str(Decimal("0.0000000765"))` renders as `7.65E-8` while the catalog returns `0.0000000765`.
+
+The free pool remains the immutable Checkpoint 1 evidence pool. The paid pool is a separately versioned addition; nothing in Checkpoint 1 was rewritten.
+
 ## 9. Backend contracts
 
 ### Generation request
@@ -279,10 +309,11 @@ All application routes use the `/api/v1` prefix.
 | `GET /models` | Frozen registry and snapshot metadata | No |
 | `POST /eligibility` | Deterministic minimum-context filtering | No |
 | `POST /comparisons` | Send the same prompt concurrently to both pinned models | Yes |
-| `POST /routing/decisions` | Preview one routing decision | No |
-| `GET /routing/validation` | Run the five deterministic policy acceptance cases | No |
-| `GET /routing/dashboard` | Replay routing strategies over saved evidence | No |
-| `POST /routes` | Select one model and send exactly one live generation request | Yes |
+| `GET /routing/models` | Paid-pool registry snapshot | No |
+| `POST /routing/decisions` | Preview one routing decision (`pool`: `baseline` or `paid`) | No |
+| `GET /routing/validation?pool=` | Run the pool's deterministic acceptance cases (5 free, 7 paid) | No |
+| `GET /routing/dashboard?pool=` | Replay six strategies over the pool's saved matrix, with per-prompt decisions | No |
+| `POST /routes` | Select one model in the chosen pool and send exactly one live generation request | Yes |
 | `POST /benchmarks/gsm8k/runs` | Start or resume pilot/full benchmark | Yes |
 | `GET /benchmarks/runs/latest` | Load latest local or committed run | No |
 | `GET /benchmarks/runs/{run_id}` | Load manifest and aggregate summary | No |
@@ -357,6 +388,36 @@ Interpretation rules:
 - free-tier latency and availability can change with shared provider capacity;
 - later evaluations must distinguish answer quality from served-request availability.
 
+## 12a. Checkpoint 2 paid benchmark evidence
+
+Committed run: `gsm8k-paid-full-20261023T044929Z-5f90eace` in `data/demo/checkpoint-2-paid/` (manifest, sanitized `results.jsonl`, summary). A preceding 6-cell pilot, `gsm8k-paid-pilot-20261023T044859Z-e4857827`, stays in ignored `data/local/runs/`; it went 6/6 served and 6/6 correct for under half a cent and confirmed that the reasoning-capable models were not truncated by the fixed 512-token limit.
+
+Protocol is identical to Checkpoint 1: same 12 GSM8K questions (seed 498, same source indices and checksum), prompt template `gsm8k-cp1-v1`, system prompt, temperature 0, 512 max tokens, 90 s timeout, at most two attempts per cell, alternating model order, exact numeric scoring. Only the registry changes, so the generation-config hash is the same as Checkpoint 1.
+
+Collection command (prints the estimate; spends nothing without `--confirm`):
+
+```powershell
+uv run --project backend python -m app.benchmarks.paid_matrix --mode pilot
+uv run --project backend python -m app.benchmarks.paid_matrix --mode full --confirm
+```
+
+`backend/app/benchmarks/paid_matrix.py` estimates worst-case cost as (prompt characters / 4 + 16) prompt tokens plus the full 512 completion tokens, at registry prices, times two attempts. It refuses to run above `SPEND_CAP_USD = 1.00`. Its request budget is separate from the free benchmark (`data/local/paid-provider-request-budget.json`, 100 per day). After a complete full run it sanitizes the run into `data/demo/checkpoint-2-paid/`.
+
+Estimate: $0.0227 for the pilot, $0.1373 for the full run. Actual provider-reported spend for the full run: about $0.0228.
+
+| Model | Cells | Served | Correct | Median latency | Tokens cost |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Gemini 4 Argon | 12 | 12 | 12 | 4,991.7 ms | $0.020892 |
+| Gemma 4 26B | 12 | 12 | 11 | 2,940.7 ms | $0.001035 |
+| Mercury 3 | 12 | 10 | 10 | 579.4 ms | $0.000900 |
+
+Failures and misses:
+
+- GSM8K #1227 and #1251, Mercury 3: `invalid_response` / `empty_content` ("Provider returned empty text content"). Kept in the denominator.
+- GSM8K #1227, Gemma 4 26B: served, extracted 5, expected 66.
+
+`BenchmarkRunner` gained `demo_name`, `run_prefix`, and `budget_file` arguments, and `latest_run()` now only returns runs whose manifest uses the runner's own registry snapshot, so the free-pool Benchmark tab never shows a paid run.
+
 ## 13. Checkpoint 2 routing policy
 
 The policy ID is `rule_based_v1`.
@@ -391,6 +452,21 @@ The policy exposes, rather than hides, its current features:
 
 These signals are intentionally simple. They establish an explainable baseline for later comparison; they are not a learned quality predictor.
 
+### Paid pool policy (`rule_based_paid_v1`)
+
+Same function, same signals, different designated roles (`backend/app/routing/policy.py`):
+
+- **Lower cost:** `PAID_BUDGET_MODEL_ID` = `google/gemma-4-26b-a4b-it`.
+- **Higher quality:** `PAID_QUALITY_MODEL_ID` = `google/gemini-4-argon`.
+- **Faster response:** `PAID_EFFICIENT_MODEL_ID` = `inception/mercury-3`.
+- **Balanced:** `effort_score(signals)` counts the higher-effort signals in `HIGH_EFFORT_SIGNALS` = {math, code, long_prompt, many_numbers}. Score 0 → budget model; 1 or 2 → efficient model; `HIGH_EFFORT_THRESHOLD` = 3 or more → quality model.
+
+The free pool's balanced rule is unchanged: any higher-effort signal selects Nemotron.
+
+When a designated model is filtered out, the cost and latency roles fall back to the first eligible model and the quality role to the last eligible model in registry order. Because both registries are price-ordered, a cost preference at 500,000 tokens in the paid pool falls to Mercury 3.
+
+Why the three-signal tier: every GSM8K prompt carries the `math` signal (the template begins with "Solve"), so a one-signal escalation would send every benchmark prompt to the quality model and make balanced identical to the fixed strong baseline. On the 12 benchmark prompts the signal counts are: 1 signal for #851; 2 for #30, #263, #507, #509, #539, #756; 3 for #780, #987, #1218, #1227, #1251. The threshold was written after seeing these input signal counts and the 6-cell pilot, but before the full paid matrix outcomes existed, and it was not changed afterward. This is disclosed on slide 7 and in `docs/checkpoint-2.md`.
+
 ### Decision preview and live route
 
 Decision preview runs only against the committed registry. It needs no API key and makes no network request. It exists so the policy can be demonstrated even when free provider capacity is unavailable.
@@ -411,9 +487,21 @@ The Route view and `GET /api/v1/routing/validation` execute these fixed local ca
 
 The UI shows expected and actual selections, the policy explanation, and an overall pass count. These are deterministic acceptance checks, not a provider benchmark.
 
+Paid-pool cases (`GET /api/v1/routing/validation?pool=paid`, strategy `rule_based_paid_v1`):
+
+| Case | Priority | Minimum context | Expected model | Behavior tested |
+| --- | --- | ---: | --- | --- |
+| `cost_general` | Cost | 1 | Gemma 4 26B | Lowest-price role |
+| `latency_general` | Latency | 1 | Mercury 3 | Low-latency role |
+| `quality_general` | Quality | 1 | Gemini 4 Argon | Quality role |
+| `balanced_general` | Balanced | 1 | Gemma 4 26B | 0 signals |
+| `balanced_simple_math` | Balanced | 1 | Mercury 3 | 1 signal ("Calculate 18 + 24.") |
+| `balanced_complex_math` | Balanced | 1 | Gemini 4 Argon | 3 signals (math, many_numbers, long_prompt) |
+| `hard_requirement_override` | Cost | 500,000 | Mercury 3 | Gemma excluded before the cost preference |
+
 ## 15. Offline strategy replay
 
-`GET /api/v1/routing/dashboard` reads the committed Checkpoint 1 `results.jsonl`. It groups the two model results for each sample and applies a strategy by selecting one existing record. It makes no model requests.
+`GET /api/v1/routing/dashboard?pool=baseline|paid` reads the pool's committed `results.jsonl` (`EVIDENCE_DIRS` in `backend/app/routing/replay.py`: `checkpoint-1` or `checkpoint-2-paid`). It groups the model results for each sample and applies a strategy by selecting one existing record. It makes no model requests. A missing matrix returns 404.
 
 Replayed strategies:
 
@@ -424,14 +512,29 @@ Replayed strategies:
 5. rule router with latency priority;
 6. rule router with balanced priority.
 
-For each strategy, the UI reports:
+For each strategy, the API (`RoutingStrategySummary`) reports:
 
 - selected-model counts;
 - attempted, successful, and failed cells;
 - exact-match accuracy over all selected cells;
-- accuracy when served, when defined in the API;
-- mean successful latency;
-- known total cost.
+- accuracy when served;
+- mean, median, and p95 successful latency (p95 is nearest rank: `sorted[ceil(0.95 n) - 1]`, which for 12 prompts is the slowest served call);
+- known total cost and cost per correct answer.
+
+The dashboard also returns `prompts`: for each sample, the question text, detected signals, every saved model outcome (`ReplayCell`: status, correct, latency, cost), and every strategy's selection with its reason (`ReplaySelection`). The UI's per-prompt table uses this to show, for a chosen strategy, which model was picked for each question, why, and what happened.
+
+Paid-pool replay results:
+
+| Strategy | Selected | Correct | Median | p95 | Total cost | Cost / correct |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| `fixed_cheap` | Gemma × 12 | 11/12 | 2,941 ms | 17,992 ms | $0.001035 | $0.000094 |
+| `fixed_strong` | Gemini × 12 | 12/12 | 4,992 ms | 8,772 ms | $0.020892 | $0.001741 |
+| `rule_cost` | Gemma × 12 | 11/12 | 2,941 ms | 17,992 ms | $0.001035 | $0.000094 |
+| `rule_quality` | Gemini × 12 | 12/12 | 4,992 ms | 8,772 ms | $0.020892 | $0.001741 |
+| `rule_latency` | Mercury × 12 | 10/12 | 579 ms | 1,098 ms | $0.000900 | $0.000090 |
+| `rule_balanced` | Mercury × 7, Gemini × 5 | 12/12 | 823 ms | 8,772 ms | $0.011556 | $0.000963 |
+
+Balanced matched always-Gemini accuracy at about 55% of its cost (−45%) and a roughly 6× faster median (4,992 / 823). Mercury's two empty responses were on #1227 and #1251, both three-signal prompts that balanced routes to Gemini, so they did not count against the balanced strategy. That is favorable alignment on a tiny sample, not evidence that the threshold generalizes.
 
 Because every strategy selects from the same saved matrix, comparisons are controlled and reproducible. The replay is a retrospective estimate over twelve GSM8K prompts, not a live randomized trial.
 
@@ -443,16 +546,19 @@ The header shows project name, checkpoint label, backend state, key-configured s
 
 ### Route
 
+- model pool selector: Checkpoint 2 paid pool (default) or Checkpoint 1 free pool; switching resets the current decision and reloads the pool's acceptance matrix and dashboard;
+- candidate chips showing each pool model and its context length;
 - editable prompt;
-- four priority choices;
+- four priority choices with pool-specific descriptions;
 - numeric minimum-context requirement;
 - one-click 500,000-token demonstration;
 - provider-free preview;
 - one-model live route when a key is configured;
 - selected-model explanation and task signals;
 - response, latency, tokens, cost, and status for a live route;
-- five-case acceptance matrix;
-- offline strategy replay table.
+- pool acceptance matrix (5 or 7 cases);
+- results dashboard: strategy table with accuracy, served cells, median and p95 latency, total cost, and cost per correct answer;
+- per-prompt routing decisions with a strategy selector, the selected model and reason, outcome, latency, cost, and every saved model's outcome for that question.
 
 ### Compare
 
@@ -510,6 +616,9 @@ These rules are mandatory for future work:
 6. Run secret scanning before a release.
 7. Preserve exact model identity checks and fail closed on drift.
 8. Do not convert a provider failure into another model without an explicit, documented future policy.
+9. Paid benchmark runs must print a cost estimate first, respect `SPEND_CAP_USD`, and require explicit confirmation.
+
+Credential note (2026-10-22): the paid OpenRouter key now in ignored `backend/.env` was shared in plain text during development. It was never written to tracked files, logs, screenshots, the deck, or commits (verified by a staged-diff scan before each commit), but it should be rotated in the OpenRouter dashboard after the checkpoint and the new key placed only in `backend/.env`.
 
 ## 19. Testing strategy
 
@@ -600,40 +709,48 @@ The script builds the frontend and serves the complete application at `http://12
 
 ### Demo order designed to survive provider limits
 
-1. Open Route and point out the two fixed candidate identities.
-2. Show the five-case policy matrix and its pass count.
-3. Preview cost and quality on the same prompt.
-4. set the minimum context to 500,000 and show the cost preference forced to Nemotron.
-5. Show the offline strategy replay and explain that it uses the same preserved 24-cell evidence.
-6. Show Eligibility for the explicit Gemma exclusion reason.
-7. Show Benchmark for the raw results and availability distinction.
-8. Make a live route or comparison only if free provider capacity is available.
+1. Open Route with the paid pool and show the 7/7 acceptance matrix.
+2. Preview Lower cost (Gemma) and Higher quality (Gemini Argon) on the same prompt.
+3. Set the minimum context to 500,000 with Lower cost and show the preference overridden to Mercury.
+4. Set context back to 1 and make one live routed call.
+5. Walk the results dashboard and the per-prompt balanced decisions.
+6. Optionally switch to the free pool to show the original 24-cell evidence, Eligibility, and Benchmark records.
 
-The live call is optional evidence. The policy, validation, benchmark, and saved outputs remain demonstrable without provider availability.
+Only step 4 needs the provider. Full detail is in `docs/live-demo-guide.md`.
+
+### Local runtime notes (Windows, this machine)
+
+- Some sandboxed (MSIX-packaged) terminals on this machine virtualize `%APPDATA%` writes under `%LOCALAPPDATA%\Packages\...\LocalCache\Roaming`. On 2026-10-22 the uv-managed CPython 3.12.14 that `backend/.venv` points to was missing from that view; `uv python install 3.12.14` followed by `uv sync --project backend --extra dev --locked` repaired it. Always pass `--extra dev`, otherwise `uv sync` uninstalls pytest, ruff, and mypy.
+- Set `UV_CACHE_DIR` to `tmp/uv-cache` inside the repository if the default uv cache is not writable.
+- Without the script, the demo server is `backend/.venv/Scripts/python.exe -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000` after `npm run build` in `frontend/`.
+- Playwright video recording needs `npx playwright install ffmpeg` once.
 
 ## 21. Presentation and deliverables
 
 Checkpoint 2 presentation assets:
 
-- `docs/presentations/Adaptive_LLM_Router_Checkpoint_2_Final.pptx`
-- `docs/presentation-script.md`
+- `docs/presentations/Adaptive_LLM_Router_Checkpoint_2_Final.pptx` (9 slides, 16:9, speaker notes on every slide)
+- `docs/presentation-script.md` (full talk track plus likely questions)
 - `docs/live-demo-guide.md`
 - `docs/demo-script.md`
-- `docs/demo/checkpoint-2-backup-demo.webm`
+- `docs/demo/checkpoint-2-backup-demo.webm` (re-recorded 2026-10-22 against the paid-pool UI)
 - `docs/progress-through-oct-15.md`
 
-The presentation covers:
+The deck was rebuilt on 2026-10-22. The previous deck's content-slide background images contained baked-in text from an older draft, and in real PowerPoint its replaced text overlapped titles and broke words mid-line ("NEMOTRO / N", "Baselin / e"). The rebuilt deck keeps the dark and lime identity and the title-slide chip image, uses the app's color tokens, native PowerPoint tables for results, and two screenshots of the live decision preview. It was generated with pptxgenjs and visually checked slide by slide by exporting PNGs through the installed PowerPoint. The generator and screenshot scripts are kept locally in ignored `tmp/presentation-build/` (`build_checkpoint2_deck.cjs`, `capture_deck_screens.cjs`, `record_backup_demo.cjs`).
 
-1. milestone and research question;
-2. the evidence-first development path;
-3. prompt, filter, rule, and model decision flow;
-4. transparent rule behavior;
-5. measured Checkpoint 1 availability and accuracy evidence;
-6. priority and hard-requirement test cases;
-7. the real application and completed Checkpoint 2 scope;
-8. limitations and the next learned-routing stage.
+Slides:
 
-The speaker should say clearly that Gemma's nine failed cells were provider rate limits and not nine incorrect math answers. The speaker should also identify the small GSM8K sample as a functional checkpoint rather than a conclusive leaderboard.
+1. Title.
+2. The three proposal commitments for October 22 and where each is shown.
+3. Decision flow and the paid-pool priority table.
+4. Same prompt under Lower cost and Higher quality, the 500,000-token override, 12/12 acceptance cases.
+5. The two benchmark matrices on the same 12 questions.
+6. Results dashboard table for the paid pool.
+7. Headline result (12/12, −45% cost, 6× faster median) with the caveats.
+8. Live demo order.
+9. Limits, Checkpoint 3 plan, questions.
+
+The speaker should say clearly that Gemma's nine Checkpoint 1 failures were provider rate limits and Mercury's two Checkpoint 2 failures were empty provider responses, not incorrect math answers, and should present the 12-question sample as a functional checkpoint rather than a conclusive leaderboard.
 
 ## 22. Build and release history
 
@@ -648,9 +765,23 @@ Important commits currently in `main`:
 - `88615c0` prepared the demo for provider capacity limits;
 - `3f47647` added transparent Checkpoint 2 routing;
 - `d32c0ee` added provider-free routing decision preview;
-- `4825477` packaged the Checkpoint 2 deck, script, demo guide, progress record, and backup recording.
+- `4825477` packaged the first Checkpoint 2 deck, script, demo guide, progress record, and backup recording;
+- `13ccb23` added the paid three-model pool, the 36-cell paid matrix, paid acceptance cases, the extended results dashboard, the decimal price-drift fix, and this document;
+- the following docs commit rebuilt the deck, re-recorded the backup demo, and rewrote the Checkpoint 2 documents; it is tagged `checkpoint-2`.
 
-The next release commit adds the deterministic acceptance matrix, aligns remaining Checkpoint 2 metadata, refreshes generated API types, updates presentation material, and adds this document.
+### Build log, 2026-10-22 evening session
+
+1. Read the original proposal (Sept 17 draft 2) and confirmed the stopping point: the Checkpoint 2 commitments and the work-plan weeks through October 15. The week of October 22 items (data split, feature extraction, learned router) were not started.
+2. Found the uv-managed Python missing from the sandboxed `%APPDATA%` view and repaired it (section 20).
+3. Verified the three paid model IDs, prices, and context lengths against the live public catalog.
+4. Fixed two defects left in the uncommitted paid-pool work: the paid registry's placeholder checksum, and the string-based price comparison that would have reported drift on every paid call.
+5. Generalized `BenchmarkRunner` and added `app.benchmarks.paid_matrix` with the estimate, cap, and confirmation gate. Ran the 6-cell pilot, then the 36-cell full run.
+6. Added `effort_score` and the paid balanced tiers, the seven paid acceptance cases, and pool-aware validation and dashboard endpoints.
+7. Extended `RoutingStrategySummary` with median and p95 latency and cost per correct answer; added `ReplayCell`, `ReplaySelection`, and `ReplayPrompt` to the dashboard.
+8. Rebuilt the Route panel: pool selector driving candidates, descriptions, acceptance matrix, and dashboard; extra dashboard columns; per-prompt decision table; model chips by name.
+9. Made three live routed calls through `POST /api/v1/routes` on the paid pool: cost → Gemma (1,104 ms, $0.000019), latency → Mercury (633 ms, $0.000044), quality → Gemini Argon (4,714 ms, $0.000674), all served with provider-reported cost.
+10. Verified `./scripts/check.ps1` (Ruff, mypy strict, 30 backend tests, ESLint, 2 Vitest tests, production build), the 2 Playwright smoke tests, desktop rendering, and no horizontal overflow at 390 px with real data. Scanned the staged diff for key patterns before each commit.
+11. Committed and pushed only as Mian Abdullah with no co-author or tool attribution, then rebuilt the deck, re-recorded the backup demo, rewrote the docs, and tagged the release.
 
 ## 23. Key decisions and rejected alternatives
 
@@ -702,11 +833,14 @@ Jev may help represent a future structured routing decision or confidence value.
 
 ## 24. Known limitations
 
-- The evaluation contains twelve GSM8K questions and one task family.
-- The rule policy uses hand-written lexical signals.
-- Cost and latency preferences currently map to designated baselines rather than calibrated predictive models.
+- The evaluation contains twelve GSM8K questions and one task family, in two matrices (free 24 cells, paid 36 cells).
+- The rule policy uses hand-written lexical signals; every GSM8K prompt carries the `math` signal because of the template.
+- Cost, latency, and quality preferences map to designated model roles rather than calibrated predictions of success.
+- The paid balanced tier threshold was chosen with knowledge of the benchmark prompts' signal counts (not their outcomes); there is no separate tuning set yet.
 - Free model availability can be intermittent and can dominate observed accuracy over all cells.
+- Paid prices and availability are a dated snapshot; live routing refuses to run on drift.
 - The offline replay can compare choices available in the saved matrix but cannot estimate models absent from that matrix.
+- There is no accuracy-vs-cost plot yet; comparison plots are a Checkpoint 3 deliverable.
 - The in-process benchmark coordinator is appropriate for one local user, not distributed production work.
 - There is no user authentication or multi-user data isolation.
 - There is no database or cloud deployment.
@@ -770,11 +904,11 @@ Checkpoint 2 is complete when all of the following remain true on `main`:
 
 - the application starts through the one-command demo path;
 - decision preview works without a provider call;
-- cost, quality, latency, and balanced priorities produce deterministic choices;
-- a 500,000-token hard requirement excludes Gemma before routing;
-- the five reference cases show expected-versus-actual passing results;
-- a live route calls only the selected fixed model when capacity is available;
-- the offline dashboard compares fixed and rule strategies over the same saved 24-cell matrix;
+- cost, quality, latency, and balanced priorities produce deterministic choices in both pools;
+- a 500,000-token hard requirement excludes Gemma before routing in both pools;
+- the 5 free-pool and 7 paid-pool reference cases show expected-versus-actual passing results;
+- a live route calls only the selected pinned model;
+- the offline dashboard compares fixed and rule strategies over the same saved matrix for each pool (24 free cells, 36 paid cells), with per-prompt decisions;
 - the raw benchmark evidence remains inspectable;
 - API and UI contracts are synchronized;
 - backend, frontend, build, end-to-end, and secret checks pass;
