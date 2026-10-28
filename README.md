@@ -24,6 +24,17 @@ Adaptive LLM Router is a local, reproducible console for comparing pinned OpenRo
 
 Checkpoint 2 is deliberately a simple, rule-based policy—not a learned router or a claim of statistically conclusive model rankings.
 
+## Toward Checkpoint 3 (weeks of Oct 22 and Oct 29)
+
+- A fixed 600-prompt suite (200 GSM8K, 200 MMLU-Pro, 100 HumanEval+, 100 MBPP+) built from pinned, checksummed sources, with a 60/20/20 train/validation/test split fixed before any model runs: `python -m app.benchmarks.prepare_suite`.
+- An 11-model pool across 8 families and 5 access paths: paid OpenRouter, free OpenRouter, anonymous OVHcloud, Google AI Studio, NVIDIA NIM, and a local Ollama model (`data/registry/cp3-pool-2026-10-27.json`).
+- A paced, resumable, spend-capped runner for the whole pool: `python -m app.benchmarks.suite_runner --smoke 2` (estimate) then `--confirm`.
+- Coding answers scored by EvalPlus in a Docker container with no network: `python -m app.benchmarks.code_scoring` (needs Docker Desktop).
+- Logistic regression and gradient-boosted trees predicting P(success | prompt, model), compared on the validation split, plus multi-objective routing replay: `python -m app.learned.train`.
+- First results (9 models × 600 prompts, 2026-10-28): logistic regression beats gradient-boosted trees, but a simple model-by-task success rate predicts as well as either. Report: `data/learned/cp3-full-router-comparison.json`.
+
+Run each command with `uv run --project backend` from the repository root. See [weeks of Oct 22 and Oct 29](docs/checkpoint-3-progress.md) and the [data provenance errata](docs/data-provenance-errata.md).
+
 ## Prerequisites
 
 - Python 3.12 managed by [uv](https://docs.astral.sh/uv/)

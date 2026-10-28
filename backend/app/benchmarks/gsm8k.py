@@ -42,6 +42,18 @@ def render_prompt(question: str) -> str:
     return PROMPT_TEMPLATE.format(question=question)
 
 
+REFERENCE_RE = re.compile(r"#### (\-?[0-9\.\,]+)")
+
+
+def canonical_answer(reference_solution: str) -> str:
+    """The reference parser from openai/grade-school-math: the number after '####'."""
+    match = REFERENCE_RE.search(reference_solution)
+    value = normalize_number(match.group(1)) if match else None
+    if value is None:
+        raise ValueError("GSM8K reference solution has no '#### <number>' answer")
+    return value
+
+
 def normalize_number(raw: str) -> str | None:
     cleaned = raw.strip().replace(",", "")
     cleaned = cleaned.lstrip("$€£").strip()

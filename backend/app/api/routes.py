@@ -362,12 +362,16 @@ async def start_benchmark(
         from app.benchmarks.runner import GENERATION_CONFIG, _config_hash
         from app.domain.models import BenchmarkManifest, BenchmarkStatus
 
+        # Read provenance from the sample file instead of repeating it here.
+        sample = load_samples(
+            services.settings.data_dir / "benchmarks" / "gsm8k_checkpoint1.jsonl"
+        )[0]
         manifest = BenchmarkManifest(
             run_id=run_id,
             mode=payload.mode,
             status=BenchmarkStatus.PENDING,
-            dataset="openai/gsm8k",
-            dataset_revision="b0bb162abedc65e1fdd8e93ed090fd7598ee68bc",
+            dataset=sample.dataset,
+            dataset_revision=sample.revision,
             registry_snapshot_id=registry.snapshot.snapshot_id,
             registry_models_sha256=registry.snapshot.models_sha256,
             model_ids=[model.id for model in registry.models],

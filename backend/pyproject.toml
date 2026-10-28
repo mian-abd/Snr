@@ -9,8 +9,11 @@ dependencies = [
   "filelock>=3.18,<4",
   "httpx>=0.28,<1",
   "litellm>=1.75,<2",
+  "numpy>=2.5.4",
+  "pyarrow>=26.0.0",
   "pydantic>=2.11,<3",
   "pydantic-settings>=2.10,<3",
+  "scikit-learn>=1.9.1",
   "uvicorn[standard]>=0.35,<1",
 ]
 
@@ -49,3 +52,7 @@ python_version = "3.12"
 strict = true
 plugins = ["pydantic.mypy"]
 exclude = ["tests"]
+
+[[tool.mypy.overrides]]
+module = ["sklearn.*", "pyarrow.*"]
+ignore_missing_imports = true

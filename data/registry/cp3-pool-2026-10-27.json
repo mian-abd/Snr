@@ -1,0 +1,260 @@
+{
+  "metadata_as_of": "2026-10-27T00:00:00Z",
+  "models": [
+    {
+      "access": "paid",
+      "api_key_env": "OPENROUTER_API_KEY",
+      "base_url": "https://openrouter.ai/api/v1",
+      "completion_price_per_token": "2.55E-7",
+      "context_length": 262144,
+      "data_policy": "OpenRouter paid route pinned to NextBit (bf16).",
+      "display_name": "Gemma 4 26B A4B",
+      "enabled": true,
+      "family": "Google Gemma",
+      "id": "gemma-4-26b",
+      "max_concurrency": 3,
+      "open_weight": true,
+      "parameters": "25.2B total / 3.8B active",
+      "prompt_price_per_token": "7.65E-8",
+      "provider": "openrouter",
+      "request_options": {
+        "provider": {
+          "allow_fallbacks": false,
+          "order": [
+            "nextbit/bf16"
+          ]
+        }
+      },
+      "requests_per_minute": 60.0,
+      "upstream_model": "google/gemma-4-26b-a4b-it"
+    },
+    {
+      "access": "paid",
+      "api_key_env": "OPENROUTER_API_KEY",
+      "base_url": "https://openrouter.ai/api/v1",
+      "completion_price_per_token": "3.5E-7",
+      "context_length": 1000000,
+      "data_policy": "OpenRouter paid route; Inception is the only host.",
+      "display_name": "Mercury 3",
+      "enabled": true,
+      "family": "Inception (diffusion)",
+      "id": "mercury-3",
+      "max_concurrency": 3,
+      "open_weight": false,
+      "parameters": "undisclosed",
+      "prompt_price_per_token": "1E-7",
+      "provider": "openrouter",
+      "request_options": {
+        "provider": {
+          "allow_fallbacks": false,
+          "order": [
+            "inception"
+          ]
+        }
+      },
+      "requests_per_minute": 60.0,
+      "upstream_model": "inception/mercury-3"
+    },
+    {
+      "access": "paid",
+      "api_key_env": "OPENROUTER_API_KEY",
+      "base_url": "https://openrouter.ai/api/v1",
+      "completion_price_per_token": "0.00001",
+      "context_length": 1048576,
+      "data_policy": "OpenRouter paid route pinned to Google AI Studio (standard tier).",
+      "display_name": "Gemini 4 Argon",
+      "enabled": true,
+      "family": "Google Gemini",
+      "id": "gemini-4-argon",
+      "max_concurrency": 3,
+      "open_weight": false,
+      "parameters": "undisclosed",
+      "prompt_price_per_token": "0.000002",
+      "provider": "openrouter",
+      "request_options": {
+        "provider": {
+          "allow_fallbacks": false,
+          "order": [
+            "google-ai-studio"
+          ]
+        }
+      },
+      "requests_per_minute": 60.0,
+      "upstream_model": "google/gemini-4-argon"
+    },
+    {
+      "access": "paid",
+      "api_key_env": "OPENROUTER_API_KEY",
+      "base_url": "https://openrouter.ai/api/v1",
+      "completion_price_per_token": "2.8E-7",
+      "context_length": 1048576,
+      "data_policy": "OpenRouter paid route limited to three fp8 hosts (Parasail, Crusoe, DeepInfra); the serving host is recorded per call. Price is the highest of the three.",
+      "display_name": "DeepSeek V4 Flash",
+      "enabled": true,
+      "family": "DeepSeek",
+      "id": "deepseek-v4-flash",
+      "max_concurrency": 2,
+      "open_weight": true,
+      "parameters": "284B total / 13B active",
+      "prompt_price_per_token": "1.4E-7",
+      "provider": "openrouter",
+      "request_options": {
+        "provider": {
+          "allow_fallbacks": false,
+          "order": [
+            "parasail/fp8",
+            "crusoe/fp8",
+            "deepinfra/fp8"
+          ]
+        }
+      },
+      "requests_per_minute": 40.0,
+      "upstream_model": "deepseek/deepseek-v4-flash"
+    },
+    {
+      "access": "free",
+      "api_key_env": "OPENROUTER_API_KEY",
+      "base_url": "https://openrouter.ai/api/v1",
+      "completion_price_per_token": "0",
+      "context_length": 1000000,
+      "data_policy": "Free endpoint: NVIDIA logs prompts and may use them for training. Counts against the account-wide 1,000 free requests per day.",
+      "display_name": "Nemotron 3 Ultra 550B (free)",
+      "enabled": true,
+      "family": "NVIDIA Nemotron",
+      "id": "nemotron-3-ultra-free",
+      "max_concurrency": 2,
+      "open_weight": true,
+      "parameters": "550B total / 55B active",
+      "prompt_price_per_token": "0",
+      "provider": "openrouter",
+      "request_options": {},
+      "requests_per_minute": 18.0,
+      "upstream_model": "nvidia/nemotron-3-ultra-550b-a55b:free"
+    },
+    {
+      "access": "free",
+      "api_key_env": null,
+      "base_url": "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1",
+      "completion_price_per_token": "0",
+      "context_length": 131072,
+      "data_policy": "OVHcloud AI Endpoints anonymous access (2 requests/min per IP per model); OVHcloud states prompts are not stored or used for training.",
+      "display_name": "gpt-oss-120b",
+      "enabled": true,
+      "family": "OpenAI gpt-oss",
+      "id": "gpt-oss-120b",
+      "max_concurrency": 2,
+      "open_weight": true,
+      "parameters": "117B total / 5.1B active",
+      "prompt_price_per_token": "0",
+      "provider": "ovhcloud",
+      "request_options": {},
+      "requests_per_minute": 1.8,
+      "upstream_model": "gpt-oss-120b"
+    },
+    {
+      "access": "free",
+      "api_key_env": null,
+      "base_url": "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1",
+      "completion_price_per_token": "0",
+      "context_length": 131072,
+      "data_policy": "OVHcloud AI Endpoints anonymous access; not stored or used for training.",
+      "display_name": "Llama 3.3 70B Instruct",
+      "enabled": true,
+      "family": "Meta Llama",
+      "id": "llama-3.3-70b",
+      "max_concurrency": 2,
+      "open_weight": true,
+      "parameters": "70B dense",
+      "prompt_price_per_token": "0",
+      "provider": "ovhcloud",
+      "request_options": {},
+      "requests_per_minute": 1.8,
+      "upstream_model": "Meta-Llama-3_3-70B-Instruct"
+    },
+    {
+      "access": "free",
+      "api_key_env": null,
+      "base_url": "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1",
+      "completion_price_per_token": "0",
+      "context_length": 262144,
+      "data_policy": "OVHcloud AI Endpoints anonymous access; not stored or used for training.",
+      "display_name": "Qwen 3.8 27B",
+      "enabled": true,
+      "family": "Alibaba Qwen",
+      "id": "qwen-3.8-27b",
+      "max_concurrency": 2,
+      "open_weight": true,
+      "parameters": "27B dense",
+      "prompt_price_per_token": "0",
+      "provider": "ovhcloud",
+      "request_options": {},
+      "requests_per_minute": 1.8,
+      "upstream_model": "Qwen3.8-27B"
+    },
+    {
+      "access": "free",
+      "api_key_env": "GEMINI_API_KEY",
+      "base_url": "https://generativelanguage.googleapis.com/v1beta/openai",
+      "completion_price_per_token": "0",
+      "context_length": 262144,
+      "data_policy": "Google AI Studio free tier: Google may use prompts to improve its products.",
+      "display_name": "Gemma 4 31B",
+      "enabled": true,
+      "family": "Google Gemma",
+      "id": "gemma-4-31b",
+      "max_concurrency": 1,
+      "open_weight": true,
+      "parameters": "30.7B dense",
+      "prompt_price_per_token": "0",
+      "provider": "google_ai_studio",
+      "request_options": {},
+      "requests_per_minute": 14.0,
+      "upstream_model": "gemma-4-31b-it"
+    },
+    {
+      "access": "free",
+      "api_key_env": "NVIDIA_API_KEY",
+      "base_url": "https://integrate.api.nvidia.com/v1",
+      "completion_price_per_token": "0",
+      "context_length": 1000000,
+      "data_policy": "NVIDIA API Catalog developer trial (evaluation use).",
+      "display_name": "DeepSeek V4.1 Flash",
+      "enabled": true,
+      "family": "DeepSeek",
+      "id": "deepseek-v4.1-flash",
+      "max_concurrency": 2,
+      "open_weight": true,
+      "parameters": "552B total / 8-16B active",
+      "prompt_price_per_token": "0",
+      "provider": "nvidia_nim",
+      "request_options": {},
+      "requests_per_minute": 35.0,
+      "upstream_model": "deepseek-ai/deepseek-v4.1-flash"
+    },
+    {
+      "access": "local",
+      "api_key_env": null,
+      "base_url": "http://localhost:11434/v1",
+      "completion_price_per_token": "0",
+      "context_length": 8192,
+      "data_policy": "Runs on this laptop's RTX 5060 through Ollama; nothing leaves the machine.",
+      "display_name": "Qwen 3.5 9B (local)",
+      "enabled": true,
+      "family": "Alibaba Qwen",
+      "id": "qwen-3.5-9b-local",
+      "max_concurrency": 1,
+      "open_weight": true,
+      "parameters": "9B dense, Q4_K_M",
+      "prompt_price_per_token": "0",
+      "provider": "ollama",
+      "request_options": {
+        "reasoning_effort": "none"
+      },
+      "requests_per_minute": 600.0,
+      "upstream_model": "qwen3.5-9b-cp3"
+    }
+  ],
+  "models_sha256": "07f96bec521437302e2f4af442dfd245d9b8e686df85879a10fa94760c4f74b9",
+  "schema_version": "1.0",
+  "snapshot_id": "cp3-pool-2026-10-27"
+}

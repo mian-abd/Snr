@@ -1,0 +1,95 @@
+{
+  "counts": {
+    "gsm8k": {
+      "test": 40,
+      "train": 120,
+      "validation": 40
+    },
+    "humaneval_plus": {
+      "test": 20,
+      "train": 60,
+      "validation": 20
+    },
+    "mbpp_plus": {
+      "test": 20,
+      "train": 60,
+      "validation": 20
+    },
+    "mmlu_pro": {
+      "test": 40,
+      "train": 120,
+      "validation": 40
+    }
+  },
+  "excluded": {
+    "gsm8k": [
+      30,
+      263,
+      507,
+      509,
+      539,
+      756,
+      780,
+      851,
+      987,
+      1218,
+      1227,
+      1251
+    ]
+  },
+  "seed": 2026,
+  "sources": {
+    "gsm8k": {
+      "configuration": "main",
+      "dataset": "openai/gsm8k",
+      "file": "main/test-00000-of-00001.parquet",
+      "kind": "hf",
+      "license": "MIT",
+      "revision": "740312add88f781978c0658806c59bc2815b9866",
+      "sampled": 200,
+      "sha256": "ee7b8da9e381df27b9e3f7758a159ab2bdaa4dbaa910546cbbc47e0cb44e4f59",
+      "source_rows": 1319,
+      "split": "test"
+    },
+    "humaneval_plus": {
+      "dataset": "evalplus/humanevalplus",
+      "kind": "release",
+      "license": "Apache-2.0",
+      "revision": "v0.1.10",
+      "sampled": 100,
+      "sha256": "272720b90ac375502c8ed23cd791c2a93dfb22a911641a494da74a426c09f101",
+      "source_rows": 164,
+      "split": "test",
+      "url": "https://github.com/evalplus/humanevalplus_release/releases/download/v0.1.10/HumanEvalPlus.jsonl.gz"
+    },
+    "mbpp_plus": {
+      "dataset": "evalplus/mbppplus",
+      "kind": "release",
+      "license": "Apache-2.0",
+      "revision": "v0.2.0",
+      "sampled": 100,
+      "sha256": "af43697e8791c4c149bdfd6b489d8b5412507551ac20e28a439f650b8225db63",
+      "source_rows": 378,
+      "split": "test",
+      "url": "https://github.com/evalplus/mbppplus_release/releases/download/v0.2.0/MbppPlus.jsonl.gz"
+    },
+    "mmlu_pro": {
+      "dataset": "TIGER-Lab/MMLU-Pro",
+      "file": "data/test-00000-of-00001.parquet",
+      "kind": "hf",
+      "license": "MIT",
+      "revision": "b189ec765aa7ed75c8acfea42df31fdae71f97be",
+      "sampled": 200,
+      "sha256": "0e24a191921c2f453518a537a8b2117bd137e7714d4ef1565e9ba06c1ecb9ad8",
+      "source_rows": 12032,
+      "split": "test"
+    }
+  },
+  "split_fractions": {
+    "test": 0.2,
+    "train": 0.6,
+    "validation": 0.2
+  },
+  "suite": "cp3",
+  "suite_sha256": "fbac0ccdc0611704ee7b01d0a236fa83ce0ec77fa1a834212b62de097dc25ca8"
+}

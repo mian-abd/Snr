@@ -18,7 +18,7 @@ jobs:
           enable-cache: true
       - run: uv sync --project backend --extra dev --frozen
       - run: uv run --project backend ruff check backend/app backend/tests
-      - run: uv run --project backend mypy backend/app
+      - run: uv run --project backend mypy --config-file backend/pyproject.toml backend/app
       - run: uv run --project backend pytest backend/tests -q
       - run: uv run --project backend python backend/scripts/export_openapi.py
       - run: git diff --exit-code frontend/openapi.json

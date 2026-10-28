@@ -2,7 +2,7 @@ $ErrorActionPreference = "Stop"
 $PSNativeCommandUseErrorActionPreference = $true
 
 uv run --project backend ruff check backend/app backend/tests
-uv run --project backend mypy backend/app
+uv run --project backend python -m mypy --config-file backend/pyproject.toml backend/app
 uv run --project backend pytest backend/tests -q
 
 Push-Location frontend

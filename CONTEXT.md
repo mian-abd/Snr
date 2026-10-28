@@ -331,11 +331,11 @@ The frontend types are regenerated from FastAPI OpenAPI and CI rejects schema dr
 - dataset: `openai/gsm8k`
 - configuration: `main`
 - split: `test`
-- revision: `b0bb162abedc65e1fdd8e93ed090fd7598ee68bc`
+- revision: `b0bb162abedc65e1fdd8e93ed090fd7598ee68bc` (**wrong; see `docs/data-provenance-errata.md`.** This commit does not exist. The real test file is byte-identical from `e53f048` to `740312a`, SHA-256 `ee7b8da9…`, and all 12 questions match it.)
 - selection seed: `498`
 - source indices: `30, 263, 507, 509, 539, 756, 780, 851, 987, 1218, 1227, 1251`
 - sample size: 12
-- committed source checksum: `3730d312f6e3440559ace48831e51066acaca737f6eabec99bccb9e4b3c39d14`
+- committed source checksum: `3730d312f6e3440559ace48831e51066acaca737f6eabec99bccb9e4b3c39d14` (**unverifiable; see the errata.** It matches neither the source file nor the sample file.)
 
 ### Generation protocol
 
@@ -903,6 +903,82 @@ These limitations are presentation requirements, not hidden defects. Future work
 - Add Docker, local inference, or Ollama only if reproducible deployment or privacy becomes a defined requirement.
 - Add a database and queued job worker only when concurrent or remote use justifies them.
 - Add cloud deployment and authentication only after local research behavior is stable.
+
+## 25a. Checkpoint 3 groundwork (weeks of Oct 22 and Oct 29), started 2026-10-27
+
+Scope: the proposal's items for the weeks of Oct 22 and Oct 29, and nothing later.
+
+- **Done:** the train/validation/test split, feature extraction, starting and then comparing logistic regression vs gradient-boosted trees, multi-objective scoring, and tests.
+- **Skipped at the owner's request:** ethics discussion prep.
+- **Not started (week of Nov 5 and after):** selecting and integrating the learned router, plots, the oracle comparison, and Checkpoint 3 slides.
+
+The full record is `docs/checkpoint-3-progress.md`. Key facts:
+
+**Decisions taken with the owner (2026-10-27)**
+- Collect the full proposal sample, 600 prompts including coding.
+- Research and add free and open models beyond OpenRouter: 11 models in total, including keyed Google AI Studio and NVIDIA NIM entries.
+- Install Ollama: the owner explicitly asked for it to be downloaded and installed for them.
+- Docker Desktop for code scoring: on 2026-10-28 the owner asked for it to be installed for them. WSL 2 (`wsl --install --no-distribution`) and Docker Desktop 4.97 (winget) were installed from the owner's terminal, with admin prompts the owner approved, followed by a restart.
+- Spend cap: $15.
+
+**Provenance correction.** The GSM8K revision `b0bb162…` and checksum `3730d3…` recorded since Checkpoint 1 do not exist or match. The questions are genuine (verified against the real test file, SHA-256 `ee7b8da9…`, unchanged from commit `e53f048` to `740312a`). Committed evidence was left untouched. See `docs/data-provenance-errata.md`.
+
+**Suite.** `data/benchmarks/cp3_suite.jsonl` plus `.meta.json`, built by `app.benchmarks.prepare_suite`.
+- Contents: 200 GSM8K (Checkpoint 1's 12 excluded), 200 MMLU-Pro (14-category stratified), 100 HumanEval+ v0.1.10, 100 MBPP+ v0.2.0.
+- Every source pinned and verified by SHA-256; seed 2026.
+- Split 60/20/20 per benchmark, fixed before any model ran.
+- A rebuild is byte-identical.
+- Prompts are version `cp3-v2` (`app/benchmarks/tasks.py`). Token caps: 2,048 math, 4,096 QA and code.
+  - `cp3-v1` (1,024 / 2,048 / 2,048) was abandoned 7 minutes into the full run: it truncated reasoning-by-default models (DeepSeek, Mercury) on ordinary questions.
+  - All models were re-run under the new caps; the partial run is archived locally.
+
+**Pool.** `data/registry/cp3-pool-2026-10-27.json`, built by `app.registry.build_pool`: 11 models, 8 families. Access paths:
+- OpenRouter paid, pinned with `provider.order` and `allow_fallbacks: false`, the serving host recorded per call;
+- OpenRouter free (1,000 requests per day for this account, confirmed via `/api/v1/key`);
+- OVHcloud AI Endpoints anonymous (no key; about 2 requests per minute per IP per model; prompts not stored);
+- Google AI Studio and NVIDIA NIM (keys `GEMINI_API_KEY` and `NVIDIA_API_KEY` in `backend/.env`, created by the owner);
+- local Ollama.
+
+**Adapter and runner.**
+- `app/providers/openai_compatible.py` is an httpx adapter for any OpenAI-compatible endpoint. One attempt per call; normalized statuses (including `truncated` when `finish_reason` is `length` with empty content). Keys are never stored in results.
+- `app/benchmarks/suite_runner.py` runs each model as a paced worker. It is resumable from `data/local/cp3/<run>/<model>/{attempts,results}.jsonl`, makes at most one retry with backoff, and enforces the $15 cap on actual plus in-flight spend.
+
+**Smoke test fixes before the full run.**
+- DeepSeek V4 Flash pinned to DeepInfra alone was rate-limited (429), so it is now limited to Parasail, Crusoe and DeepInfra (fp8).
+- Truncation at 1,024 / 1,536 tokens: the QA and code caps were raised, first to 2,048, and in `cp3-v2` to 2,048 math and 4,096 QA and code.
+- OVH answers take 35–60 s, so two calls run in flight at the paced start rate.
+
+**Code scoring.** `app/benchmarks/code_scoring.py` runs EvalPlus `ganler/evalplus:v0.3.1` in Docker, pinned by digest `sha256:26b11809…`, with `--network none`, 8 GB memory, 4 CPUs, a 512-process limit, `no-new-privileges`, and `--cap-drop ALL`.
+- A task passes only when base and extra tests both pass.
+- Unsampled tasks get stubs because EvalPlus requires complete sample files.
+- With no network, EvalPlus reads the pinned, verified dataset files, mounted read-only through `HUMANEVAL_OVERRIDE_PATH` / `MBPP_OVERRIDE_PATH`.
+
+**Learned router.**
+- `app/learned/features.py`: prompt features plus model identity, model × task interactions, price, flags, and training-split-only history with leave-one-prompt-out.
+- `app/learned/train.py`: logistic regression and histogram gradient-boosted trees, small grids, chosen by validation log loss, with the overfitting gap reported. It also replays validation routing per priority against the fixed and rule baselines. The test split is never read.
+
+**Multi-objective scoring.** `app/routing/multi_objective.py` implements the proposal's formula, plus an optional reliability penalty. Normalization divides by the largest eligible value. The emphasized objective's weight is 0.5, not 1.0, so a cheap model expected to fail cannot win; a test covers this.
+
+**Results, 2026-10-28** (full tables in `docs/checkpoint-3-progress.md`; report in `data/learned/cp3-full-router-comparison.json`).
+- **Matrix:** 9 models × 600 prompts (`cp3-full`). Correct out of 600:
+  - Gemini 4 Argon 563, Gemma 4 26B 517, Nemotron 3 Ultra 511, DeepSeek V4 Flash 508, gpt-oss-120b 495;
+  - Mercury 3 494, Llama 3.3 70B 493, Qwen 3.5 9B local 471, Qwen 3.8 27B 461.
+- **Failures:** Mercury 3 had 71 truncated answers and DeepSeek 41. Qwen 3.8 on OVH had 56 timeouts and 48 truncated.
+- **Spend:** $3.32 recorded across all Checkpoint 3 runs; true spend is at most $3.55 (see the cost fix below).
+- **Classifiers (validation log loss):**
+  - Logistic regression (C = 0.01): 0.467.
+  - Gradient-boosted trees (depth 2): 0.491, overfitting twice as much.
+  - A model × task success-rate reference with no prompt features: 0.454, slightly better than both. The prompt features do not yet add signal on 360 training prompts.
+- **Routing replay (120 validation prompts):** logistic regression's quality priority matches always-Gemini (110) for 9% less, and its latency priority reaches 109 for half the cost. The boosted trees overrate the local 9B model.
+- **Keyed models:** Gemma 4 31B (AI Studio) and DeepSeek V4.1 Flash (NIM) are not in the matrix. Both services were overloaded on 2026-10-28: 3–6 of 8 smoke prompts answered, at 50–150 s each.
+- **Adapter fixes made during the run:**
+  - Truncated and empty answers now keep their billed usage and cost; they were recorded as $0.
+  - AI Studio's inline `<thought>` block is removed before scoring.
+
+**Local environment.**
+- mypy must run as `python -m mypy --config-file backend/pyproject.toml`: Application Control blocks `mypy.exe`, and without `--config-file` strict mode was silently not applied. The check script and CI are fixed.
+- Ollama v0.40.12 was installed from the signed official installer (Ollama Inc. / DigiCert, SHA-256 `9A6A44DD…`) in the owner's terminal, so it lands in the real profile, not the sandboxed one.
+- New dependencies: scikit-learn 1.9.1, NumPy 2.5.4 and PyArrow 26, locked in `backend/uv.lock`.
 
 ## 26. Rules for future contributors and agents
 
