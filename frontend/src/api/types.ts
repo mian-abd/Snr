@@ -231,3 +231,59 @@ export type PaginatedRecords = {
   offset: number
   limit: number
 }
+
+export type ClassifierMetrics = {
+  log_loss: number
+  brier: number
+  roc_auc: number | null
+  accuracy_at_0_5: number
+  rows: number
+}
+
+export type ClassifierReport = {
+  best_params: Record<string, number>
+  train: ClassifierMetrics
+  validation: ClassifierMetrics
+  overfit_gap_log_loss: number
+  grid: Array<{ params: Record<string, number>; train: ClassifierMetrics; validation: ClassifierMetrics }>
+}
+
+export type LearnedMatrixRow = {
+  model_id: string
+  display_name: string
+  access: string
+  prompts: number
+  correct: number
+  prompts_by_task: Record<string, number>
+  correct_by_task: Record<string, number>
+  failed_calls: number
+  median_latency_ms: number | null
+  cost_usd: number
+}
+
+export type LearnedStrategyOutcome = {
+  strategy_id: string
+  prompts: number
+  correct: number
+  accuracy: number
+  total_cost_usd: number
+  cost_per_correct_usd: number | null
+  median_latency_ms: number | null
+  p95_latency_ms: number | null
+  selected_models: Record<string, number>
+}
+
+export type LearnedRouterReport = {
+  run_id: string
+  pool_snapshot_id: string
+  models: string[]
+  models_without_results: string[]
+  features: string[]
+  rows: Record<string, number>
+  matrix: LearnedMatrixRow[]
+  classifiers: Record<string, ClassifierReport>
+  reference_model_task_prior: ClassifierMetrics
+  validation_prompts: number
+  strategies: LearnedStrategyOutcome[]
+  note: string
+}

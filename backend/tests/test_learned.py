@@ -6,7 +6,13 @@ import pytest
 
 from app.benchmarks.suite import Benchmark, RouterSplit, SuiteItem, TaskGroup
 from app.learned.features import Cell, ModelHistory, feature_row, prompt_features
-from app.learned.train import build_dataset, fit_and_compare, model_task_prior, replay_routing
+from app.learned.train import (
+    build_dataset,
+    fit_and_compare,
+    matrix_summary,
+    model_task_prior,
+    replay_routing,
+)
 from app.registry.pool import Access, PoolModel
 
 GROUPS = {Benchmark.GSM8K: TaskGroup.MATH, Benchmark.MMLU_PRO: TaskGroup.QA}
@@ -142,3 +148,15 @@ def test_routing_replay_compares_baselines_and_learned_policies() -> None:
     assert learned_cost["total_cost_usd"] < strategies["fixed_strongest"]["total_cost_usd"]
     assert learned_cost["accuracy"] >= strategies["fixed_cheapest"]["accuracy"]
     assert np.isfinite(strategies["gradient_boosted_trees:quality"]["accuracy"])
+
+
+def test_matrix_summary_counts_every_split_per_model_and_task() -> None:
+    items, cells = _synthetic()
+    rows = matrix_summary(cells, MODELS)
+    assert rows[0].model_id == "gemini-4-argon"  # solves everything, so it sorts first
+    for row in rows:
+        assert row.prompts == 90
+        assert sum(row.prompts_by_task.values()) == row.prompts
+        assert sum(row.correct_by_task.values()) == row.correct
+        assert row.failed_calls == 0
+    assert rows[0].correct == 90 and rows[0].prompts_by_task == {"math": 45, "qa": 45, "code": 0}

@@ -42,7 +42,7 @@ class FakeGenerationService:
 
 def _copy_evidence(data_dir) -> None:
     """Give a temporary data directory the committed sample and both saved matrices."""
-    for relative in ("benchmarks", "demo/checkpoint-1", "demo/checkpoint-2-paid"):
+    for relative in ("benchmarks", "demo/checkpoint-1", "demo/checkpoint-2-paid", "learned"):
         shutil.copytree(REPOSITORY_ROOT / "data" / relative, data_dir / relative)
 
 
@@ -166,6 +166,13 @@ def test_read_only_endpoints_work_without_credential(
         assert paid_dashboard.status_code == 200
         assert paid_dashboard.json()["pool"] == "paid"
         assert len(paid_dashboard.json()["prompts"]) == 12
+        learned = client.get("/api/v1/learned/report")
+        assert learned.status_code == 200
+        report = learned.json()
+        assert {"logistic_regression", "gradient_boosted_trees"} <= set(report["classifiers"])
+        assert len(report["matrix"]) == len(report["models"])
+        assert all(row["prompts"] == 600 for row in report["matrix"])
+        assert report["validation_prompts"] == 120
         compare = client.post("/api/v1/comparisons", json={"prompt": "hello", "save": False})
         assert compare.status_code == 503
 
@@ -181,6 +188,15 @@ def test_blank_prompt_is_rejected(registry, tmp_path) -> None:
     with TestClient(create_app(settings=settings, services=services)) as client:
         response = client.post("/api/v1/comparisons", json={"prompt": "   ", "save": False})
         assert response.status_code == 422
+
+
+def test_missing_learned_report_is_not_found(registry, tmp_path) -> None:
+    settings = Settings(openrouter_api_key=None, data_dir=tmp_path)
+    services = AppServices(
+        settings=settings, registry=registry, generation_service=None, benchmark_runner=None
+    )
+    with TestClient(create_app(settings=settings, services=services)) as client:
+        assert client.get("/api/v1/learned/report").status_code == 404
 
 
 def test_comparison_preserves_partial_success_and_save_is_opt_in(

@@ -95,3 +95,46 @@ test('starts a paid benchmark only after the cost estimate is confirmed', async 
   await waitFor(() => expect(posts).toHaveLength(1))
   expect(JSON.parse(posts[0])).toEqual({ mode: 'pilot', pool: 'paid', confirmed_estimate_usd: '0.02268' })
 })
+
+test('shows the learned-router comparison without any provider call', async () => {
+  const metrics = (logLoss: number) => ({ log_loss: logLoss, brier: 0.15, roc_auc: 0.7, accuracy_at_0_5: 0.8, rows: 6 })
+  const classifier = (logLoss: number, params: Record<string, number>) => ({ best_params: params, train: metrics(logLoss - 0.1), validation: metrics(logLoss), overfit_gap_log_loss: 0.1, grid: [] })
+  const report = {
+    run_id: 'cp3-test', pool_snapshot_id: 'pool', models: ['gemini-4-argon', 'gemma-4-26b'], models_without_results: ['gemma-4-31b'], features: [], rows: { train: 12, validation: 4 },
+    matrix: [
+      { model_id: 'gemini-4-argon', display_name: 'Gemini 4 Argon', access: 'paid', prompts: 600, correct: 563, prompts_by_task: { math: 200, qa: 200, code: 200 }, correct_by_task: { math: 193, qa: 185, code: 185 }, failed_calls: 1, median_latency_ms: 5400, cost_usd: 2.29 },
+      { model_id: 'gemma-4-26b', display_name: 'Gemma 4 26B', access: 'paid', prompts: 600, correct: 517, prompts_by_task: { math: 200, qa: 200, code: 200 }, correct_by_task: { math: 191, qa: 162, code: 164 }, failed_calls: 0, median_latency_ms: 5000, cost_usd: 0.08 },
+    ],
+    classifiers: { logistic_regression: classifier(0.467, { logisticregression__C: 0.01 }), gradient_boosted_trees: classifier(0.491, { max_depth: 2 }) },
+    reference_model_task_prior: metrics(0.454),
+    validation_prompts: 2,
+    strategies: [{ strategy_id: 'logistic_regression:quality', prompts: 2, correct: 2, accuracy: 1, total_cost_usd: 0.01, cost_per_correct_usd: 0.005, median_latency_ms: 5000, p95_latency_ms: 6000, selected_models: { 'gemini-4-argon': 2 } }],
+    note: 'Validation split only.',
+  }
+  const requested: string[] = []
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+    const url = String(input)
+    requested.push(url)
+    const body = url.endsWith('/health')
+      ? health
+      : url.includes('/routing/dashboard')
+        ? dashboard
+        : url.includes('/routing/validation')
+          ? validation
+          : url.endsWith('/learned/report')
+            ? report
+            : { schema_version: '1.0', snapshot_id: 'snapshot', metadata_as_of: '2026-09-30T00:00:00Z', source_url: 'https://example.com', models_sha256: 'abc', models: [model('google/gemma:free', 262144)] }
+    return new Response(JSON.stringify(body), { status: 200, headers: { 'Content-Type': 'application/json' } })
+  }))
+  const user = userEvent.setup()
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  render(<QueryClientProvider client={queryClient}><App /></QueryClientProvider>)
+  await screen.findByText('Adaptive LLM Router')
+  await user.click(screen.getByRole('tab', { name: /learned/i }))
+  expect(await screen.findByText('563 / 600')).toBeInTheDocument()
+  expect(screen.getByText('Logistic regression · higher quality')).toBeInTheDocument()
+  expect(screen.getByText('C 0.01')).toBeInTheDocument()
+  expect(screen.getByText(/predicts as well as either classifier/)).toBeInTheDocument()
+  expect(screen.getByText('gemma-4-31b')).toBeInTheDocument()
+  expect(requested.some((url) => url.includes('/comparisons') || url.includes('/routes'))).toBe(false)
+})

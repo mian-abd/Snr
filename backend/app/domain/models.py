@@ -253,6 +253,72 @@ class RoutingDashboard(StrictModel):
     prompts: list[ReplayPrompt]
 
 
+class ClassifierMetrics(StrictModel):
+    log_loss: float
+    brier: float
+    roc_auc: float | None
+    accuracy_at_0_5: float
+    rows: int
+
+
+class ClassifierTrial(StrictModel):
+    params: dict[str, int | float]
+    train: ClassifierMetrics
+    validation: ClassifierMetrics
+
+
+class ClassifierReport(StrictModel):
+    best_params: dict[str, int | float]
+    train: ClassifierMetrics
+    validation: ClassifierMetrics
+    overfit_gap_log_loss: float
+    grid: list[ClassifierTrial]
+
+
+class LearnedMatrixRow(StrictModel):
+    """One model's scored outcomes over the whole Checkpoint 3 suite (every split)."""
+
+    model_id: str
+    display_name: str
+    access: str
+    prompts: int
+    correct: int
+    prompts_by_task: dict[str, int]
+    correct_by_task: dict[str, int]
+    failed_calls: int
+    median_latency_ms: float | None
+    cost_usd: float
+
+
+class LearnedStrategyOutcome(StrictModel):
+    strategy_id: str
+    prompts: int
+    correct: int
+    accuracy: float
+    total_cost_usd: float
+    cost_per_correct_usd: float | None
+    median_latency_ms: float | None
+    p95_latency_ms: float | None
+    selected_models: dict[str, int]
+
+
+class LearnedRouterReport(StrictModel):
+    """The Checkpoint 3 matrix, classifier comparison, and validation routing replay."""
+
+    run_id: str
+    pool_snapshot_id: str
+    models: list[str]
+    models_without_results: list[str]
+    features: list[str]
+    rows: dict[str, int]
+    matrix: list[LearnedMatrixRow]
+    classifiers: dict[str, ClassifierReport]
+    reference_model_task_prior: ClassifierMetrics
+    validation_prompts: int
+    strategies: list[LearnedStrategyOutcome]
+    note: str
+
+
 class EligibilityRequest(StrictModel):
     min_context_tokens: int = Field(default=500_000, ge=1)
     # None evaluates every registered pool.

@@ -10,7 +10,6 @@ validation prompts with the multi-objective scorer. The held-out test split is n
 from __future__ import annotations
 
 import argparse
-import json
 import math
 from collections import Counter, defaultdict
 from dataclasses import dataclass
@@ -27,7 +26,14 @@ from sklearn.preprocessing import StandardScaler
 
 from app.benchmarks.suite import RouterSplit, SuiteItem, TaskGroup, load_suite
 from app.config import REPOSITORY_ROOT
-from app.domain.models import RoutingPriority
+from app.domain.models import (
+    ClassifierMetrics,
+    ClassifierReport,
+    LearnedMatrixRow,
+    LearnedRouterReport,
+    LearnedStrategyOutcome,
+    RoutingPriority,
+)
 from app.learned.features import Cell, ModelHistory, feature_row
 from app.registry.pool import PoolModel, PoolSnapshot, load_pool
 from app.routing.multi_objective import CandidateEstimate, choose
@@ -183,6 +189,37 @@ def model_task_prior(
     return np.array(rates, dtype=float)
 
 
+def matrix_summary(cells: list[Cell], models: dict[str, PoolModel]) -> list[LearnedMatrixRow]:
+    """Per-model outcomes over every split, strongest first."""
+    by_model: dict[str, list[Cell]] = defaultdict(list)
+    for cell in cells:
+        by_model[cell.model_id].append(cell)
+    rows = []
+    for model_id, members in by_model.items():
+        served = [cell.latency_ms for cell in members if cell.served]
+        rows.append(
+            LearnedMatrixRow(
+                model_id=model_id,
+                display_name=models[model_id].display_name,
+                access=models[model_id].access.value,
+                prompts=len(members),
+                correct=sum(cell.correct for cell in members),
+                prompts_by_task={
+                    group.value: sum(cell.task_group == group for cell in members)
+                    for group in TaskGroup
+                },
+                correct_by_task={
+                    group.value: sum(cell.task_group == group and cell.correct for cell in members)
+                    for group in TaskGroup
+                },
+                failed_calls=sum(not cell.served for cell in members),
+                median_latency_ms=round(median(served), 1) if served else None,
+                cost_usd=round(sum(cell.cost_usd for cell in members), 6),
+            )
+        )
+    return sorted(rows, key=lambda row: (-row.correct, row.model_id))
+
+
 def _summarize(outcomes: list[tuple[bool, float, float]]) -> dict[str, float | int | None]:
     correct = sum(1 for ok, _, _ in outcomes if ok)
     cost = sum(cost for _, cost, _ in outcomes)
@@ -298,30 +335,38 @@ def main() -> int:
     # Routing on the prior too shows what the prompt features add beyond a model-by-task table.
     probabilities["model_task_prior"] = model_task_prior(cells, validation, items)
     routing = replay_routing(validation, probabilities, cells, items, models)
-    report = {
-        "run_id": args.run_id,
-        "pool_snapshot_id": snapshot.snapshot_id,
-        "models": sorted(models),
-        "features": train.names,
-        "rows": {"train": len(train.y), "validation": len(validation.y)},
-        "classifiers": {
-            name: {key: value for key, value in entry.items() if key != "_model"}
+    report = LearnedRouterReport(
+        run_id=args.run_id,
+        pool_snapshot_id=snapshot.snapshot_id,
+        models=sorted(models),
+        models_without_results=sorted(m.id for m in snapshot.models if m.id not in models),
+        features=train.names,
+        rows={"train": len(train.y), "validation": len(validation.y)},
+        matrix=matrix_summary(cells, models),
+        classifiers={
+            name: ClassifierReport.model_validate(
+                {key: value for key, value in entry.items() if key != "_model"}
+            )
             for name, entry in comparison.items()
         },
-        "reference_model_task_prior": {
-            "validation": _metrics(validation.y, probabilities["model_task_prior"])
-        },
-        "routing_on_validation": routing,
-        "note": "Validation split only; the held-out test split is reserved for Checkpoint 3.",
-    }
+        reference_model_task_prior=ClassifierMetrics.model_validate(
+            _metrics(validation.y, probabilities["model_task_prior"])
+        ),
+        validation_prompts=routing["validation_prompts_with_all_models"],
+        strategies=[
+            LearnedStrategyOutcome(strategy_id=name, **summary)
+            for name, summary in routing["strategies"].items()
+        ],
+        note="Validation split only; the held-out test split is reserved for Checkpoint 3.",
+    )
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     out = REPORT_DIR / f"{args.run_id}-router-comparison.json"
-    out.write_text(json.dumps(report, indent=2, default=str) + "\n", encoding="utf-8")
-    for name, entry in report["classifiers"].items():
-        print(f"{name}: val log loss {entry['validation']['log_loss']:.4f}, "
-              f"AUC {entry['validation']['roc_auc']}, gap {entry['overfit_gap_log_loss']:.4f}")
-    prior = report["reference_model_task_prior"]["validation"]
-    print(f"model_task_prior: val log loss {prior['log_loss']:.4f}, AUC {prior['roc_auc']}")
+    out.write_text(report.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    for name, classifier in report.classifiers.items():
+        print(f"{name}: val log loss {classifier.validation.log_loss:.4f}, "
+              f"AUC {classifier.validation.roc_auc}, gap {classifier.overfit_gap_log_loss:.4f}")
+    prior = report.reference_model_task_prior
+    print(f"model_task_prior: val log loss {prior.log_loss:.4f}, AUC {prior.roc_auc}")
     print(f"wrote {out.relative_to(REPOSITORY_ROOT)}")
     return 0
 

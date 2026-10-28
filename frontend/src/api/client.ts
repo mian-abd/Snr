@@ -4,6 +4,7 @@ import type {
   ComparisonResponse,
   EligibilityResult,
   Health,
+  LearnedRouterReport,
   PaginatedRecords,
   RegistrySnapshot,
   RoutingDecision,
@@ -76,6 +77,14 @@ export const client = {
     }
   },
   benchmark: (runId: string) => api<BenchmarkView>(`/api/v1/benchmarks/runs/${runId}`),
+  learnedReport: async () => {
+    try {
+      return await api<LearnedRouterReport>('/api/v1/learned/report')
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 404) return null
+      throw error
+    }
+  },
   records: (runId: string) =>
     api<PaginatedRecords>(`/api/v1/benchmarks/runs/${runId}/records?limit=100`),
   benchmarkEstimate: (pool: RoutingPool, mode: 'pilot' | 'full') =>

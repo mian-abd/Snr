@@ -105,6 +105,8 @@ Code answers are scored by `app.benchmarks.code_scoring` inside `ganler/evalplus
 
 `uv run --project backend python -m app.learned.train --run-id cp3-full` writes `data/learned/cp3-full-router-comparison.json`.
 
+The console's read-only **05 Learned** tab shows that report through `GET /api/v1/learned/report`. It covers the matrix, the classifier comparison and the validation replay, and makes no provider call. Live routing still uses the Checkpoint 2 rule policy; integrating a learned router is a week-of-November-5 item.
+
 ## Results (2026-10-28)
 
 ### The matrix

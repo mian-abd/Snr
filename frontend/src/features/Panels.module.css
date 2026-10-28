@@ -110,6 +110,7 @@
 .tableWrap td code { display: block; max-width: 24rem; color: var(--text-dim); white-space: normal; overflow-wrap: anywhere; }
 .mono, .metricStrong { font-family: var(--font-mono); }
 .metricStrong { color: var(--accent) !important; font-weight: 700; }
+.nowrap { white-space: nowrap; }
 .reason { display: block; margin-top: 0.45rem; color: var(--text-dim); }
 .proofLine { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.8rem; color: var(--text-muted); font-size: 0.75rem; }
 .proofLine svg { color: var(--accent); }

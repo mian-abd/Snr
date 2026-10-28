@@ -143,6 +143,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/learned/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Learned Report
+         * @description The saved Checkpoint 3 matrix, classifier comparison, and validation replay.
+         */
+        get: operations["learned_report_api_v1_learned_report_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/models": {
         parameters: {
             query?: never;
@@ -428,6 +448,41 @@ export interface components {
              */
             tools: boolean;
         };
+        /** ClassifierMetrics */
+        ClassifierMetrics: {
+            /** Accuracy At 0 5 */
+            accuracy_at_0_5: number;
+            /** Brier */
+            brier: number;
+            /** Log Loss */
+            log_loss: number;
+            /** Roc Auc */
+            roc_auc: number | null;
+            /** Rows */
+            rows: number;
+        };
+        /** ClassifierReport */
+        ClassifierReport: {
+            /** Best Params */
+            best_params: {
+                [key: string]: number;
+            };
+            /** Grid */
+            grid: components["schemas"]["ClassifierTrial"][];
+            /** Overfit Gap Log Loss */
+            overfit_gap_log_loss: number;
+            train: components["schemas"]["ClassifierMetrics"];
+            validation: components["schemas"]["ClassifierMetrics"];
+        };
+        /** ClassifierTrial */
+        ClassifierTrial: {
+            /** Params */
+            params: {
+                [key: string]: number;
+            };
+            train: components["schemas"]["ClassifierMetrics"];
+            validation: components["schemas"]["ClassifierMetrics"];
+        };
         /** ComparisonRequest */
         ComparisonRequest: {
             /** @default baseline */
@@ -569,6 +624,92 @@ export interface components {
             status: string;
             /** Version */
             version: string;
+        };
+        /**
+         * LearnedMatrixRow
+         * @description One model's scored outcomes over the whole Checkpoint 3 suite (every split).
+         */
+        LearnedMatrixRow: {
+            /** Access */
+            access: string;
+            /** Correct */
+            correct: number;
+            /** Correct By Task */
+            correct_by_task: {
+                [key: string]: number;
+            };
+            /** Cost Usd */
+            cost_usd: number;
+            /** Display Name */
+            display_name: string;
+            /** Failed Calls */
+            failed_calls: number;
+            /** Median Latency Ms */
+            median_latency_ms: number | null;
+            /** Model Id */
+            model_id: string;
+            /** Prompts */
+            prompts: number;
+            /** Prompts By Task */
+            prompts_by_task: {
+                [key: string]: number;
+            };
+        };
+        /**
+         * LearnedRouterReport
+         * @description The Checkpoint 3 matrix, classifier comparison, and validation routing replay.
+         */
+        LearnedRouterReport: {
+            /** Classifiers */
+            classifiers: {
+                [key: string]: components["schemas"]["ClassifierReport"];
+            };
+            /** Features */
+            features: string[];
+            /** Matrix */
+            matrix: components["schemas"]["LearnedMatrixRow"][];
+            /** Models */
+            models: string[];
+            /** Models Without Results */
+            models_without_results: string[];
+            /** Note */
+            note: string;
+            /** Pool Snapshot Id */
+            pool_snapshot_id: string;
+            reference_model_task_prior: components["schemas"]["ClassifierMetrics"];
+            /** Rows */
+            rows: {
+                [key: string]: number;
+            };
+            /** Run Id */
+            run_id: string;
+            /** Strategies */
+            strategies: components["schemas"]["LearnedStrategyOutcome"][];
+            /** Validation Prompts */
+            validation_prompts: number;
+        };
+        /** LearnedStrategyOutcome */
+        LearnedStrategyOutcome: {
+            /** Accuracy */
+            accuracy: number;
+            /** Correct */
+            correct: number;
+            /** Cost Per Correct Usd */
+            cost_per_correct_usd: number | null;
+            /** Median Latency Ms */
+            median_latency_ms: number | null;
+            /** P95 Latency Ms */
+            p95_latency_ms: number | null;
+            /** Prompts */
+            prompts: number;
+            /** Selected Models */
+            selected_models: {
+                [key: string]: number;
+            };
+            /** Strategy Id */
+            strategy_id: string;
+            /** Total Cost Usd */
+            total_cost_usd: number;
         };
         /** ModelBenchmarkSummary */
         ModelBenchmarkSummary: {
@@ -1106,6 +1247,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthResponse"];
+                };
+            };
+        };
+    };
+    learned_report_api_v1_learned_report_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LearnedRouterReport"];
                 };
             };
         };

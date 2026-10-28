@@ -416,6 +416,124 @@
         "title": "CapabilitySpec",
         "type": "object"
       },
+      "ClassifierMetrics": {
+        "additionalProperties": false,
+        "properties": {
+          "accuracy_at_0_5": {
+            "title": "Accuracy At 0 5",
+            "type": "number"
+          },
+          "brier": {
+            "title": "Brier",
+            "type": "number"
+          },
+          "log_loss": {
+            "title": "Log Loss",
+            "type": "number"
+          },
+          "roc_auc": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Roc Auc"
+          },
+          "rows": {
+            "title": "Rows",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "log_loss",
+          "brier",
+          "roc_auc",
+          "accuracy_at_0_5",
+          "rows"
+        ],
+        "title": "ClassifierMetrics",
+        "type": "object"
+      },
+      "ClassifierReport": {
+        "additionalProperties": false,
+        "properties": {
+          "best_params": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            "title": "Best Params",
+            "type": "object"
+          },
+          "grid": {
+            "items": {
+              "$ref": "#/components/schemas/ClassifierTrial"
+            },
+            "title": "Grid",
+            "type": "array"
+          },
+          "overfit_gap_log_loss": {
+            "title": "Overfit Gap Log Loss",
+            "type": "number"
+          },
+          "train": {
+            "$ref": "#/components/schemas/ClassifierMetrics"
+          },
+          "validation": {
+            "$ref": "#/components/schemas/ClassifierMetrics"
+          }
+        },
+        "required": [
+          "best_params",
+          "train",
+          "validation",
+          "overfit_gap_log_loss",
+          "grid"
+        ],
+        "title": "ClassifierReport",
+        "type": "object"
+      },
+      "ClassifierTrial": {
+        "additionalProperties": false,
+        "properties": {
+          "params": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            "title": "Params",
+            "type": "object"
+          },
+          "train": {
+            "$ref": "#/components/schemas/ClassifierMetrics"
+          },
+          "validation": {
+            "$ref": "#/components/schemas/ClassifierMetrics"
+          }
+        },
+        "required": [
+          "params",
+          "train",
+          "validation"
+        ],
+        "title": "ClassifierTrial",
+        "type": "object"
+      },
       "ComparisonRequest": {
         "additionalProperties": false,
         "properties": {
@@ -822,6 +940,247 @@
           "active_benchmark_run_id"
         ],
         "title": "HealthResponse",
+        "type": "object"
+      },
+      "LearnedMatrixRow": {
+        "additionalProperties": false,
+        "description": "One model's scored outcomes over the whole Checkpoint 3 suite (every split).",
+        "properties": {
+          "access": {
+            "title": "Access",
+            "type": "string"
+          },
+          "correct": {
+            "title": "Correct",
+            "type": "integer"
+          },
+          "correct_by_task": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Correct By Task",
+            "type": "object"
+          },
+          "cost_usd": {
+            "title": "Cost Usd",
+            "type": "number"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "failed_calls": {
+            "title": "Failed Calls",
+            "type": "integer"
+          },
+          "median_latency_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median Latency Ms"
+          },
+          "model_id": {
+            "title": "Model Id",
+            "type": "string"
+          },
+          "prompts": {
+            "title": "Prompts",
+            "type": "integer"
+          },
+          "prompts_by_task": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Prompts By Task",
+            "type": "object"
+          }
+        },
+        "required": [
+          "model_id",
+          "display_name",
+          "access",
+          "prompts",
+          "correct",
+          "prompts_by_task",
+          "correct_by_task",
+          "failed_calls",
+          "median_latency_ms",
+          "cost_usd"
+        ],
+        "title": "LearnedMatrixRow",
+        "type": "object"
+      },
+      "LearnedRouterReport": {
+        "additionalProperties": false,
+        "description": "The Checkpoint 3 matrix, classifier comparison, and validation routing replay.",
+        "properties": {
+          "classifiers": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ClassifierReport"
+            },
+            "title": "Classifiers",
+            "type": "object"
+          },
+          "features": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Features",
+            "type": "array"
+          },
+          "matrix": {
+            "items": {
+              "$ref": "#/components/schemas/LearnedMatrixRow"
+            },
+            "title": "Matrix",
+            "type": "array"
+          },
+          "models": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Models",
+            "type": "array"
+          },
+          "models_without_results": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Models Without Results",
+            "type": "array"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "pool_snapshot_id": {
+            "title": "Pool Snapshot Id",
+            "type": "string"
+          },
+          "reference_model_task_prior": {
+            "$ref": "#/components/schemas/ClassifierMetrics"
+          },
+          "rows": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Rows",
+            "type": "object"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "strategies": {
+            "items": {
+              "$ref": "#/components/schemas/LearnedStrategyOutcome"
+            },
+            "title": "Strategies",
+            "type": "array"
+          },
+          "validation_prompts": {
+            "title": "Validation Prompts",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "run_id",
+          "pool_snapshot_id",
+          "models",
+          "models_without_results",
+          "features",
+          "rows",
+          "matrix",
+          "classifiers",
+          "reference_model_task_prior",
+          "validation_prompts",
+          "strategies",
+          "note"
+        ],
+        "title": "LearnedRouterReport",
+        "type": "object"
+      },
+      "LearnedStrategyOutcome": {
+        "additionalProperties": false,
+        "properties": {
+          "accuracy": {
+            "title": "Accuracy",
+            "type": "number"
+          },
+          "correct": {
+            "title": "Correct",
+            "type": "integer"
+          },
+          "cost_per_correct_usd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Per Correct Usd"
+          },
+          "median_latency_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median Latency Ms"
+          },
+          "p95_latency_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P95 Latency Ms"
+          },
+          "prompts": {
+            "title": "Prompts",
+            "type": "integer"
+          },
+          "selected_models": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Selected Models",
+            "type": "object"
+          },
+          "strategy_id": {
+            "title": "Strategy Id",
+            "type": "string"
+          },
+          "total_cost_usd": {
+            "title": "Total Cost Usd",
+            "type": "number"
+          }
+        },
+        "required": [
+          "strategy_id",
+          "prompts",
+          "correct",
+          "accuracy",
+          "total_cost_usd",
+          "cost_per_correct_usd",
+          "median_latency_ms",
+          "p95_latency_ms",
+          "selected_models"
+        ],
+        "title": "LearnedStrategyOutcome",
         "type": "object"
       },
       "ModelBenchmarkSummary": {
@@ -1984,6 +2343,25 @@
           }
         },
         "summary": "Health"
+      }
+    },
+    "/api/v1/learned/report": {
+      "get": {
+        "description": "The saved Checkpoint 3 matrix, classifier comparison, and validation replay.",
+        "operationId": "learned_report_api_v1_learned_report_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LearnedRouterReport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Learned Report"
       }
     },
     "/api/v1/models": {

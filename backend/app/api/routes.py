@@ -22,6 +22,7 @@ from app.domain.models import (
     EligibilityResult,
     GenerationRequest,
     HealthResponse,
+    LearnedRouterReport,
     PaginatedRecords,
     RegistrySnapshot,
     RouteRequest,
@@ -57,6 +58,8 @@ def _require_live_services(services: AppServices) -> None:
 
 
 DEMO_DIRS = {RoutingPool.BASELINE: "checkpoint-1", RoutingPool.PAID: PAID_DEMO_NAME}
+# Written by `python -m app.learned.train --run-id cp3-full` and committed.
+LEARNED_REPORT = Path("learned") / "cp3-full-router-comparison.json"
 
 
 def _registry_for(services: AppServices, pool: RoutingPool) -> ModelRegistry:
@@ -276,6 +279,18 @@ async def routing_validation(
             detail="The selected routing pool is not configured",
         )
     return build_validation_report(registry.models, pool=pool)
+
+
+@router.get("/learned/report", response_model=LearnedRouterReport)
+async def learned_report(services: Services) -> LearnedRouterReport:
+    """The saved Checkpoint 3 matrix, classifier comparison, and validation replay."""
+    path = services.settings.data_dir / LEARNED_REPORT
+    if not path.exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No learned-router report has been generated yet",
+        )
+    return LearnedRouterReport.model_validate_json(path.read_text(encoding="utf-8"))
 
 
 def _estimate(

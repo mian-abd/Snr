@@ -12,6 +12,10 @@
     "qwen-3.5-9b-local",
     "qwen-3.8-27b"
   ],
+  "models_without_results": [
+    "deepseek-v4.1-flash",
+    "gemma-4-31b"
+  ],
   "features": [
     "effort_score",
     "has_docstring_examples",
@@ -77,6 +81,188 @@
     "train": 3240,
     "validation": 1080
   },
+  "matrix": [
+    {
+      "model_id": "gemini-4-argon",
+      "display_name": "Gemini 4 Argon",
+      "access": "paid",
+      "prompts": 600,
+      "correct": 563,
+      "prompts_by_task": {
+        "math": 200,
+        "qa": 200,
+        "code": 200
+      },
+      "correct_by_task": {
+        "math": 193,
+        "qa": 185,
+        "code": 185
+      },
+      "failed_calls": 1,
+      "median_latency_ms": 5384.1,
+      "cost_usd": 2.2942
+    },
+    {
+      "model_id": "gemma-4-26b",
+      "display_name": "Gemma 4 26B A4B",
+      "access": "paid",
+      "prompts": 600,
+      "correct": 517,
+      "prompts_by_task": {
+        "math": 200,
+        "qa": 200,
+        "code": 200
+      },
+      "correct_by_task": {
+        "math": 191,
+        "qa": 162,
+        "code": 164
+      },
+      "failed_calls": 0,
+      "median_latency_ms": 4985.5,
+      "cost_usd": 0.078929
+    },
+    {
+      "model_id": "nemotron-3-ultra-free",
+      "display_name": "Nemotron 3 Ultra 550B (free)",
+      "access": "free",
+      "prompts": 600,
+      "correct": 511,
+      "prompts_by_task": {
+        "math": 200,
+        "qa": 200,
+        "code": 200
+      },
+      "correct_by_task": {
+        "math": 182,
+        "qa": 159,
+        "code": 170
+      },
+      "failed_calls": 5,
+      "median_latency_ms": 12565.3,
+      "cost_usd": 0.0
+    },
+    {
+      "model_id": "deepseek-v4-flash",
+      "display_name": "DeepSeek V4 Flash",
+      "access": "paid",
+      "prompts": 600,
+      "correct": 508,
+      "prompts_by_task": {
+        "math": 200,
+        "qa": 200,
+        "code": 200
+      },
+      "correct_by_task": {
+        "math": 182,
+        "qa": 158,
+        "code": 168
+      },
+      "failed_calls": 41,
+      "median_latency_ms": 5202.2,
+      "cost_usd": 0.11005
+    },
+    {
+      "model_id": "gpt-oss-120b",
+      "display_name": "gpt-oss-120b",
+      "access": "free",
+      "prompts": 600,
+      "correct": 495,
+      "prompts_by_task": {
+        "math": 200,
+        "qa": 200,
+        "code": 200
+      },
+      "correct_by_task": {
+        "math": 191,
+        "qa": 154,
+        "code": 150
+      },
+      "failed_calls": 3,
+      "median_latency_ms": 16203.1,
+      "cost_usd": 0.0
+    },
+    {
+      "model_id": "mercury-3",
+      "display_name": "Mercury 3",
+      "access": "paid",
+      "prompts": 600,
+      "correct": 494,
+      "prompts_by_task": {
+        "math": 200,
+        "qa": 200,
+        "code": 200
+      },
+      "correct_by_task": {
+        "math": 183,
+        "qa": 160,
+        "code": 151
+      },
+      "failed_calls": 71,
+      "median_latency_ms": 1294.4,
+      "cost_usd": 0.123102
+    },
+    {
+      "model_id": "llama-3.3-70b",
+      "display_name": "Llama 3.3 70B Instruct",
+      "access": "free",
+      "prompts": 600,
+      "correct": 493,
+      "prompts_by_task": {
+        "math": 200,
+        "qa": 200,
+        "code": 200
+      },
+      "correct_by_task": {
+        "math": 187,
+        "qa": 153,
+        "code": 153
+      },
+      "failed_calls": 0,
+      "median_latency_ms": 16015.8,
+      "cost_usd": 0.0
+    },
+    {
+      "model_id": "qwen-3.5-9b-local",
+      "display_name": "Qwen 3.5 9B (local)",
+      "access": "local",
+      "prompts": 600,
+      "correct": 471,
+      "prompts_by_task": {
+        "math": 200,
+        "qa": 200,
+        "code": 200
+      },
+      "correct_by_task": {
+        "math": 189,
+        "qa": 153,
+        "code": 129
+      },
+      "failed_calls": 0,
+      "median_latency_ms": 6644.5,
+      "cost_usd": 0.0
+    },
+    {
+      "model_id": "qwen-3.8-27b",
+      "display_name": "Qwen 3.8 27B",
+      "access": "free",
+      "prompts": 600,
+      "correct": 461,
+      "prompts_by_task": {
+        "math": 200,
+        "qa": 200,
+        "code": 200
+      },
+      "correct_by_task": {
+        "math": 181,
+        "qa": 144,
+        "code": 136
+      },
+      "failed_calls": 104,
+      "median_latency_ms": 23800.0,
+      "cost_usd": 0.0
+    }
+  ],
   "classifiers": {
     "logistic_regression": {
       "best_params": {
@@ -370,218 +556,229 @@
     }
   },
   "reference_model_task_prior": {
-    "validation": {
-      "log_loss": 0.4543939034050985,
-      "brier": 0.14561099664566476,
-      "roc_auc": 0.6972697600564574,
-      "accuracy_at_0_5": 0.8074074074074075,
-      "rows": 1080
-    }
+    "log_loss": 0.4543939034050985,
+    "brier": 0.14561099664566476,
+    "roc_auc": 0.6972697600564574,
+    "accuracy_at_0_5": 0.8074074074074075,
+    "rows": 1080
   },
-  "routing_on_validation": {
-    "validation_prompts_with_all_models": 120,
-    "strategies": {
-      "fixed_cheapest": {
-        "prompts": 120,
-        "correct": 99,
-        "accuracy": 0.825,
-        "total_cost_usd": 0.015888,
-        "cost_per_correct_usd": 0.00016049,
-        "median_latency_ms": 5032.1,
-        "p95_latency_ms": 13249.7,
-        "selected_models": {
-          "gemma-4-26b": 120
-        }
-      },
-      "fixed_strongest": {
-        "prompts": 120,
-        "correct": 110,
-        "accuracy": 0.9166666666666666,
-        "total_cost_usd": 0.519492,
-        "cost_per_correct_usd": 0.00472265,
-        "median_latency_ms": 5445.5,
-        "p95_latency_ms": 13900.6,
-        "selected_models": {
-          "gemini-4-argon": 120
-        }
-      },
-      "rule_balanced": {
-        "prompts": 120,
-        "correct": 102,
-        "accuracy": 0.85,
-        "total_cost_usd": 0.135929,
-        "cost_per_correct_usd": 0.00133263,
-        "median_latency_ms": 3917.1,
-        "p95_latency_ms": 10160.5,
-        "selected_models": {
-          "mercury-3": 57,
-          "gemma-4-26b": 36,
-          "gemini-4-argon": 27
-        }
-      },
-      "logistic_regression:cost": {
-        "prompts": 120,
-        "correct": 101,
-        "accuracy": 0.8416666666666667,
-        "total_cost_usd": 0.008153,
-        "cost_per_correct_usd": 8.073e-05,
-        "median_latency_ms": 8300.0,
-        "p95_latency_ms": 49361.2,
-        "selected_models": {
-          "nemotron-3-ultra-free": 40,
-          "gemma-4-26b": 40,
-          "gpt-oss-120b": 33,
-          "qwen-3.5-9b-local": 7
-        }
-      },
-      "logistic_regression:quality": {
-        "prompts": 120,
-        "correct": 110,
-        "accuracy": 0.9166666666666666,
-        "total_cost_usd": 0.474228,
-        "cost_per_correct_usd": 0.00431117,
-        "median_latency_ms": 5210.6,
-        "p95_latency_ms": 13900.6,
-        "selected_models": {
-          "gemini-4-argon": 92,
-          "gemma-4-26b": 28
-        }
-      },
-      "logistic_regression:latency": {
-        "prompts": 120,
-        "correct": 109,
-        "accuracy": 0.9083333333333333,
-        "total_cost_usd": 0.259558,
-        "cost_per_correct_usd": 0.00238127,
-        "median_latency_ms": 4205.3,
-        "p95_latency_ms": 12359.6,
-        "selected_models": {
-          "gemini-4-argon": 54,
-          "mercury-3": 53,
-          "gemma-4-26b": 13
-        }
-      },
-      "logistic_regression:balanced": {
-        "prompts": 120,
-        "correct": 99,
-        "accuracy": 0.825,
-        "total_cost_usd": 0.018367,
-        "cost_per_correct_usd": 0.00018553,
-        "median_latency_ms": 5009.6,
-        "p95_latency_ms": 14719.0,
-        "selected_models": {
-          "gemma-4-26b": 100,
-          "deepseek-v4-flash": 20
-        }
-      },
-      "gradient_boosted_trees:cost": {
-        "prompts": 120,
-        "correct": 89,
-        "accuracy": 0.7416666666666667,
-        "total_cost_usd": 0.0,
-        "cost_per_correct_usd": 0.0,
-        "median_latency_ms": 6984.1,
-        "p95_latency_ms": 85579.3,
-        "selected_models": {
-          "qwen-3.5-9b-local": 120
-        }
-      },
-      "gradient_boosted_trees:quality": {
-        "prompts": 120,
-        "correct": 99,
-        "accuracy": 0.825,
-        "total_cost_usd": 0.371966,
-        "cost_per_correct_usd": 0.00375723,
-        "median_latency_ms": 6014.4,
-        "p95_latency_ms": 29854.2,
-        "selected_models": {
-          "qwen-3.5-9b-local": 70,
-          "gemini-4-argon": 50
-        }
-      },
-      "gradient_boosted_trees:latency": {
-        "prompts": 120,
-        "correct": 94,
-        "accuracy": 0.7833333333333333,
-        "total_cost_usd": 0.057858,
-        "cost_per_correct_usd": 0.00061551,
-        "median_latency_ms": 2588.7,
-        "p95_latency_ms": 12929.8,
-        "selected_models": {
-          "mercury-3": 72,
-          "qwen-3.5-9b-local": 39,
-          "gemini-4-argon": 5,
-          "gemma-4-26b": 4
-        }
-      },
-      "gradient_boosted_trees:balanced": {
-        "prompts": 120,
-        "correct": 92,
-        "accuracy": 0.7666666666666667,
-        "total_cost_usd": 0.008611,
-        "cost_per_correct_usd": 9.359e-05,
-        "median_latency_ms": 4035.9,
-        "p95_latency_ms": 12929.8,
-        "selected_models": {
-          "qwen-3.5-9b-local": 80,
-          "mercury-3": 37,
-          "gemma-4-26b": 3
-        }
-      },
-      "model_task_prior:cost": {
-        "prompts": 120,
-        "correct": 101,
-        "accuracy": 0.8416666666666667,
-        "total_cost_usd": 0.008153,
-        "cost_per_correct_usd": 8.073e-05,
-        "median_latency_ms": 8416.2,
-        "p95_latency_ms": 49361.2,
-        "selected_models": {
-          "gpt-oss-120b": 40,
-          "nemotron-3-ultra-free": 40,
-          "gemma-4-26b": 40
-        }
-      },
-      "model_task_prior:quality": {
-        "prompts": 120,
-        "correct": 110,
-        "accuracy": 0.9166666666666666,
-        "total_cost_usd": 0.444928,
-        "cost_per_correct_usd": 0.0040448,
-        "median_latency_ms": 6400.0,
-        "p95_latency_ms": 19942.5,
-        "selected_models": {
-          "gemini-4-argon": 80,
-          "gpt-oss-120b": 40
-        }
-      },
-      "model_task_prior:latency": {
-        "prompts": 120,
-        "correct": 110,
-        "accuracy": 0.9166666666666666,
-        "total_cost_usd": 0.44772,
-        "cost_per_correct_usd": 0.00407019,
-        "median_latency_ms": 5078.7,
-        "p95_latency_ms": 13900.6,
-        "selected_models": {
-          "gemini-4-argon": 80,
-          "gemma-4-26b": 40
-        }
-      },
-      "model_task_prior:balanced": {
-        "prompts": 120,
-        "correct": 98,
-        "accuracy": 0.8166666666666667,
-        "total_cost_usd": 0.019511,
-        "cost_per_correct_usd": 0.00019909,
-        "median_latency_ms": 5097.8,
-        "p95_latency_ms": 14975.0,
-        "selected_models": {
-          "gemma-4-26b": 80,
-          "deepseek-v4-flash": 40
-        }
+  "validation_prompts": 120,
+  "strategies": [
+    {
+      "strategy_id": "fixed_cheapest",
+      "prompts": 120,
+      "correct": 99,
+      "accuracy": 0.825,
+      "total_cost_usd": 0.015888,
+      "cost_per_correct_usd": 0.00016049,
+      "median_latency_ms": 5032.1,
+      "p95_latency_ms": 13249.7,
+      "selected_models": {
+        "gemma-4-26b": 120
+      }
+    },
+    {
+      "strategy_id": "fixed_strongest",
+      "prompts": 120,
+      "correct": 110,
+      "accuracy": 0.9166666666666666,
+      "total_cost_usd": 0.519492,
+      "cost_per_correct_usd": 0.00472265,
+      "median_latency_ms": 5445.5,
+      "p95_latency_ms": 13900.6,
+      "selected_models": {
+        "gemini-4-argon": 120
+      }
+    },
+    {
+      "strategy_id": "rule_balanced",
+      "prompts": 120,
+      "correct": 102,
+      "accuracy": 0.85,
+      "total_cost_usd": 0.135929,
+      "cost_per_correct_usd": 0.00133263,
+      "median_latency_ms": 3917.1,
+      "p95_latency_ms": 10160.5,
+      "selected_models": {
+        "mercury-3": 57,
+        "gemma-4-26b": 36,
+        "gemini-4-argon": 27
+      }
+    },
+    {
+      "strategy_id": "logistic_regression:cost",
+      "prompts": 120,
+      "correct": 101,
+      "accuracy": 0.8416666666666667,
+      "total_cost_usd": 0.008153,
+      "cost_per_correct_usd": 0.00008073,
+      "median_latency_ms": 8300.0,
+      "p95_latency_ms": 49361.2,
+      "selected_models": {
+        "nemotron-3-ultra-free": 40,
+        "gemma-4-26b": 40,
+        "gpt-oss-120b": 33,
+        "qwen-3.5-9b-local": 7
+      }
+    },
+    {
+      "strategy_id": "logistic_regression:quality",
+      "prompts": 120,
+      "correct": 110,
+      "accuracy": 0.9166666666666666,
+      "total_cost_usd": 0.474228,
+      "cost_per_correct_usd": 0.00431117,
+      "median_latency_ms": 5210.6,
+      "p95_latency_ms": 13900.6,
+      "selected_models": {
+        "gemini-4-argon": 92,
+        "gemma-4-26b": 28
+      }
+    },
+    {
+      "strategy_id": "logistic_regression:latency",
+      "prompts": 120,
+      "correct": 109,
+      "accuracy": 0.9083333333333333,
+      "total_cost_usd": 0.259558,
+      "cost_per_correct_usd": 0.00238127,
+      "median_latency_ms": 4205.3,
+      "p95_latency_ms": 12359.6,
+      "selected_models": {
+        "gemini-4-argon": 54,
+        "mercury-3": 53,
+        "gemma-4-26b": 13
+      }
+    },
+    {
+      "strategy_id": "logistic_regression:balanced",
+      "prompts": 120,
+      "correct": 99,
+      "accuracy": 0.825,
+      "total_cost_usd": 0.018367,
+      "cost_per_correct_usd": 0.00018553,
+      "median_latency_ms": 5009.6,
+      "p95_latency_ms": 14719.0,
+      "selected_models": {
+        "gemma-4-26b": 100,
+        "deepseek-v4-flash": 20
+      }
+    },
+    {
+      "strategy_id": "gradient_boosted_trees:cost",
+      "prompts": 120,
+      "correct": 89,
+      "accuracy": 0.7416666666666667,
+      "total_cost_usd": 0.0,
+      "cost_per_correct_usd": 0.0,
+      "median_latency_ms": 6984.1,
+      "p95_latency_ms": 85579.3,
+      "selected_models": {
+        "qwen-3.5-9b-local": 120
+      }
+    },
+    {
+      "strategy_id": "gradient_boosted_trees:quality",
+      "prompts": 120,
+      "correct": 99,
+      "accuracy": 0.825,
+      "total_cost_usd": 0.371966,
+      "cost_per_correct_usd": 0.00375723,
+      "median_latency_ms": 6014.4,
+      "p95_latency_ms": 29854.2,
+      "selected_models": {
+        "qwen-3.5-9b-local": 70,
+        "gemini-4-argon": 50
+      }
+    },
+    {
+      "strategy_id": "gradient_boosted_trees:latency",
+      "prompts": 120,
+      "correct": 94,
+      "accuracy": 0.7833333333333333,
+      "total_cost_usd": 0.057858,
+      "cost_per_correct_usd": 0.00061551,
+      "median_latency_ms": 2588.7,
+      "p95_latency_ms": 12929.8,
+      "selected_models": {
+        "mercury-3": 72,
+        "qwen-3.5-9b-local": 39,
+        "gemini-4-argon": 5,
+        "gemma-4-26b": 4
+      }
+    },
+    {
+      "strategy_id": "gradient_boosted_trees:balanced",
+      "prompts": 120,
+      "correct": 92,
+      "accuracy": 0.7666666666666667,
+      "total_cost_usd": 0.008611,
+      "cost_per_correct_usd": 0.00009359,
+      "median_latency_ms": 4035.9,
+      "p95_latency_ms": 12929.8,
+      "selected_models": {
+        "qwen-3.5-9b-local": 80,
+        "mercury-3": 37,
+        "gemma-4-26b": 3
+      }
+    },
+    {
+      "strategy_id": "model_task_prior:cost",
+      "prompts": 120,
+      "correct": 101,
+      "accuracy": 0.8416666666666667,
+      "total_cost_usd": 0.008153,
+      "cost_per_correct_usd": 0.00008073,
+      "median_latency_ms": 8416.2,
+      "p95_latency_ms": 49361.2,
+      "selected_models": {
+        "gpt-oss-120b": 40,
+        "nemotron-3-ultra-free": 40,
+        "gemma-4-26b": 40
+      }
+    },
+    {
+      "strategy_id": "model_task_prior:quality",
+      "prompts": 120,
+      "correct": 110,
+      "accuracy": 0.9166666666666666,
+      "total_cost_usd": 0.444928,
+      "cost_per_correct_usd": 0.0040448,
+      "median_latency_ms": 6400.0,
+      "p95_latency_ms": 19942.5,
+      "selected_models": {
+        "gemini-4-argon": 80,
+        "gpt-oss-120b": 40
+      }
+    },
+    {
+      "strategy_id": "model_task_prior:latency",
+      "prompts": 120,
+      "correct": 110,
+      "accuracy": 0.9166666666666666,
+      "total_cost_usd": 0.44772,
+      "cost_per_correct_usd": 0.00407019,
+      "median_latency_ms": 5078.7,
+      "p95_latency_ms": 13900.6,
+      "selected_models": {
+        "gemini-4-argon": 80,
+        "gemma-4-26b": 40
+      }
+    },
+    {
+      "strategy_id": "model_task_prior:balanced",
+      "prompts": 120,
+      "correct": 98,
+      "accuracy": 0.8166666666666667,
+      "total_cost_usd": 0.019511,
+      "cost_per_correct_usd": 0.00019909,
+      "median_latency_ms": 5097.8,
+      "p95_latency_ms": 14975.0,
+      "selected_models": {
+        "gemma-4-26b": 80,
+        "deepseek-v4-flash": 40
       }
     }
-  },
+  ],
   "note": "Validation split only; the held-out test split is reserved for Checkpoint 3."
 }

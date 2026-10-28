@@ -32,6 +32,7 @@ Checkpoint 2 is deliberately a simple, rule-based policy—not a learned router 
 - Coding answers scored by EvalPlus in a Docker container with no network: `python -m app.benchmarks.code_scoring` (needs Docker Desktop).
 - Logistic regression and gradient-boosted trees predicting P(success | prompt, model), compared on the validation split, plus multi-objective routing replay: `python -m app.learned.train`.
 - First results (9 models × 600 prompts, 2026-10-28): logistic regression beats gradient-boosted trees, but a simple model-by-task success rate predicts as well as either. Report: `data/learned/cp3-full-router-comparison.json`.
+- A read-only **Learned** tab shows the matrix, the classifier comparison, and the validation routing replay from that report, without provider calls. Live routing still uses the Checkpoint 2 rule policy.
 
 Run each command with `uv run --project backend` from the repository root. See [weeks of Oct 22 and Oct 29](docs/checkpoint-3-progress.md) and the [data provenance errata](docs/data-provenance-errata.md).
 

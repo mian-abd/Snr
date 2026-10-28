@@ -321,6 +321,7 @@ All application routes use the `/api/v1` prefix.
 | `GET /benchmarks/runs/latest?pool=` | Load the pool's latest local or committed run | No |
 | `GET /benchmarks/runs/{run_id}` | Load manifest and aggregate summary | No |
 | `GET /benchmarks/runs/{run_id}/records` | Load paginated result records | No |
+| `GET /learned/report` | The committed Checkpoint 3 report (`data/learned/cp3-full-router-comparison.json`): matrix, classifier comparison, validation replay; 404 until generated | No |
 
 The frontend types are regenerated from FastAPI OpenAPI and CI rejects schema drift.
 
@@ -585,6 +586,17 @@ The header shows project name, checkpoint label, backend state, key-configured s
 - saved summary metrics;
 - expandable per-question evidence;
 - automatic loading of the pool's committed evidence when no newer local run exists.
+
+### Learned (added 2026-10-28, Checkpoint 3 groundwork)
+
+- read-only; it makes no provider call, and live routing still uses the rule policy;
+- protocol summary of the 600-prompt suite and its split;
+- benchmark matrix: per-model correct answers by benchmark, total, median latency, paid cost, failed calls, and the pool models without results;
+- classifier comparison on the validation split: chosen setting, log loss, Brier, ROC AUC, and overfitting gap for both classifiers and the model × task reference, with the best log loss highlighted and a one-line finding;
+- routing replay on the 120 validation prompts: correct answers, cost, median and p95 latency, and the models each strategy picked;
+- an empty state until `python -m app.learned.train` has written the report.
+
+The header label reads "CP3 IN PROGRESS".
 
 ### Visual system
 

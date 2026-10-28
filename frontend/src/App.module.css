@@ -1,7 +1,7 @@
 .app { min-height: 100vh; }
 .header { position: sticky; top: 0; z-index: 10; border-bottom: 1px solid var(--border); background: rgb(8 10 11 / 94%); backdrop-filter: blur(10px); }
 .headerInner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; width: min(100% - 2rem, 1280px); min-height: 4.25rem; margin: 0 auto; }
-.brand { display: flex; align-items: center; gap: 0.75rem; }
+.brand { display: flex; flex-shrink: 0; align-items: center; gap: 0.75rem; }
 .mark { display: grid; width: 2rem; height: 2rem; place-items: center; border: 1px solid var(--accent); border-radius: var(--radius-sm); color: var(--accent); font: 700 0.74rem var(--font-mono); }
 .brand strong { display: block; font-size: 0.9rem; }
 .brand span { color: var(--text-dim); font: 0.67rem var(--font-mono); }
