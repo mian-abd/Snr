@@ -16,6 +16,7 @@ from pathlib import Path
 from pydantic import Field
 
 from app.domain.models import StrictModel
+from app.domain.models import TaskGroup as TaskGroup  # re-exported; it now lives with the API
 from app.storage import read_jsonl
 
 
@@ -24,12 +25,6 @@ class Benchmark(StrEnum):
     MMLU_PRO = "mmlu_pro"
     HUMANEVAL_PLUS = "humaneval_plus"
     MBPP_PLUS = "mbpp_plus"
-
-
-class TaskGroup(StrEnum):
-    MATH = "math"
-    QA = "qa"
-    CODE = "code"
 
 
 class RouterSplit(StrEnum):

@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from app import __version__
 from app.benchmarks.costs import PAID_DEMO_NAME, SPEND_CAP_USD, estimate_worst_case_usd
 from app.benchmarks.gsm8k import load_samples
+from app.benchmarks.tasks import MAX_TOKENS
 from app.domain.models import (
     BenchmarkEstimate,
     BenchmarkMode,
@@ -22,7 +23,10 @@ from app.domain.models import (
     EligibilityResult,
     GenerationRequest,
     HealthResponse,
+    LearnedRouteRequest,
+    LearnedRouteResponse,
     LearnedRouterReport,
+    LearnedRoutingDecision,
     PaginatedRecords,
     RegistrySnapshot,
     RouteRequest,
@@ -32,6 +36,7 @@ from app.domain.models import (
     RoutingPool,
     RoutingValidationReport,
 )
+from app.learned.router import LearnedRouter, NoEligibleModelError
 from app.registry.filtering import evaluate_eligibility
 from app.registry.loader import ModelDriftError, ModelRegistry
 from app.routing import RuleBasedRouter, build_dashboard, build_validation_report
@@ -60,6 +65,7 @@ def _require_live_services(services: AppServices) -> None:
 DEMO_DIRS = {RoutingPool.BASELINE: "checkpoint-1", RoutingPool.PAID: PAID_DEMO_NAME}
 # Written by `python -m app.learned.train --run-id cp3-full` and committed.
 LEARNED_REPORT = Path("learned") / "cp3-full-router-comparison.json"
+LEARNED_TIMEOUT_SECONDS = 180  # the anonymous OVHcloud endpoints can take minutes
 
 
 def _registry_for(services: AppServices, pool: RoutingPool) -> ModelRegistry:
@@ -291,6 +297,55 @@ async def learned_report(services: Services) -> LearnedRouterReport:
             detail="No learned-router report has been generated yet",
         )
     return LearnedRouterReport.model_validate_json(path.read_text(encoding="utf-8"))
+
+
+def _learned_decision(
+    services: AppServices, payload: LearnedRouteRequest
+) -> tuple[LearnedRouter, LearnedRoutingDecision]:
+    router = services.learned_router
+    if router is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="The learned router has not been trained yet",
+        )
+    configured = {"OPENROUTER_API_KEY"} if services.settings.credential_configured else set()
+    try:
+        return router, router.decide(payload, configured)
+    except NoEligibleModelError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
+        ) from exc
+
+
+@router.post("/learned/decisions", response_model=LearnedRoutingDecision)
+async def preview_learned_decision(
+    payload: LearnedRouteRequest, services: Services
+) -> LearnedRoutingDecision:
+    """Score every model with the learned router and the chosen weights; no provider call."""
+    return _learned_decision(services, payload)[1]
+
+
+@router.post("/learned/routes", response_model=LearnedRouteResponse)
+async def learned_route(payload: LearnedRouteRequest, services: Services) -> LearnedRouteResponse:
+    """Route with the learned router and send exactly one generation request (one retry)."""
+    _, decision = _learned_decision(services, payload)
+    if services.learned_generation_service is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="The learned router's model pool is not configured",
+        )
+    outcome = await services.learned_generation_service.generate_with_retries(
+        GenerationRequest(
+            model_id=decision.selected_model_id,
+            prompt=payload.prompt,
+            max_tokens=MAX_TOKENS[decision.task_group],
+            timeout_seconds=LEARNED_TIMEOUT_SECONDS,
+        )
+    )
+    return LearnedRouteResponse(
+        decision=decision,
+        result=outcome.final.model_copy(update={"provider_request_id": None}),
+    )
 
 
 def _estimate(

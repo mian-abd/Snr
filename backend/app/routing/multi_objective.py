@@ -24,11 +24,18 @@ class PolicyWeights:
     latency: float
     reliability: float = 0.0
 
+    def __post_init__(self) -> None:
+        if min(self.cost, self.latency, self.reliability) < 0:
+            raise ValueError("cost, latency, and reliability weights must not be negative")
+        if self.quality <= 0:
+            raise ValueError("the quality weight must be positive")
 
-# One preset per user priority. The emphasised objective gets 0.5, not 1.0: the costliest model
-# always scores a full normalized 1.0 penalty, so a weight of 1.0 would let a model expected to
-# fail win just for being cheap. At 0.5 a cheap model wins only when its quality is close.
-# These are starting presets; the proposal tunes user weights on validation data (week of Nov 5).
+
+# Starting presets, one per user priority. The emphasised objective gets 0.5, not 1.0: the
+# costliest model always scores a full normalized 1.0 penalty, so a weight of 1.0 would let a
+# model expected to fail win just for being cheap. At 0.5 a cheap model wins only when its
+# quality is close. The integrated router uses presets tuned on the validation split instead
+# (``app.learned.evaluate.tune_weights``); these remain the replay's reference point.
 POLICY_WEIGHTS: dict[RoutingPriority, PolicyWeights] = {
     RoutingPriority.QUALITY: PolicyWeights(quality=1.0, cost=0.02, latency=0.02, reliability=0.5),
     RoutingPriority.COST: PolicyWeights(quality=1.0, cost=0.5, latency=0.05, reliability=0.5),
@@ -54,6 +61,11 @@ class ScoredCandidate:
     normalized_cost: float
     normalized_latency: float
     failure_rate: float
+    # The score's four terms, so a decision can show why a model won.
+    quality_term: float = 0.0
+    cost_penalty: float = 0.0
+    latency_penalty: float = 0.0
+    reliability_penalty: float = 0.0
 
 
 def _scale_to_max(values: list[float]) -> list[float]:
@@ -74,24 +86,34 @@ def score_candidates(
             raise ValueError(f"p_success out of range for {candidate.model_id}")
     costs = _scale_to_max([item.expected_cost_usd for item in candidates])
     latencies = _scale_to_max([item.expected_latency_ms for item in candidates])
-    scored = [
-        ScoredCandidate(
-            model_id=item.model_id,
-            score=(
-                weights.quality * item.p_success
-                - weights.cost * cost
-                - weights.latency * latency
-                - weights.reliability * item.failure_rate
-            ),
-            p_success=item.p_success,
-            normalized_cost=cost,
-            normalized_latency=latency,
-            failure_rate=item.failure_rate,
+    scored = []
+    for item, cost, latency in zip(candidates, costs, latencies, strict=True):
+        terms = (
+            weights.quality * item.p_success,
+            weights.cost * cost,
+            weights.latency * latency,
+            weights.reliability * item.failure_rate,
         )
-        for item, cost, latency in zip(candidates, costs, latencies, strict=True)
-    ]
+        scored.append(
+            ScoredCandidate(
+                model_id=item.model_id,
+                score=terms[0] - terms[1] - terms[2] - terms[3],
+                p_success=item.p_success,
+                normalized_cost=cost,
+                normalized_latency=latency,
+                failure_rate=item.failure_rate,
+                quality_term=terms[0],
+                cost_penalty=terms[1],
+                latency_penalty=terms[2],
+                reliability_penalty=terms[3],
+            )
+        )
     return sorted(scored, key=lambda item: (-item.score, item.normalized_cost, item.model_id))
 
 
-def choose(candidates: list[CandidateEstimate], priority: RoutingPriority) -> ScoredCandidate:
-    return score_candidates(candidates, POLICY_WEIGHTS[priority])[0]
+def choose(
+    candidates: list[CandidateEstimate], weights: PolicyWeights | RoutingPriority
+) -> ScoredCandidate:
+    """Pick the best candidate under explicit weights or a priority's starting preset."""
+    resolved = weights if isinstance(weights, PolicyWeights) else POLICY_WEIGHTS[weights]
+    return score_candidates(candidates, resolved)[0]

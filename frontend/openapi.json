@@ -942,6 +942,181 @@
         "title": "HealthResponse",
         "type": "object"
       },
+      "HeldoutEvaluation": {
+        "additionalProperties": false,
+        "description": "The selected router, refit on train + validation, evaluated once on the test split.",
+        "properties": {
+          "artifact_id": {
+            "title": "Artifact Id",
+            "type": "string"
+          },
+          "classifier": {
+            "$ref": "#/components/schemas/ClassifierMetrics"
+          },
+          "prompts": {
+            "title": "Prompts",
+            "type": "integer"
+          },
+          "reference_model_task_prior": {
+            "$ref": "#/components/schemas/ClassifierMetrics"
+          },
+          "strategies": {
+            "items": {
+              "$ref": "#/components/schemas/LearnedStrategyOutcome"
+            },
+            "title": "Strategies",
+            "type": "array"
+          },
+          "trained_on": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Trained On",
+            "type": "array"
+          }
+        },
+        "required": [
+          "artifact_id",
+          "trained_on",
+          "prompts",
+          "classifier",
+          "reference_model_task_prior",
+          "strategies"
+        ],
+        "title": "HeldoutEvaluation",
+        "type": "object"
+      },
+      "LearnedCandidate": {
+        "additionalProperties": false,
+        "properties": {
+          "access": {
+            "title": "Access",
+            "type": "string"
+          },
+          "context_length": {
+            "title": "Context Length",
+            "type": "integer"
+          },
+          "cost_penalty": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Penalty"
+          },
+          "data_policy": {
+            "title": "Data Policy",
+            "type": "string"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "eligible": {
+            "title": "Eligible",
+            "type": "boolean"
+          },
+          "exclusion_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exclusion Reason"
+          },
+          "expected_cost_usd": {
+            "title": "Expected Cost Usd",
+            "type": "number"
+          },
+          "expected_latency_ms": {
+            "title": "Expected Latency Ms",
+            "type": "number"
+          },
+          "failure_rate": {
+            "title": "Failure Rate",
+            "type": "number"
+          },
+          "latency_penalty": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latency Penalty"
+          },
+          "model_id": {
+            "title": "Model Id",
+            "type": "string"
+          },
+          "p_success": {
+            "title": "P Success",
+            "type": "number"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "quality_term": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quality Term"
+          },
+          "reliability_penalty": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reliability Penalty"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          }
+        },
+        "required": [
+          "model_id",
+          "display_name",
+          "access",
+          "provider",
+          "context_length",
+          "data_policy",
+          "eligible",
+          "exclusion_reason",
+          "p_success",
+          "expected_cost_usd",
+          "expected_latency_ms",
+          "failure_rate"
+        ],
+        "title": "LearnedCandidate",
+        "type": "object"
+      },
       "LearnedMatrixRow": {
         "additionalProperties": false,
         "description": "One model's scored outcomes over the whole Checkpoint 3 suite (every split).",
@@ -1015,9 +1190,72 @@
         "title": "LearnedMatrixRow",
         "type": "object"
       },
+      "LearnedRouteRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "min_context_tokens": {
+            "default": 1,
+            "minimum": 1.0,
+            "title": "Min Context Tokens",
+            "type": "integer"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/RoutingPriority",
+            "default": "balanced"
+          },
+          "prompt": {
+            "maxLength": 50000,
+            "minLength": 1,
+            "title": "Prompt",
+            "type": "string"
+          },
+          "task_group": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TaskGroup"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "weights": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RoutingWeights"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "prompt"
+        ],
+        "title": "LearnedRouteRequest",
+        "type": "object"
+      },
+      "LearnedRouteResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "decision": {
+            "$ref": "#/components/schemas/LearnedRoutingDecision"
+          },
+          "result": {
+            "$ref": "#/components/schemas/GenerationResult"
+          }
+        },
+        "required": [
+          "decision",
+          "result"
+        ],
+        "title": "LearnedRouteResponse",
+        "type": "object"
+      },
       "LearnedRouterReport": {
         "additionalProperties": false,
-        "description": "The Checkpoint 3 matrix, classifier comparison, and validation routing replay.",
+        "description": "The Checkpoint 3 matrix, classifier comparison, validation replay, and held-out test.",
         "properties": {
           "classifiers": {
             "additionalProperties": {
@@ -1032,6 +1270,9 @@
             },
             "title": "Features",
             "type": "array"
+          },
+          "heldout": {
+            "$ref": "#/components/schemas/HeldoutEvaluation"
           },
           "matrix": {
             "items": {
@@ -1076,6 +1317,14 @@
             "title": "Run Id",
             "type": "string"
           },
+          "selected_family": {
+            "title": "Selected Family",
+            "type": "string"
+          },
+          "selection_rule": {
+            "title": "Selection Rule",
+            "type": "string"
+          },
           "strategies": {
             "items": {
               "$ref": "#/components/schemas/LearnedStrategyOutcome"
@@ -1086,6 +1335,13 @@
           "validation_prompts": {
             "title": "Validation Prompts",
             "type": "integer"
+          },
+          "weight_tuning": {
+            "items": {
+              "$ref": "#/components/schemas/WeightTuningResult"
+            },
+            "title": "Weight Tuning",
+            "type": "array"
           }
         },
         "required": [
@@ -1098,11 +1354,92 @@
           "matrix",
           "classifiers",
           "reference_model_task_prior",
+          "selected_family",
+          "selection_rule",
           "validation_prompts",
           "strategies",
+          "weight_tuning",
+          "heldout",
           "note"
         ],
         "title": "LearnedRouterReport",
+        "type": "object"
+      },
+      "LearnedRoutingDecision": {
+        "additionalProperties": false,
+        "properties": {
+          "artifact_id": {
+            "title": "Artifact Id",
+            "type": "string"
+          },
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/LearnedCandidate"
+            },
+            "title": "Candidates",
+            "type": "array"
+          },
+          "custom_weights": {
+            "title": "Custom Weights",
+            "type": "boolean"
+          },
+          "min_context_tokens": {
+            "title": "Min Context Tokens",
+            "type": "integer"
+          },
+          "pool_snapshot_id": {
+            "title": "Pool Snapshot Id",
+            "type": "string"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/RoutingPriority"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "selected_model_id": {
+            "title": "Selected Model Id",
+            "type": "string"
+          },
+          "strategy_id": {
+            "title": "Strategy Id",
+            "type": "string"
+          },
+          "task_group": {
+            "$ref": "#/components/schemas/TaskGroup"
+          },
+          "task_group_inferred": {
+            "title": "Task Group Inferred",
+            "type": "boolean"
+          },
+          "task_signals": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Task Signals",
+            "type": "array"
+          },
+          "weights": {
+            "$ref": "#/components/schemas/RoutingWeights"
+          }
+        },
+        "required": [
+          "strategy_id",
+          "artifact_id",
+          "pool_snapshot_id",
+          "priority",
+          "weights",
+          "custom_weights",
+          "task_group",
+          "task_group_inferred",
+          "task_signals",
+          "min_context_tokens",
+          "selected_model_id",
+          "candidates",
+          "reason"
+        ],
+        "title": "LearnedRoutingDecision",
         "type": "object"
       },
       "LearnedStrategyOutcome": {
@@ -1111,6 +1448,13 @@
           "accuracy": {
             "title": "Accuracy",
             "type": "number"
+          },
+          "by_task": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/StrategyTaskOutcome"
+            },
+            "title": "By Task",
+            "type": "object"
           },
           "correct": {
             "title": "Correct",
@@ -1975,6 +2319,94 @@
         "title": "RoutingValidationReport",
         "type": "object"
       },
+      "RoutingWeights": {
+        "additionalProperties": false,
+        "description": "Multi-objective weights for the learned router. Quality must count for something.",
+        "properties": {
+          "cost": {
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Cost",
+            "type": "number"
+          },
+          "latency": {
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Latency",
+            "type": "number"
+          },
+          "quality": {
+            "default": 1.0,
+            "exclusiveMinimum": 0.0,
+            "maximum": 10.0,
+            "title": "Quality",
+            "type": "number"
+          },
+          "reliability": {
+            "default": 0.0,
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Reliability",
+            "type": "number"
+          }
+        },
+        "required": [
+          "cost",
+          "latency"
+        ],
+        "title": "RoutingWeights",
+        "type": "object"
+      },
+      "StrategyTaskOutcome": {
+        "additionalProperties": false,
+        "properties": {
+          "accuracy": {
+            "title": "Accuracy",
+            "type": "number"
+          },
+          "correct": {
+            "title": "Correct",
+            "type": "integer"
+          },
+          "median_latency_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median Latency Ms"
+          },
+          "prompts": {
+            "title": "Prompts",
+            "type": "integer"
+          },
+          "total_cost_usd": {
+            "title": "Total Cost Usd",
+            "type": "number"
+          }
+        },
+        "required": [
+          "prompts",
+          "correct",
+          "accuracy",
+          "total_cost_usd",
+          "median_latency_ms"
+        ],
+        "title": "StrategyTaskOutcome",
+        "type": "object"
+      },
+      "TaskGroup": {
+        "enum": [
+          "math",
+          "qa",
+          "code"
+        ],
+        "title": "TaskGroup",
+        "type": "string"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -2013,6 +2445,63 @@
           "type"
         ],
         "title": "ValidationError",
+        "type": "object"
+      },
+      "WeightTuningResult": {
+        "additionalProperties": false,
+        "description": "One priority's preset, chosen on the validation split.",
+        "properties": {
+          "accuracy_floor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accuracy Floor"
+          },
+          "candidates_tried": {
+            "title": "Candidates Tried",
+            "type": "integer"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/RoutingPriority"
+          },
+          "validation_correct": {
+            "title": "Validation Correct",
+            "type": "integer"
+          },
+          "validation_cost_usd": {
+            "title": "Validation Cost Usd",
+            "type": "number"
+          },
+          "validation_median_latency_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Validation Median Latency Ms"
+          },
+          "weights": {
+            "$ref": "#/components/schemas/RoutingWeights"
+          }
+        },
+        "required": [
+          "priority",
+          "weights",
+          "validation_correct",
+          "validation_cost_usd",
+          "validation_median_latency_ms",
+          "accuracy_floor",
+          "candidates_tried"
+        ],
+        "title": "WeightTuningResult",
         "type": "object"
       }
     }
@@ -2345,6 +2834,45 @@
         "summary": "Health"
       }
     },
+    "/api/v1/learned/decisions": {
+      "post": {
+        "description": "Score every model with the learned router and the chosen weights; no provider call.",
+        "operationId": "preview_learned_decision_api_v1_learned_decisions_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LearnedRouteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LearnedRoutingDecision"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Preview Learned Decision"
+      }
+    },
     "/api/v1/learned/report": {
       "get": {
         "description": "The saved Checkpoint 3 matrix, classifier comparison, and validation replay.",
@@ -2362,6 +2890,45 @@
           }
         },
         "summary": "Learned Report"
+      }
+    },
+    "/api/v1/learned/routes": {
+      "post": {
+        "description": "Route with the learned router and send exactly one generation request (one retry).",
+        "operationId": "learned_route_api_v1_learned_routes_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LearnedRouteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LearnedRouteResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Learned Route"
       }
     },
     "/api/v1/models": {

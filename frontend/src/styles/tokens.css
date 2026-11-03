@@ -14,6 +14,9 @@
   --success: #6cdda2;
   --warning: #f1c75b;
   --danger: #ff7474;
+  /* Chart series: dataviz reference palette slots 1 and 2 (dark steps), validated on --panel. */
+  --series-learned: #3987e5;
+  --series-baseline: #d95926;
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 10px;

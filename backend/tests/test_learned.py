@@ -1,3 +1,4 @@
+import json
 import random
 from decimal import Decimal
 
@@ -5,15 +6,35 @@ import numpy as np
 import pytest
 
 from app.benchmarks.suite import Benchmark, RouterSplit, SuiteItem, TaskGroup
-from app.learned.features import Cell, ModelHistory, feature_row, prompt_features
+from app.domain.models import (
+    LearnedRouteRequest,
+    LearnedStrategyOutcome,
+    RoutingPriority,
+    StrategyTaskOutcome,
+)
+from app.learned.evaluate import complete_prompts, routing_estimates, tune_weights, weight_grid
+from app.learned.features import (
+    Cell,
+    ModelHistory,
+    count_options,
+    feature_row,
+    infer_task_group,
+    prompt_features,
+)
+from app.learned.plots import _points
+from app.learned.router import LearnedRouter, NoEligibleModelError, RouterArtifact
 from app.learned.train import (
+    FIT_SPLITS,
+    TRAIN_ONLY,
     build_dataset,
+    export_router,
     fit_and_compare,
     matrix_summary,
     model_task_prior,
-    replay_routing,
+    select_family,
+    validation_replay,
 )
-from app.registry.pool import Access, PoolModel
+from app.registry.pool import Access, PoolModel, PoolSnapshot, models_sha256
 
 GROUPS = {Benchmark.GSM8K: TaskGroup.MATH, Benchmark.MMLU_PRO: TaskGroup.QA}
 
@@ -124,8 +145,7 @@ def test_both_classifiers_train_and_report_validation_metrics() -> None:
         assert "overfit_gap_log_loss" in entry
 
 
-def test_routing_replay_compares_baselines_and_learned_policies() -> None:
-    items, cells = _synthetic()
+def _trained(items: dict[str, SuiteItem], cells: list[Cell]):
     history = ModelHistory(cells)
     train = build_dataset(RouterSplit.TRAIN, cells, items, MODELS, history)
     validation = build_dataset(RouterSplit.VALIDATION, cells, items, MODELS, history)
@@ -134,20 +154,117 @@ def test_routing_replay_compares_baselines_and_learned_policies() -> None:
         name: entry["_model"].predict_proba(validation.x)[:, 1] for name, entry in report.items()
     }
     probabilities["model_task_prior"] = model_task_prior(cells, validation, items)
-    replay = replay_routing(validation, probabilities, cells, items, MODELS)
-    strategies = replay["strategies"]
-    assert replay["validation_prompts_with_all_models"] == 18
-    assert strategies["fixed_strongest"]["accuracy"] == 1.0
-    assert strategies["fixed_strongest"]["selected_models"] == {"gemini-4-argon": 18}
+    return report, validation, probabilities
+
+
+def _tuned(items, cells, validation, probabilities):
+    prompts = complete_prompts(cells, RouterSplit.VALIDATION, sorted(MODELS))
+    return tune_weights(
+        prompts, validation.probability(probabilities["logistic_regression"]),
+        routing_estimates(cells, TRAIN_ONLY), sorted(MODELS), cells, items,
+    )
+
+
+def test_routing_replay_compares_baselines_and_learned_policies() -> None:
+    items, cells = _synthetic()
+    _, validation, probabilities = _trained(items, cells)
+    tuned = _tuned(items, cells, validation, probabilities)
+    count, outcomes = validation_replay(
+        validation, probabilities, cells, items, MODELS, tuned, "logistic_regression"
+    )
+    strategies = {outcome.strategy_id: outcome for outcome in outcomes}
+    assert count == 18
+    assert strategies["fixed_strongest"].accuracy == 1.0
+    assert strategies["fixed_strongest"].selected_models == {"gemini-4-argon": 18}
+    assert all(sum(entry.selected_models.values()) == entry.prompts for entry in outcomes)
     assert all(
-        sum(entry["selected_models"].values()) == entry["prompts"] for entry in strategies.values()
+        sum(task.prompts for task in entry.by_task.values()) == entry.prompts for entry in outcomes
     )
     assert "model_task_prior:balanced" in strategies
+    assert "logistic_regression_tuned:quality" in strategies
     learned_cost = strategies["logistic_regression:cost"]
     # The learned router should keep most of the quality while spending less than always-strong.
-    assert learned_cost["total_cost_usd"] < strategies["fixed_strongest"]["total_cost_usd"]
-    assert learned_cost["accuracy"] >= strategies["fixed_cheapest"]["accuracy"]
-    assert np.isfinite(strategies["gradient_boosted_trees:quality"]["accuracy"])
+    assert learned_cost.total_cost_usd < strategies["fixed_strongest"].total_cost_usd
+    assert learned_cost.accuracy >= strategies["fixed_cheapest"].accuracy
+    assert np.isfinite(strategies["gradient_boosted_trees:quality"].accuracy)
+
+
+def test_tuned_presets_respect_their_accuracy_floors() -> None:
+    items, cells = _synthetic()
+    report, validation, probabilities = _trained(items, cells)
+    assert select_family(report) in report
+    tuned = {result.priority: result for result in _tuned(items, cells, validation, probabilities)}
+    assert set(tuned) == set(RoutingPriority)
+    quality = tuned[RoutingPriority.QUALITY]
+    assert quality.accuracy_floor is None
+    assert quality.candidates_tried == len(weight_grid(RoutingPriority.QUALITY))
+    for priority in (RoutingPriority.COST, RoutingPriority.LATENCY, RoutingPriority.BALANCED):
+        result = tuned[priority]
+        assert result.accuracy_floor is not None
+        assert result.validation_correct >= result.accuracy_floor
+        assert result.validation_correct <= quality.validation_correct
+    assert tuned[RoutingPriority.COST].validation_cost_usd <= quality.validation_cost_usd
+
+
+def test_exported_router_reproduces_the_fitted_model_and_applies_hard_filters() -> None:
+    items, cells = _synthetic()
+    report, validation, probabilities = _trained(items, cells)
+    tuned = _tuned(items, cells, validation, probabilities)
+    fit_history = ModelHistory(cells, FIT_SPLITS)
+    fit = build_dataset(FIT_SPLITS, cells, items, MODELS, fit_history)
+    pool_models = list(MODELS.values())
+    snapshot = PoolSnapshot(
+        snapshot_id="test-pool", metadata_as_of="2026-11-03",
+        models_sha256=models_sha256(pool_models), models=pool_models,
+    )
+    artifact, fitted = export_router(
+        "logistic_regression", report["logistic_regression"]["best_params"], fit, fit_history,
+        cells, tuned, snapshot, "test-run", MODELS,
+    )
+    router = LearnedRouter(RouterArtifact.model_validate_json(artifact.model_dump_json()), snapshot)
+    test = build_dataset(RouterSplit.TEST, cells, items, MODELS, fit_history)
+    served = [
+        router.p_success(items[s].question, items[s].task_group, len(items[s].options),
+                         MODELS[m])
+        for s, m in test.keys
+    ]
+    assert np.allclose(served, fitted.predict_proba(test.x)[:, 1], atol=1e-9)
+
+    hard = "Calculate 12 + 7 + 5 + 9 then explain. " * 6
+    quality = router.decide(LearnedRouteRequest(prompt=hard, priority="quality"), set())
+    assert quality.selected_model_id == "gemini-4-argon"
+    assert quality.task_group == TaskGroup.MATH and quality.task_group_inferred
+    assert quality.weights == router.artifact.weights[RoutingPriority.QUALITY]
+    assert all(item.eligible and item.score is not None for item in quality.candidates)
+    custom = router.decide(
+        LearnedRouteRequest(prompt=hard, weights={"cost": 0, "latency": 10}), set()
+    )
+    assert custom.custom_weights and custom.selected_model_id == "mercury-3"  # fastest
+    with pytest.raises(NoEligibleModelError):
+        router.decide(LearnedRouteRequest(prompt=hard, min_context_tokens=5000), set())
+
+
+def test_live_prompts_get_a_task_group_and_option_count() -> None:
+    assert infer_task_group("def add(a, b):\n    return a + b") == TaskGroup.CODE
+    assert infer_task_group("Calculate 15 percent of 240.") == TaskGroup.MATH
+    question = "Which planet is largest?\nA. Mars\nB. Jupiter\nC. Venus\nD. Earth"
+    assert count_options(question) == 4
+    assert infer_task_group(question) == TaskGroup.QA
+    assert infer_task_group("Explain the water cycle.") == TaskGroup.QA
+
+
+def test_history_snapshot_round_trips_the_aggregates() -> None:
+    _, cells = _synthetic()
+    history = ModelHistory(cells, FIT_SPLITS)
+    restored = ModelHistory.from_snapshot(json.loads(json.dumps(history.snapshot())))
+    assert restored.splits == FIT_SPLITS
+    for model_id in MODELS:
+        for group in (TaskGroup.MATH, TaskGroup.QA):
+            assert restored.success_rate(model_id, group, None) == pytest.approx(
+                history.success_rate(model_id, group, None)
+            )
+        assert restored.latency_ms[model_id] == pytest.approx(history.latency_ms[model_id])
+    assert restored.output_tokens == history.output_tokens
 
 
 def test_matrix_summary_counts_every_split_per_model_and_task() -> None:
@@ -160,3 +277,26 @@ def test_matrix_summary_counts_every_split_per_model_and_task() -> None:
         assert sum(row.correct_by_task.values()) == row.correct
         assert row.failed_calls == 0
     assert rows[0].correct == 90 and rows[0].prompts_by_task == {"math": 45, "qa": 45, "code": 0}
+
+
+def test_plot_points_merge_strategies_that_land_on_the_same_spot() -> None:
+    task = StrategyTaskOutcome(prompts=2, correct=2, accuracy=1.0, total_cost_usd=0.01,
+                               median_latency_ms=1000.0)
+
+    def outcome(strategy_id: str, correct: int, cost: float) -> LearnedStrategyOutcome:
+        return LearnedStrategyOutcome(
+            strategy_id=strategy_id, prompts=4, correct=correct, accuracy=correct / 4,
+            total_cost_usd=cost, cost_per_correct_usd=None, median_latency_ms=1000.0,
+            p95_latency_ms=None, selected_models={}, by_task={"math": task},
+        )
+
+    points = _points(
+        [outcome("fixed_cheapest", 3, 0.01), outcome("learned:quality", 3, 0.01),
+         outcome("learned:cost", 2, 0.0), outcome("model_task_prior:cost", 2, 0.0)],
+        None,
+    )
+    labels = sorted(point.label for point in points if point.label)
+    assert labels == ["Always cheapest = Learned · quality", "Learned · cost"]
+    # A shared spot keeps one marker per series; the reference strategy is not plotted.
+    assert len(points) == 3
+    assert len(_points([outcome("learned:latency", 3, 0.0)], "math")) == 1

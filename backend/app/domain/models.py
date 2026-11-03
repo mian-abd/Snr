@@ -150,6 +150,12 @@ class RoutingPriority(StrEnum):
     BALANCED = "balanced"
 
 
+class TaskGroup(StrEnum):
+    MATH = "math"
+    QA = "qa"
+    CODE = "code"
+
+
 class RouteRequest(StrictModel):
     prompt: str = Field(min_length=1, max_length=50_000)
     priority: RoutingPriority = RoutingPriority.BALANCED
@@ -290,6 +296,23 @@ class LearnedMatrixRow(StrictModel):
     cost_usd: float
 
 
+class RoutingWeights(StrictModel):
+    """Multi-objective weights for the learned router. Quality must count for something."""
+
+    quality: float = Field(default=1.0, gt=0, le=10)
+    cost: float = Field(ge=0, le=10)
+    latency: float = Field(ge=0, le=10)
+    reliability: float = Field(default=0.0, ge=0, le=10)
+
+
+class StrategyTaskOutcome(StrictModel):
+    prompts: int
+    correct: int
+    accuracy: float
+    total_cost_usd: float
+    median_latency_ms: float | None
+
+
 class LearnedStrategyOutcome(StrictModel):
     strategy_id: str
     prompts: int
@@ -300,10 +323,34 @@ class LearnedStrategyOutcome(StrictModel):
     median_latency_ms: float | None
     p95_latency_ms: float | None
     selected_models: dict[str, int]
+    by_task: dict[str, StrategyTaskOutcome] = Field(default_factory=dict)
+
+
+class WeightTuningResult(StrictModel):
+    """One priority's preset, chosen on the validation split."""
+
+    priority: RoutingPriority
+    weights: RoutingWeights
+    validation_correct: int
+    validation_cost_usd: float
+    validation_median_latency_ms: float | None
+    accuracy_floor: int | None
+    candidates_tried: int
+
+
+class HeldoutEvaluation(StrictModel):
+    """The selected router, refit on train + validation, evaluated once on the test split."""
+
+    artifact_id: str
+    trained_on: list[str]
+    prompts: int
+    classifier: ClassifierMetrics
+    reference_model_task_prior: ClassifierMetrics
+    strategies: list[LearnedStrategyOutcome]
 
 
 class LearnedRouterReport(StrictModel):
-    """The Checkpoint 3 matrix, classifier comparison, and validation routing replay."""
+    """The Checkpoint 3 matrix, classifier comparison, validation replay, and held-out test."""
 
     run_id: str
     pool_snapshot_id: str
@@ -314,9 +361,69 @@ class LearnedRouterReport(StrictModel):
     matrix: list[LearnedMatrixRow]
     classifiers: dict[str, ClassifierReport]
     reference_model_task_prior: ClassifierMetrics
+    selected_family: str
+    selection_rule: str
     validation_prompts: int
     strategies: list[LearnedStrategyOutcome]
+    weight_tuning: list[WeightTuningResult]
+    heldout: HeldoutEvaluation
     note: str
+
+
+class LearnedRouteRequest(StrictModel):
+    prompt: str = Field(min_length=1, max_length=50_000)
+    priority: RoutingPriority = RoutingPriority.BALANCED
+    weights: RoutingWeights | None = None  # overrides the priority's tuned preset
+    task_group: TaskGroup | None = None  # inferred from the prompt when absent
+    min_context_tokens: int = Field(default=1, ge=1)
+
+    @field_validator("prompt")
+    @classmethod
+    def prompt_must_not_be_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("prompt must not be blank")
+        return value
+
+
+class LearnedCandidate(StrictModel):
+    model_id: str
+    display_name: str
+    access: str
+    provider: str
+    context_length: int
+    data_policy: str
+    eligible: bool
+    exclusion_reason: str | None
+    p_success: float
+    expected_cost_usd: float
+    expected_latency_ms: float
+    failure_rate: float
+    score: float | None = None
+    quality_term: float | None = None
+    cost_penalty: float | None = None
+    latency_penalty: float | None = None
+    reliability_penalty: float | None = None
+
+
+class LearnedRoutingDecision(StrictModel):
+    strategy_id: str
+    artifact_id: str
+    pool_snapshot_id: str
+    priority: RoutingPriority
+    weights: RoutingWeights
+    custom_weights: bool
+    task_group: TaskGroup
+    task_group_inferred: bool
+    task_signals: list[str]
+    min_context_tokens: int
+    selected_model_id: str
+    candidates: list[LearnedCandidate]
+    reason: str
+
+
+class LearnedRouteResponse(StrictModel):
+    decision: LearnedRoutingDecision
+    result: GenerationResult
 
 
 class EligibilityRequest(StrictModel):

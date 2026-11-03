@@ -92,7 +92,13 @@ Implemented:
 - deterministic acceptance matrices (5 free-pool cases, 7 paid-pool cases);
 - a rebuilt 9-slide Checkpoint 2 deck, full speaking script, live demo guide, progress record, and backup demo recording.
 
-The proposal's next items (train/validation/test split, feature extraction, learned router) belong to the week of October 22 onward and Checkpoint 3. They were deliberately not started.
+The proposal's next items (train/validation/test split, feature extraction, learned router) belonged to the week of October 22 onward and Checkpoint 3; they were not started before Checkpoint 2.
+
+### Checkpoint 3 (Nov 12): work through the week of November 5 done
+
+- The work-plan items for the weeks of October 22, October 29, and November 5 are done; the October 29 ethics prep was skipped at the owner's request. See section 25a and `docs/checkpoint-3-progress.md`.
+- Checkpoint 3 slides, backup recording, and live-demo preparation are the owner's, for the week of November 12.
+- Not started (week of November 12 and after): presenting Checkpoint 3, the held-out evaluation for Checkpoint 4, the oracle comparison, under- and over-routing analysis, and robustness tests.
 
 ## 5. Current system architecture
 
@@ -321,7 +327,9 @@ All application routes use the `/api/v1` prefix.
 | `GET /benchmarks/runs/latest?pool=` | Load the pool's latest local or committed run | No |
 | `GET /benchmarks/runs/{run_id}` | Load manifest and aggregate summary | No |
 | `GET /benchmarks/runs/{run_id}/records` | Load paginated result records | No |
-| `GET /learned/report` | The committed Checkpoint 3 report (`data/learned/cp3-full-router-comparison.json`): matrix, classifier comparison, validation replay; 404 until generated | No |
+| `GET /learned/report` | The committed Checkpoint 3 report (`data/learned/cp3-full-router-comparison.json`): matrix, classifier comparison, validation replay, tuned weights, held-out comparison; 404 until generated | No |
+| `POST /learned/decisions` | Score every model with the learned router under a priority's tuned preset or custom `weights`; hard filters (context, configured key) first; optional `task_group` | No |
+| `POST /learned/routes` | The same decision, then one generation call (one retry) to the selected model through the multi-provider adapter | Yes |
 
 The frontend types are regenerated from FastAPI OpenAPI and CI rejects schema drift.
 
@@ -587,13 +595,16 @@ The header shows project name, checkpoint label, backend state, key-configured s
 - expandable per-question evidence;
 - automatic loading of the pool's committed evidence when no newer local run exists.
 
-### Learned (added 2026-10-28, Checkpoint 3 groundwork)
+### Learned (added 2026-10-28; router and held-out comparison added 2026-11-03)
 
-- read-only; it makes no provider call, and live routing still uses the rule policy;
+- the learned router: prompt, task type (inferred or chosen), four tuned priority presets, cost / latency / reliability weight sliders (custom weights), minimum context, a provider-free preview listing every model's P(success), expected cost and latency, failure rate, score and exclusion reason, and a one-call live route with the response, latency, tokens, and cost;
+- the held-out comparison: two one-line findings, a task filter (all, GSM8K, MMLU-Pro, code), accuracy-against-cost and accuracy-against-latency scatter charts with hover and keyboard tooltips, and the matching table;
+- the tuned weight presets with their validation results;
+- the Route tab still uses the Checkpoint 2 rule policy;
 - protocol summary of the 600-prompt suite and its split;
 - benchmark matrix: per-model correct answers by benchmark, total, median latency, paid cost, failed calls, and the pool models without results;
 - classifier comparison on the validation split: chosen setting, log loss, Brier, ROC AUC, and overfitting gap for both classifiers and the model × task reference, with the best log loss highlighted and a one-line finding;
-- routing replay on the 120 validation prompts: correct answers, cost, median and p95 latency, and the models each strategy picked;
+- routing replay on the 120 validation prompts, collapsed by default: correct answers, cost, median and p95 latency, and the models each strategy picked;
 - an empty state until `python -m app.learned.train` has written the report.
 
 The header label reads "CP3 IN PROGRESS".
@@ -918,11 +929,12 @@ These limitations are presentation requirements, not hidden defects. Future work
 
 ## 25a. Checkpoint 3 groundwork (weeks of Oct 22 and Oct 29), started 2026-10-27
 
-Scope: the proposal's items for the weeks of Oct 22 and Oct 29, and nothing later.
+Scope: the proposal's items for the weeks of Oct 22 and Oct 29; the week of Nov 5 follows at the end of this section.
 
 - **Done:** the train/validation/test split, feature extraction, starting and then comparing logistic regression vs gradient-boosted trees, multi-objective scoring, and tests.
 - **Skipped at the owner's request:** ethics discussion prep.
-- **Not started (week of Nov 5 and after):** selecting and integrating the learned router, plots, the oracle comparison, and Checkpoint 3 slides.
+- **Week of Nov 5 (done 2026-11-03):** selecting and integrating the learned router, tuned user weights, comparison plots, and the Checkpoint 3 held-out comparison. Checkpoint 3 slides, recording, and demo are left to the owner.
+- **Not started (week of Nov 12 and after):** the oracle comparison, routing error analysis, robustness tests.
 
 The full record is `docs/checkpoint-3-progress.md`. Key facts:
 
@@ -986,6 +998,28 @@ The full record is `docs/checkpoint-3-progress.md`. Key facts:
 - **Adapter fixes made during the run:**
   - Truncated and empty answers now keep their billed usage and cost; they were recorded as $0.
   - AI Studio's inline `<thought>` block is removed before scoring.
+
+**Week of Nov 5 (2026-11-03).** Full record: `docs/checkpoint-3-progress.md`, "Week of November 5".
+- **Selection:** logistic regression, C = 0.003 (the C grid was extended below 0.01). Validation log loss 0.465 against 0.491 for gradient-boosted trees; the model × task reference is still 0.454.
+- **Refit and export:** refit on train + validation and exported to `data/learned/cp3-router-model.json` as plain numbers. `app/learned/router.py` serves it without scikit-learn; training checks it reproduces scikit-learn's probabilities to 1e-9.
+- **User weights:** tuned on validation per priority (`app/learned/evaluate.py`):
+  - quality: cost 0.05, latency 0.02;
+  - cost: cost 1.0;
+  - faster and balanced: cost 0.05, latency 1.0. Balanced came out equal to faster.
+  - Floors: lower cost and faster must match the always-cheapest baseline's validation accuracy; balanced must reach halfway to the quality preset.
+  - Custom weights are accepted by the API and the console sliders.
+- **Held-out test** (120 prompts, read once), correct answers and cost:
+  - always cheapest: 103, $0.018; always strongest: 112, $0.493; CP2 rules: 105, $0.186;
+  - learned, quality: 112 for $0.422;
+  - learned, cost: 103 for $0.0003 (median 12.7 s);
+  - learned, faster / balanced: 102 for $0.116 (median 2.1 s, the fastest).
+  - The model × task reference routes within one or two answers of the learned router, and the router's choices are almost entirely per task.
+- **Plots:** `docs/figures/cp3-heldout-accuracy-{cost,latency}.{png,svg}`, drawn by `python -m app.learned.plots` (Matplotlib 3.11). The console draws the same charts.
+- **Keyed models retested:** DeepSeek V4.1 Flash 0 of 8, Gemma 4 31B 3 of 8. They stay out.
+- **Code changes:**
+  - `TaskGroup` moved to `app/domain/models.py`; `app.benchmarks.suite` re-exports it.
+  - `ModelHistory` takes its history splits and can be snapshotted.
+  - `PolicyWeights` validates itself, and `ScoredCandidate` carries the four score terms.
 
 **Local environment.**
 - mypy must run as `python -m mypy --config-file backend/pyproject.toml`: Application Control blocks `mypy.exe`, and without `--config-file` strict mode was silently not applied. The check script and CI are fixed.

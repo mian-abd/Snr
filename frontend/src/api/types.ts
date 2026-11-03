@@ -271,6 +271,38 @@ export type LearnedStrategyOutcome = {
   median_latency_ms: number | null
   p95_latency_ms: number | null
   selected_models: Record<string, number>
+  by_task: Record<string, StrategyTaskOutcome>
+}
+
+export type StrategyTaskOutcome = {
+  prompts: number
+  correct: number
+  accuracy: number
+  total_cost_usd: number
+  median_latency_ms: number | null
+}
+
+export type TaskGroup = 'math' | 'qa' | 'code'
+
+export type RoutingWeights = { quality: number; cost: number; latency: number; reliability: number }
+
+export type WeightTuningResult = {
+  priority: RoutingPriority
+  weights: RoutingWeights
+  validation_correct: number
+  validation_cost_usd: number
+  validation_median_latency_ms: number | null
+  accuracy_floor: number | null
+  candidates_tried: number
+}
+
+export type HeldoutEvaluation = {
+  artifact_id: string
+  trained_on: string[]
+  prompts: number
+  classifier: ClassifierMetrics
+  reference_model_task_prior: ClassifierMetrics
+  strategies: LearnedStrategyOutcome[]
 }
 
 export type LearnedRouterReport = {
@@ -283,7 +315,57 @@ export type LearnedRouterReport = {
   matrix: LearnedMatrixRow[]
   classifiers: Record<string, ClassifierReport>
   reference_model_task_prior: ClassifierMetrics
+  selected_family: string
+  selection_rule: string
   validation_prompts: number
   strategies: LearnedStrategyOutcome[]
+  weight_tuning: WeightTuningResult[]
+  heldout: HeldoutEvaluation
   note: string
 }
+
+export type LearnedCandidate = {
+  model_id: string
+  display_name: string
+  access: string
+  provider: string
+  context_length: number
+  data_policy: string
+  eligible: boolean
+  exclusion_reason: string | null
+  p_success: number
+  expected_cost_usd: number
+  expected_latency_ms: number
+  failure_rate: number
+  score: number | null
+  quality_term: number | null
+  cost_penalty: number | null
+  latency_penalty: number | null
+  reliability_penalty: number | null
+}
+
+export type LearnedRoutingDecision = {
+  strategy_id: string
+  artifact_id: string
+  pool_snapshot_id: string
+  priority: RoutingPriority
+  weights: RoutingWeights
+  custom_weights: boolean
+  task_group: TaskGroup
+  task_group_inferred: boolean
+  task_signals: string[]
+  min_context_tokens: number
+  selected_model_id: string
+  candidates: LearnedCandidate[]
+  reason: string
+}
+
+export type LearnedRouteRequest = {
+  prompt: string
+  priority: RoutingPriority
+  weights: RoutingWeights | null
+  task_group: TaskGroup | null
+  min_context_tokens: number
+}
+
+export type LearnedRouteResponse = { decision: LearnedRoutingDecision; result: GenerationResult }

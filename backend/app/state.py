@@ -13,8 +13,11 @@ from app.benchmarks.costs import (
 from app.benchmarks.runner import BenchmarkRunner
 from app.config import REPOSITORY_ROOT, Settings
 from app.domain.models import BenchmarkMode, BenchmarkStatus, RoutingPool
+from app.learned.router import ROUTER_MODEL_FILE, ROUTER_POOL_FILE, LearnedRouter, load_router
 from app.providers import GenerationService
+from app.providers.openai_compatible import OpenAICompatibleAdapter
 from app.registry import ModelRegistry
+from app.registry.pool import endpoint_for, load_pool
 
 REGISTRY_PATH = REPOSITORY_ROOT / "data" / "registry" / "openrouter-2026-09-30.json"
 PAID_REGISTRY_PATH = REPOSITORY_ROOT / "data" / "registry" / "openrouter-paid-2026-10-23.json"
@@ -36,6 +39,8 @@ class AppServices:
     routing_generation_service: GenerationService | None = None
     paid_benchmark_runner: BenchmarkRunner | None = None
     paid_benchmark_coordinator: BenchmarkCoordinator | None = None
+    learned_router: LearnedRouter | None = None
+    learned_generation_service: GenerationService | None = None
 
     def pool_registry(self, pool: RoutingPool) -> ModelRegistry | None:
         return self.routing_registry if pool == RoutingPool.PAID else self.registry
@@ -100,6 +105,25 @@ class BenchmarkCoordinator:
             self.active_run_id = None
 
 
+def build_learned_services(
+    settings: Settings,
+) -> tuple[LearnedRouter | None, GenerationService | None]:
+    """The exported learned router and a client for its pool, or neither before training."""
+    artifact = settings.data_dir / ROUTER_MODEL_FILE
+    if not artifact.exists():
+        return None, None
+    router = load_router(artifact, load_pool(settings.data_dir / ROUTER_POOL_FILE))
+    keys = (
+        {"OPENROUTER_API_KEY": settings.openrouter_api_key.get_secret_value()}
+        if settings.openrouter_api_key and settings.credential_configured
+        else {}
+    )
+    adapter = OpenAICompatibleAdapter(
+        [endpoint_for(model) for model in router.models.values()], keys=keys
+    )
+    return router, GenerationService(adapter)
+
+
 def build_services(settings: Settings) -> AppServices:
     registry = ModelRegistry(REGISTRY_PATH)
     routing_registry = ModelRegistry(
@@ -107,6 +131,7 @@ def build_services(settings: Settings) -> AppServices:
         expected_model_ids=PAID_MODEL_IDS,
         require_free=False,
     )
+    learned_router, learned_service = build_learned_services(settings)
     if not settings.credential_configured:
         return AppServices(
             settings=settings,
@@ -114,6 +139,8 @@ def build_services(settings: Settings) -> AppServices:
             generation_service=None,
             benchmark_runner=None,
             routing_registry=routing_registry,
+            learned_router=learned_router,
+            learned_generation_service=learned_service,
         )
     assert settings.openrouter_api_key is not None
     from app.providers.litellm_openrouter import LiteLLMOpenRouterAdapter
@@ -163,4 +190,6 @@ def build_services(settings: Settings) -> AppServices:
         routing_generation_service=routing_service,
         paid_benchmark_runner=paid_runner,
         paid_benchmark_coordinator=BenchmarkCoordinator(paid_runner),
+        learned_router=learned_router,
+        learned_generation_service=learned_service,
     )

@@ -52,3 +52,19 @@ def test_invalid_inputs_are_rejected() -> None:
         score_candidates([], POLICY_WEIGHTS[RoutingPriority.BALANCED])
     with pytest.raises(ValueError):
         score_candidates([CandidateEstimate("bad", 1.5, 0.0, 1.0)], PolicyWeights(1, 1, 1))
+
+
+def test_user_weights_are_checked_and_each_score_term_is_reported() -> None:
+    with pytest.raises(ValueError):
+        PolicyWeights(quality=0.0, cost=0.5, latency=0.5)
+    with pytest.raises(ValueError):
+        PolicyWeights(quality=1.0, cost=-0.1, latency=0.5)
+    weights = PolicyWeights(quality=1.0, cost=0.3, latency=0.2, reliability=0.5)
+    pool = [CHEAP, FAST, CandidateEstimate("flaky", 0.9, 0.002, 2000, failure_rate=0.2)]
+    for item in score_candidates(pool, weights):
+        terms = item.quality_term - item.cost_penalty - item.latency_penalty
+        assert item.score == pytest.approx(terms - item.reliability_penalty)
+    # Explicit weights and a priority's preset go through the same choice.
+    assert choose(pool, POLICY_WEIGHTS[RoutingPriority.LATENCY]) == choose(
+        pool, RoutingPriority.LATENCY
+    )

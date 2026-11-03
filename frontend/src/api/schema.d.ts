@@ -143,6 +143,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/learned/decisions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview Learned Decision
+         * @description Score every model with the learned router and the chosen weights; no provider call.
+         */
+        post: operations["preview_learned_decision_api_v1_learned_decisions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/learned/report": {
         parameters: {
             query?: never;
@@ -157,6 +177,26 @@ export interface paths {
         get: operations["learned_report_api_v1_learned_report_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/learned/routes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Learned Route
+         * @description Route with the learned router and send exactly one generation request (one retry).
+         */
+        post: operations["learned_route_api_v1_learned_routes_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -626,6 +666,59 @@ export interface components {
             version: string;
         };
         /**
+         * HeldoutEvaluation
+         * @description The selected router, refit on train + validation, evaluated once on the test split.
+         */
+        HeldoutEvaluation: {
+            /** Artifact Id */
+            artifact_id: string;
+            classifier: components["schemas"]["ClassifierMetrics"];
+            /** Prompts */
+            prompts: number;
+            reference_model_task_prior: components["schemas"]["ClassifierMetrics"];
+            /** Strategies */
+            strategies: components["schemas"]["LearnedStrategyOutcome"][];
+            /** Trained On */
+            trained_on: string[];
+        };
+        /** LearnedCandidate */
+        LearnedCandidate: {
+            /** Access */
+            access: string;
+            /** Context Length */
+            context_length: number;
+            /** Cost Penalty */
+            cost_penalty?: number | null;
+            /** Data Policy */
+            data_policy: string;
+            /** Display Name */
+            display_name: string;
+            /** Eligible */
+            eligible: boolean;
+            /** Exclusion Reason */
+            exclusion_reason: string | null;
+            /** Expected Cost Usd */
+            expected_cost_usd: number;
+            /** Expected Latency Ms */
+            expected_latency_ms: number;
+            /** Failure Rate */
+            failure_rate: number;
+            /** Latency Penalty */
+            latency_penalty?: number | null;
+            /** Model Id */
+            model_id: string;
+            /** P Success */
+            p_success: number;
+            /** Provider */
+            provider: string;
+            /** Quality Term */
+            quality_term?: number | null;
+            /** Reliability Penalty */
+            reliability_penalty?: number | null;
+            /** Score */
+            score?: number | null;
+        };
+        /**
          * LearnedMatrixRow
          * @description One model's scored outcomes over the whole Checkpoint 3 suite (every split).
          */
@@ -655,9 +748,28 @@ export interface components {
                 [key: string]: number;
             };
         };
+        /** LearnedRouteRequest */
+        LearnedRouteRequest: {
+            /**
+             * Min Context Tokens
+             * @default 1
+             */
+            min_context_tokens: number;
+            /** @default balanced */
+            priority: components["schemas"]["RoutingPriority"];
+            /** Prompt */
+            prompt: string;
+            task_group?: components["schemas"]["TaskGroup"] | null;
+            weights?: components["schemas"]["RoutingWeights"] | null;
+        };
+        /** LearnedRouteResponse */
+        LearnedRouteResponse: {
+            decision: components["schemas"]["LearnedRoutingDecision"];
+            result: components["schemas"]["GenerationResult"];
+        };
         /**
          * LearnedRouterReport
-         * @description The Checkpoint 3 matrix, classifier comparison, and validation routing replay.
+         * @description The Checkpoint 3 matrix, classifier comparison, validation replay, and held-out test.
          */
         LearnedRouterReport: {
             /** Classifiers */
@@ -666,6 +778,7 @@ export interface components {
             };
             /** Features */
             features: string[];
+            heldout: components["schemas"]["HeldoutEvaluation"];
             /** Matrix */
             matrix: components["schemas"]["LearnedMatrixRow"][];
             /** Models */
@@ -683,15 +796,51 @@ export interface components {
             };
             /** Run Id */
             run_id: string;
+            /** Selected Family */
+            selected_family: string;
+            /** Selection Rule */
+            selection_rule: string;
             /** Strategies */
             strategies: components["schemas"]["LearnedStrategyOutcome"][];
             /** Validation Prompts */
             validation_prompts: number;
+            /** Weight Tuning */
+            weight_tuning: components["schemas"]["WeightTuningResult"][];
+        };
+        /** LearnedRoutingDecision */
+        LearnedRoutingDecision: {
+            /** Artifact Id */
+            artifact_id: string;
+            /** Candidates */
+            candidates: components["schemas"]["LearnedCandidate"][];
+            /** Custom Weights */
+            custom_weights: boolean;
+            /** Min Context Tokens */
+            min_context_tokens: number;
+            /** Pool Snapshot Id */
+            pool_snapshot_id: string;
+            priority: components["schemas"]["RoutingPriority"];
+            /** Reason */
+            reason: string;
+            /** Selected Model Id */
+            selected_model_id: string;
+            /** Strategy Id */
+            strategy_id: string;
+            task_group: components["schemas"]["TaskGroup"];
+            /** Task Group Inferred */
+            task_group_inferred: boolean;
+            /** Task Signals */
+            task_signals: string[];
+            weights: components["schemas"]["RoutingWeights"];
         };
         /** LearnedStrategyOutcome */
         LearnedStrategyOutcome: {
             /** Accuracy */
             accuracy: number;
+            /** By Task */
+            by_task?: {
+                [key: string]: components["schemas"]["StrategyTaskOutcome"];
+            };
             /** Correct */
             correct: number;
             /** Cost Per Correct Usd */
@@ -982,6 +1131,44 @@ export interface components {
             /** Total Cases */
             total_cases: number;
         };
+        /**
+         * RoutingWeights
+         * @description Multi-objective weights for the learned router. Quality must count for something.
+         */
+        RoutingWeights: {
+            /** Cost */
+            cost: number;
+            /** Latency */
+            latency: number;
+            /**
+             * Quality
+             * @default 1
+             */
+            quality: number;
+            /**
+             * Reliability
+             * @default 0
+             */
+            reliability: number;
+        };
+        /** StrategyTaskOutcome */
+        StrategyTaskOutcome: {
+            /** Accuracy */
+            accuracy: number;
+            /** Correct */
+            correct: number;
+            /** Median Latency Ms */
+            median_latency_ms: number | null;
+            /** Prompts */
+            prompts: number;
+            /** Total Cost Usd */
+            total_cost_usd: number;
+        };
+        /**
+         * TaskGroup
+         * @enum {string}
+         */
+        TaskGroup: "math" | "qa" | "code";
         /** ValidationError */
         ValidationError: {
             /** Context */
@@ -994,6 +1181,24 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /**
+         * WeightTuningResult
+         * @description One priority's preset, chosen on the validation split.
+         */
+        WeightTuningResult: {
+            /** Accuracy Floor */
+            accuracy_floor: number | null;
+            /** Candidates Tried */
+            candidates_tried: number;
+            priority: components["schemas"]["RoutingPriority"];
+            /** Validation Correct */
+            validation_correct: number;
+            /** Validation Cost Usd */
+            validation_cost_usd: number;
+            /** Validation Median Latency Ms */
+            validation_median_latency_ms: number | null;
+            weights: components["schemas"]["RoutingWeights"];
         };
     };
     responses: never;
@@ -1251,6 +1456,39 @@ export interface operations {
             };
         };
     };
+    preview_learned_decision_api_v1_learned_decisions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LearnedRouteRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LearnedRoutingDecision"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     learned_report_api_v1_learned_report_get: {
         parameters: {
             query?: never;
@@ -1267,6 +1505,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LearnedRouterReport"];
+                };
+            };
+        };
+    };
+    learned_route_api_v1_learned_routes_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LearnedRouteRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LearnedRouteResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

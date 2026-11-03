@@ -4,7 +4,10 @@ import type {
   ComparisonResponse,
   EligibilityResult,
   Health,
+  LearnedRouteRequest,
+  LearnedRouteResponse,
   LearnedRouterReport,
+  LearnedRoutingDecision,
   PaginatedRecords,
   RegistrySnapshot,
   RoutingDecision,
@@ -85,6 +88,10 @@ export const client = {
       throw error
     }
   },
+  previewLearnedRoute: (request: LearnedRouteRequest) =>
+    api<LearnedRoutingDecision>('/api/v1/learned/decisions', { method: 'POST', body: JSON.stringify(request) }),
+  learnedRoute: (request: LearnedRouteRequest) =>
+    api<LearnedRouteResponse>('/api/v1/learned/routes', { method: 'POST', body: JSON.stringify(request) }),
   records: (runId: string) =>
     api<PaginatedRecords>(`/api/v1/benchmarks/runs/${runId}/records?limit=100`),
   benchmarkEstimate: (pool: RoutingPool, mode: 'pilot' | 'full') =>

@@ -266,24 +266,62 @@
   "classifiers": {
     "logistic_regression": {
       "best_params": {
-        "logisticregression__C": 0.01
+        "logisticregression__C": 0.003
       },
       "train": {
-        "log_loss": 0.38147897780164547,
-        "brier": 0.11724084684583108,
-        "roc_auc": 0.739725383240854,
-        "accuracy_at_0_5": 0.8453703703703703,
+        "log_loss": 0.38738393770080226,
+        "brier": 0.11872627387610214,
+        "roc_auc": 0.728957020596257,
+        "accuracy_at_0_5": 0.8459876543209877,
         "rows": 3240
       },
       "validation": {
-        "log_loss": 0.46658386825681225,
-        "brier": 0.15018881931143263,
-        "roc_auc": 0.6962883733239238,
-        "accuracy_at_0_5": 0.8,
+        "log_loss": 0.46476401650438354,
+        "brier": 0.14927230456303656,
+        "roc_auc": 0.6941601976005646,
+        "accuracy_at_0_5": 0.8064814814814815,
         "rows": 1080
       },
-      "overfit_gap_log_loss": 0.08510489045516678,
+      "overfit_gap_log_loss": 0.07738007880358128,
       "grid": [
+        {
+          "params": {
+            "logisticregression__C": 0.001
+          },
+          "train": {
+            "log_loss": 0.39587631228459924,
+            "brier": 0.12101082082237072,
+            "roc_auc": 0.719829334383523,
+            "accuracy_at_0_5": 0.8469135802469135,
+            "rows": 3240
+          },
+          "validation": {
+            "log_loss": 0.4669600601441272,
+            "brier": 0.14954959976008544,
+            "roc_auc": 0.6903173517995765,
+            "accuracy_at_0_5": 0.8074074074074075,
+            "rows": 1080
+          }
+        },
+        {
+          "params": {
+            "logisticregression__C": 0.003
+          },
+          "train": {
+            "log_loss": 0.38738393770080226,
+            "brier": 0.11872627387610214,
+            "roc_auc": 0.728957020596257,
+            "accuracy_at_0_5": 0.8459876543209877,
+            "rows": 3240
+          },
+          "validation": {
+            "log_loss": 0.46476401650438354,
+            "brier": 0.14927230456303656,
+            "roc_auc": 0.6941601976005646,
+            "accuracy_at_0_5": 0.8064814814814815,
+            "rows": 1080
+          }
+        },
         {
           "params": {
             "logisticregression__C": 0.01
@@ -300,6 +338,25 @@
             "brier": 0.15018881931143263,
             "roc_auc": 0.6962883733239238,
             "accuracy_at_0_5": 0.8,
+            "rows": 1080
+          }
+        },
+        {
+          "params": {
+            "logisticregression__C": 0.03
+          },
+          "train": {
+            "log_loss": 0.3742308627402564,
+            "brier": 0.11518077521399234,
+            "roc_auc": 0.7564862926737514,
+            "accuracy_at_0_5": 0.845679012345679,
+            "rows": 3240
+          },
+          "validation": {
+            "log_loss": 0.46913948786044135,
+            "brier": 0.15110180296917083,
+            "roc_auc": 0.6943090596330276,
+            "accuracy_at_0_5": 0.7972222222222223,
             "rows": 1080
           }
         },
@@ -562,6 +619,8 @@
     "accuracy_at_0_5": 0.8074074074074075,
     "rows": 1080
   },
+  "selected_family": "logistic_regression",
+  "selection_rule": "Lower validation log loss between logistic regression and gradient-boosted trees, as the proposal specifies; the train-to-validation gap is the overfitting check.",
   "validation_prompts": 120,
   "strategies": [
     {
@@ -575,6 +634,29 @@
       "p95_latency_ms": 13249.7,
       "selected_models": {
         "gemma-4-26b": 120
+      },
+      "by_task": {
+        "math": {
+          "prompts": 40,
+          "correct": 39,
+          "accuracy": 0.975,
+          "total_cost_usd": 0.002792,
+          "median_latency_ms": 3411.0
+        },
+        "qa": {
+          "prompts": 40,
+          "correct": 30,
+          "accuracy": 0.75,
+          "total_cost_usd": 0.008153,
+          "median_latency_ms": 7455.1
+        },
+        "code": {
+          "prompts": 40,
+          "correct": 30,
+          "accuracy": 0.75,
+          "total_cost_usd": 0.004942,
+          "median_latency_ms": 5157.8
+        }
       }
     },
     {
@@ -588,6 +670,29 @@
       "p95_latency_ms": 13900.6,
       "selected_models": {
         "gemini-4-argon": 120
+      },
+      "by_task": {
+        "math": {
+          "prompts": 40,
+          "correct": 39,
+          "accuracy": 0.975,
+          "total_cost_usd": 0.074564,
+          "median_latency_ms": 4693.0
+        },
+        "qa": {
+          "prompts": 40,
+          "correct": 36,
+          "accuracy": 0.9,
+          "total_cost_usd": 0.330376,
+          "median_latency_ms": 9654.1
+        },
+        "code": {
+          "prompts": 40,
+          "correct": 35,
+          "accuracy": 0.875,
+          "total_cost_usd": 0.114552,
+          "median_latency_ms": 5175.5
+        }
       }
     },
     {
@@ -603,6 +708,29 @@
         "mercury-3": 57,
         "gemma-4-26b": 36,
         "gemini-4-argon": 27
+      },
+      "by_task": {
+        "math": {
+          "prompts": 40,
+          "correct": 39,
+          "accuracy": 0.975,
+          "total_cost_usd": 0.008074,
+          "median_latency_ms": 1373.4
+        },
+        "qa": {
+          "prompts": 40,
+          "correct": 30,
+          "accuracy": 0.75,
+          "total_cost_usd": 0.045958,
+          "median_latency_ms": 5009.6
+        },
+        "code": {
+          "prompts": 40,
+          "correct": 33,
+          "accuracy": 0.825,
+          "total_cost_usd": 0.081897,
+          "median_latency_ms": 4990.9
+        }
       }
     },
     {
@@ -617,8 +745,31 @@
       "selected_models": {
         "nemotron-3-ultra-free": 40,
         "gemma-4-26b": 40,
-        "gpt-oss-120b": 33,
-        "qwen-3.5-9b-local": 7
+        "gpt-oss-120b": 29,
+        "qwen-3.5-9b-local": 11
+      },
+      "by_task": {
+        "math": {
+          "prompts": 40,
+          "correct": 39,
+          "accuracy": 0.975,
+          "total_cost_usd": 0.0,
+          "median_latency_ms": 6556.5
+        },
+        "qa": {
+          "prompts": 40,
+          "correct": 30,
+          "accuracy": 0.75,
+          "total_cost_usd": 0.008153,
+          "median_latency_ms": 7455.1
+        },
+        "code": {
+          "prompts": 40,
+          "correct": 32,
+          "accuracy": 0.8,
+          "total_cost_usd": 0.0,
+          "median_latency_ms": 17842.3
+        }
       }
     },
     {
@@ -626,13 +777,36 @@
       "prompts": 120,
       "correct": 110,
       "accuracy": 0.9166666666666666,
-      "total_cost_usd": 0.474228,
-      "cost_per_correct_usd": 0.00431117,
-      "median_latency_ms": 5210.6,
+      "total_cost_usd": 0.492118,
+      "cost_per_correct_usd": 0.0044738,
+      "median_latency_ms": 5277.2,
       "p95_latency_ms": 13900.6,
       "selected_models": {
-        "gemini-4-argon": 92,
-        "gemma-4-26b": 28
+        "gemini-4-argon": 101,
+        "gemma-4-26b": 19
+      },
+      "by_task": {
+        "math": {
+          "prompts": 40,
+          "correct": 39,
+          "accuracy": 0.975,
+          "total_cost_usd": 0.04719,
+          "median_latency_ms": 3991.4
+        },
+        "qa": {
+          "prompts": 40,
+          "correct": 36,
+          "accuracy": 0.9,
+          "total_cost_usd": 0.330376,
+          "median_latency_ms": 9654.1
+        },
+        "code": {
+          "prompts": 40,
+          "correct": 35,
+          "accuracy": 0.875,
+          "total_cost_usd": 0.114552,
+          "median_latency_ms": 5175.5
+        }
       }
     },
     {
@@ -640,14 +814,37 @@
       "prompts": 120,
       "correct": 109,
       "accuracy": 0.9083333333333333,
-      "total_cost_usd": 0.259558,
-      "cost_per_correct_usd": 0.00238127,
-      "median_latency_ms": 4205.3,
-      "p95_latency_ms": 12359.6,
+      "total_cost_usd": 0.241522,
+      "cost_per_correct_usd": 0.0022158,
+      "median_latency_ms": 3343.8,
+      "p95_latency_ms": 12257.7,
       "selected_models": {
-        "gemini-4-argon": 54,
-        "mercury-3": 53,
-        "gemma-4-26b": 13
+        "mercury-3": 66,
+        "gemini-4-argon": 52,
+        "gemma-4-26b": 2
+      },
+      "by_task": {
+        "math": {
+          "prompts": 40,
+          "correct": 39,
+          "accuracy": 0.975,
+          "total_cost_usd": 0.003849,
+          "median_latency_ms": 894.9
+        },
+        "qa": {
+          "prompts": 40,
+          "correct": 35,
+          "accuracy": 0.875,
+          "total_cost_usd": 0.126445,
+          "median_latency_ms": 3820.3
+        },
+        "code": {
+          "prompts": 40,
+          "correct": 35,
+          "accuracy": 0.875,
+          "total_cost_usd": 0.111229,
+          "median_latency_ms": 5175.5
+        }
       }
     },
     {
@@ -655,13 +852,35 @@
       "prompts": 120,
       "correct": 99,
       "accuracy": 0.825,
-      "total_cost_usd": 0.018367,
-      "cost_per_correct_usd": 0.00018553,
-      "median_latency_ms": 5009.6,
-      "p95_latency_ms": 14719.0,
+      "total_cost_usd": 0.015888,
+      "cost_per_correct_usd": 0.00016049,
+      "median_latency_ms": 5032.1,
+      "p95_latency_ms": 13249.7,
       "selected_models": {
-        "gemma-4-26b": 100,
-        "deepseek-v4-flash": 20
+        "gemma-4-26b": 120
+      },
+      "by_task": {
+        "math": {
+          "prompts": 40,
+          "correct": 39,
+          "accuracy": 0.975,
+          "total_cost_usd": 0.002792,
+          "median_latency_ms": 3411.0
+        },
+        "qa": {
+          "prompts": 40,
+          "correct": 30,
+          "accuracy": 0.75,
+          "total_cost_usd": 0.008153,
+          "median_latency_ms": 7455.1
+        },
+        "code": {
+          "prompts": 40,
+          "correct": 30,
+          "accuracy": 0.75,
+          "total_cost_usd": 0.004942,
+          "median_latency_ms": 5157.8
+        }
       }
     },
     {
@@ -675,6 +894,29 @@
       "p95_latency_ms": 85579.3,
       "selected_models": {
         "qwen-3.5-9b-local": 120
+      },
+      "by_task": {
+        "math": {
+          "prompts": 40,
+          "correct": 38,
+          "accuracy": 0.95,
+          "total_cost_usd": 0.0,
+          "median_latency_ms": 3485.9
+        },
+        "qa": {
+          "prompts": 40,
+          "correct": 29,
+          "accuracy": 0.725,
+          "total_cost_usd": 0.0,
+          "median_latency_ms": 15335.6
+        },
+        "code": {
+          "prompts": 40,
+          "correct": 22,
+          "accuracy": 0.55,
+          "total_cost_usd": 0.0,
+          "median_latency_ms": 6960.1
+        }
       }
     },
     {
@@ -689,6 +931,29 @@
       "selected_models": {
         "qwen-3.5-9b-local": 70,
         "gemini-4-argon": 50
+      },
+      "by_task": {
+        "math": {
+          "prompts": 40,
+          "correct": 38,
+          "accuracy": 0.95,
+          "total_cost_usd": 0.0,
+          "median_latency_ms": 3485.9
+        },
+        "qa": {
+          "prompts": 40,
+          "correct": 36,
+          "accuracy": 0.9,
+          "total_cost_usd": 0.330376,
+          "median_latency_ms": 9654.1
+        },
+        "code": {
+          "prompts": 40,
+          "correct": 25,
+          "accuracy": 0.625,
+          "total_cost_usd": 0.04159,
+          "median_latency_ms": 5932.5
+        }
       }
     },
     {
@@ -705,6 +970,29 @@
         "qwen-3.5-9b-local": 39,
         "gemini-4-argon": 5,
         "gemma-4-26b": 4
+      },
+      "by_task": {
+        "math": {
+          "prompts": 40,
+          "correct": 39,
+          "accuracy": 0.975,
+          "total_cost_usd": 0.003684,
+          "median_latency_ms": 915.1
+        },
+        "qa": {
+          "prompts": 40,
+          "correct": 32,
+          "accuracy": 0.8,
+          "total_cost_usd": 0.049327,
+          "median_latency_ms": 1771.5
+        },
+        "code": {
+          "prompts": 40,
+          "correct": 23,
+          "accuracy": 0.575,
+          "total_cost_usd": 0.004848,
+          "median_latency_ms": 6901.1
+        }
       }
     },
     {
@@ -720,6 +1008,29 @@
         "qwen-3.5-9b-local": 80,
         "mercury-3": 37,
         "gemma-4-26b": 3
+      },
+      "by_task": {
+        "math": {
+          "prompts": 40,
+          "correct": 38,
+          "accuracy": 0.95,
+          "total_cost_usd": 0.0,
+          "median_latency_ms": 3485.9
+        },
+        "qa": {
+          "prompts": 40,
+          "correct": 32,
+          "accuracy": 0.8,
+          "total_cost_usd": 0.008611,
+          "median_latency_ms": 1508.4
+        },
+        "code": {
+          "prompts": 40,
+          "correct": 22,
+          "accuracy": 0.55,
+          "total_cost_usd": 0.0,
+          "median_latency_ms": 6960.1
+        }
       }
     },
     {
@@ -735,6 +1046,29 @@
         "gpt-oss-120b": 40,
         "nemotron-3-ultra-free": 40,
         "gemma-4-26b": 40
+      },
+      "by_task": {
+        "math": {
+          "prompts": 40,
+          "correct": 39,
+          "accuracy": 0.975,
+          "total_cost_usd": 0.0,
+          "median_latency_ms": 6780.1
+        },
+        "qa": {
+          "prompts": 40,
+          "correct": 30,
+          "accuracy": 0.75,
+          "total_cost_usd": 0.008153,
+          "median_latency_ms": 7455.1
+        },
+        "code": {
+          "prompts": 40,
+          "correct": 32,
+          "accuracy": 0.8,
+          "total_cost_usd": 0.0,
+          "median_latency_ms": 17842.3
+        }
       }
     },
     {
@@ -749,6 +1083,29 @@
       "selected_models": {
         "gemini-4-argon": 80,
         "gpt-oss-120b": 40
+      },
+      "by_task": {
+        "math": {
+          "prompts": 40,
+          "correct": 39,
+          "accuracy": 0.975,
+          "total_cost_usd": 0.0,
+          "median_latency_ms": 6780.1
+        },
+        "qa": {
+          "prompts": 40,
+          "correct": 36,
+          "accuracy": 0.9,
+          "total_cost_usd": 0.330376,
+          "median_latency_ms": 9654.1
+        },
+        "code": {
+          "prompts": 40,
+          "correct": 35,
+          "accuracy": 0.875,
+          "total_cost_usd": 0.114552,
+          "median_latency_ms": 5175.5
+        }
       }
     },
     {
@@ -763,6 +1120,29 @@
       "selected_models": {
         "gemini-4-argon": 80,
         "gemma-4-26b": 40
+      },
+      "by_task": {
+        "math": {
+          "prompts": 40,
+          "correct": 39,
+          "accuracy": 0.975,
+          "total_cost_usd": 0.002792,
+          "median_latency_ms": 3411.0
+        },
+        "qa": {
+          "prompts": 40,
+          "correct": 36,
+          "accuracy": 0.9,
+          "total_cost_usd": 0.330376,
+          "median_latency_ms": 9654.1
+        },
+        "code": {
+          "prompts": 40,
+          "correct": 35,
+          "accuracy": 0.875,
+          "total_cost_usd": 0.114552,
+          "median_latency_ms": 5175.5
+        }
       }
     },
     {
@@ -777,8 +1157,671 @@
       "selected_models": {
         "gemma-4-26b": 80,
         "deepseek-v4-flash": 40
+      },
+      "by_task": {
+        "math": {
+          "prompts": 40,
+          "correct": 39,
+          "accuracy": 0.975,
+          "total_cost_usd": 0.002792,
+          "median_latency_ms": 3411.0
+        },
+        "qa": {
+          "prompts": 40,
+          "correct": 30,
+          "accuracy": 0.75,
+          "total_cost_usd": 0.008153,
+          "median_latency_ms": 7455.1
+        },
+        "code": {
+          "prompts": 40,
+          "correct": 29,
+          "accuracy": 0.725,
+          "total_cost_usd": 0.008565,
+          "median_latency_ms": 6116.9
+        }
+      }
+    },
+    {
+      "strategy_id": "logistic_regression_tuned:cost",
+      "prompts": 120,
+      "correct": 100,
+      "accuracy": 0.8333333333333334,
+      "total_cost_usd": 0.004163,
+      "cost_per_correct_usd": 0.00004163,
+      "median_latency_ms": 11649.3,
+      "p95_latency_ms": 64229.6,
+      "selected_models": {
+        "nemotron-3-ultra-free": 63,
+        "llama-3.3-70b": 40,
+        "gemma-4-26b": 17
+      },
+      "by_task": {
+        "math": {
+          "prompts": 40,
+          "correct": 37,
+          "accuracy": 0.925,
+          "total_cost_usd": 0.0,
+          "median_latency_ms": 9106.9
+        },
+        "qa": {
+          "prompts": 40,
+          "correct": 31,
+          "accuracy": 0.775,
+          "total_cost_usd": 0.004163,
+          "median_latency_ms": 11649.3
+        },
+        "code": {
+          "prompts": 40,
+          "correct": 32,
+          "accuracy": 0.8,
+          "total_cost_usd": 0.0,
+          "median_latency_ms": 17842.3
+        }
+      }
+    },
+    {
+      "strategy_id": "logistic_regression_tuned:quality",
+      "prompts": 120,
+      "correct": 110,
+      "accuracy": 0.9166666666666666,
+      "total_cost_usd": 0.443318,
+      "cost_per_correct_usd": 0.00403016,
+      "median_latency_ms": 5071.9,
+      "p95_latency_ms": 13900.6,
+      "selected_models": {
+        "gemini-4-argon": 77,
+        "gemma-4-26b": 40,
+        "deepseek-v4-flash": 3
+      },
+      "by_task": {
+        "math": {
+          "prompts": 40,
+          "correct": 39,
+          "accuracy": 0.975,
+          "total_cost_usd": 0.002792,
+          "median_latency_ms": 3411.0
+        },
+        "qa": {
+          "prompts": 40,
+          "correct": 36,
+          "accuracy": 0.9,
+          "total_cost_usd": 0.330376,
+          "median_latency_ms": 9654.1
+        },
+        "code": {
+          "prompts": 40,
+          "correct": 35,
+          "accuracy": 0.875,
+          "total_cost_usd": 0.110149,
+          "median_latency_ms": 5175.5
+        }
+      }
+    },
+    {
+      "strategy_id": "logistic_regression_tuned:latency",
+      "prompts": 120,
+      "correct": 106,
+      "accuracy": 0.8833333333333333,
+      "total_cost_usd": 0.124201,
+      "cost_per_correct_usd": 0.00117171,
+      "median_latency_ms": 1767.4,
+      "p95_latency_ms": 8001.6,
+      "selected_models": {
+        "mercury-3": 83,
+        "gemini-4-argon": 37
+      },
+      "by_task": {
+        "math": {
+          "prompts": 40,
+          "correct": 39,
+          "accuracy": 0.975,
+          "total_cost_usd": 0.003849,
+          "median_latency_ms": 894.9
+        },
+        "qa": {
+          "prompts": 40,
+          "correct": 32,
+          "accuracy": 0.8,
+          "total_cost_usd": 0.009286,
+          "median_latency_ms": 1508.4
+        },
+        "code": {
+          "prompts": 40,
+          "correct": 35,
+          "accuracy": 0.875,
+          "total_cost_usd": 0.111066,
+          "median_latency_ms": 5210.6
+        }
+      }
+    },
+    {
+      "strategy_id": "logistic_regression_tuned:balanced",
+      "prompts": 120,
+      "correct": 106,
+      "accuracy": 0.8833333333333333,
+      "total_cost_usd": 0.124201,
+      "cost_per_correct_usd": 0.00117171,
+      "median_latency_ms": 1767.4,
+      "p95_latency_ms": 8001.6,
+      "selected_models": {
+        "mercury-3": 83,
+        "gemini-4-argon": 37
+      },
+      "by_task": {
+        "math": {
+          "prompts": 40,
+          "correct": 39,
+          "accuracy": 0.975,
+          "total_cost_usd": 0.003849,
+          "median_latency_ms": 894.9
+        },
+        "qa": {
+          "prompts": 40,
+          "correct": 32,
+          "accuracy": 0.8,
+          "total_cost_usd": 0.009286,
+          "median_latency_ms": 1508.4
+        },
+        "code": {
+          "prompts": 40,
+          "correct": 35,
+          "accuracy": 0.875,
+          "total_cost_usd": 0.111066,
+          "median_latency_ms": 5210.6
+        }
       }
     }
   ],
-  "note": "Validation split only; the held-out test split is reserved for Checkpoint 3."
+  "weight_tuning": [
+    {
+      "priority": "cost",
+      "weights": {
+        "quality": 1.0,
+        "cost": 1.0,
+        "latency": 0.0,
+        "reliability": 0.0
+      },
+      "validation_correct": 100,
+      "validation_cost_usd": 0.004163,
+      "validation_median_latency_ms": 11649.3,
+      "accuracy_floor": 99,
+      "candidates_tried": 42
+    },
+    {
+      "priority": "quality",
+      "weights": {
+        "quality": 1.0,
+        "cost": 0.05,
+        "latency": 0.02,
+        "reliability": 0.0
+      },
+      "validation_correct": 110,
+      "validation_cost_usd": 0.443318,
+      "validation_median_latency_ms": 5071.9,
+      "accuracy_floor": null,
+      "candidates_tried": 18
+    },
+    {
+      "priority": "latency",
+      "weights": {
+        "quality": 1.0,
+        "cost": 0.05,
+        "latency": 1.0,
+        "reliability": 0.0
+      },
+      "validation_correct": 106,
+      "validation_cost_usd": 0.124201,
+      "validation_median_latency_ms": 1767.4,
+      "accuracy_floor": 99,
+      "candidates_tried": 42
+    },
+    {
+      "priority": "balanced",
+      "weights": {
+        "quality": 1.0,
+        "cost": 0.05,
+        "latency": 1.0,
+        "reliability": 0.0
+      },
+      "validation_correct": 106,
+      "validation_cost_usd": 0.124201,
+      "validation_median_latency_ms": 1767.4,
+      "accuracy_floor": 105,
+      "candidates_tried": 98
+    }
+  ],
+  "heldout": {
+    "artifact_id": "cp3-full-logistic_regression-C0.003",
+    "trained_on": [
+      "train",
+      "validation"
+    ],
+    "prompts": 120,
+    "classifier": {
+      "log_loss": 0.4322657297790166,
+      "brier": 0.13342564344069766,
+      "roc_auc": 0.6651741384456995,
+      "accuracy_at_0_5": 0.8305555555555556,
+      "rows": 1080
+    },
+    "reference_model_task_prior": {
+      "log_loss": 0.43375298983902144,
+      "brier": 0.13476590063619479,
+      "roc_auc": 0.6541263836345803,
+      "accuracy_at_0_5": 0.8305555555555556,
+      "rows": 1080
+    },
+    "strategies": [
+      {
+        "strategy_id": "fixed_cheapest",
+        "prompts": 120,
+        "correct": 103,
+        "accuracy": 0.8583333333333333,
+        "total_cost_usd": 0.018229,
+        "cost_per_correct_usd": 0.00017698,
+        "median_latency_ms": 5128.1,
+        "p95_latency_ms": 16535.2,
+        "selected_models": {
+          "gemma-4-26b": 120
+        },
+        "by_task": {
+          "math": {
+            "prompts": 40,
+            "correct": 38,
+            "accuracy": 0.95,
+            "total_cost_usd": 0.003503,
+            "median_latency_ms": 3810.2
+          },
+          "qa": {
+            "prompts": 40,
+            "correct": 34,
+            "accuracy": 0.85,
+            "total_cost_usd": 0.008708,
+            "median_latency_ms": 7292.8
+          },
+          "code": {
+            "prompts": 40,
+            "correct": 31,
+            "accuracy": 0.775,
+            "total_cost_usd": 0.006018,
+            "median_latency_ms": 5066.0
+          }
+        }
+      },
+      {
+        "strategy_id": "fixed_strongest",
+        "prompts": 120,
+        "correct": 112,
+        "accuracy": 0.9333333333333333,
+        "total_cost_usd": 0.49303,
+        "cost_per_correct_usd": 0.00440205,
+        "median_latency_ms": 5118.8,
+        "p95_latency_ms": 12671.2,
+        "selected_models": {
+          "gemini-4-argon": 120
+        },
+        "by_task": {
+          "math": {
+            "prompts": 40,
+            "correct": 38,
+            "accuracy": 0.95,
+            "total_cost_usd": 0.072924,
+            "median_latency_ms": 4152.8
+          },
+          "qa": {
+            "prompts": 40,
+            "correct": 39,
+            "accuracy": 0.975,
+            "total_cost_usd": 0.30838,
+            "median_latency_ms": 9036.7
+          },
+          "code": {
+            "prompts": 40,
+            "correct": 35,
+            "accuracy": 0.875,
+            "total_cost_usd": 0.111726,
+            "median_latency_ms": 4926.9
+          }
+        }
+      },
+      {
+        "strategy_id": "rule_balanced",
+        "prompts": 120,
+        "correct": 105,
+        "accuracy": 0.875,
+        "total_cost_usd": 0.185887,
+        "cost_per_correct_usd": 0.00177036,
+        "median_latency_ms": 3532.3,
+        "p95_latency_ms": 11555.0,
+        "selected_models": {
+          "mercury-3": 61,
+          "gemini-4-argon": 34,
+          "gemma-4-26b": 25
+        },
+        "by_task": {
+          "math": {
+            "prompts": 40,
+            "correct": 37,
+            "accuracy": 0.925,
+            "total_cost_usd": 0.010804,
+            "median_latency_ms": 1315.6
+          },
+          "qa": {
+            "prompts": 40,
+            "correct": 35,
+            "accuracy": 0.875,
+            "total_cost_usd": 0.094349,
+            "median_latency_ms": 5126.6
+          },
+          "code": {
+            "prompts": 40,
+            "correct": 33,
+            "accuracy": 0.825,
+            "total_cost_usd": 0.080734,
+            "median_latency_ms": 4305.6
+          }
+        }
+      },
+      {
+        "strategy_id": "learned:cost",
+        "prompts": 120,
+        "correct": 103,
+        "accuracy": 0.8583333333333333,
+        "total_cost_usd": 0.000324,
+        "cost_per_correct_usd": 3.15e-6,
+        "median_latency_ms": 12702.3,
+        "p95_latency_ms": 88083.2,
+        "selected_models": {
+          "nemotron-3-ultra-free": 78,
+          "gpt-oss-120b": 40,
+          "gemma-4-26b": 2
+        },
+        "by_task": {
+          "math": {
+            "prompts": 40,
+            "correct": 37,
+            "accuracy": 0.925,
+            "total_cost_usd": 0.0,
+            "median_latency_ms": 6964.8
+          },
+          "qa": {
+            "prompts": 40,
+            "correct": 33,
+            "accuracy": 0.825,
+            "total_cost_usd": 0.000324,
+            "median_latency_ms": 20535.7
+          },
+          "code": {
+            "prompts": 40,
+            "correct": 33,
+            "accuracy": 0.825,
+            "total_cost_usd": 0.0,
+            "median_latency_ms": 17255.4
+          }
+        }
+      },
+      {
+        "strategy_id": "learned:quality",
+        "prompts": 120,
+        "correct": 112,
+        "accuracy": 0.9333333333333333,
+        "total_cost_usd": 0.421463,
+        "cost_per_correct_usd": 0.00376306,
+        "median_latency_ms": 5356.2,
+        "p95_latency_ms": 14150.3,
+        "selected_models": {
+          "gemini-4-argon": 79,
+          "gemma-4-26b": 40,
+          "nemotron-3-ultra-free": 1
+        },
+        "by_task": {
+          "math": {
+            "prompts": 40,
+            "correct": 38,
+            "accuracy": 0.95,
+            "total_cost_usd": 0.003503,
+            "median_latency_ms": 3810.2
+          },
+          "qa": {
+            "prompts": 40,
+            "correct": 39,
+            "accuracy": 0.975,
+            "total_cost_usd": 0.30838,
+            "median_latency_ms": 9036.7
+          },
+          "code": {
+            "prompts": 40,
+            "correct": 35,
+            "accuracy": 0.875,
+            "total_cost_usd": 0.10958,
+            "median_latency_ms": 4926.9
+          }
+        }
+      },
+      {
+        "strategy_id": "learned:latency",
+        "prompts": 120,
+        "correct": 102,
+        "accuracy": 0.85,
+        "total_cost_usd": 0.115606,
+        "cost_per_correct_usd": 0.00113339,
+        "median_latency_ms": 2085.3,
+        "p95_latency_ms": 9811.4,
+        "selected_models": {
+          "mercury-3": 86,
+          "gemini-4-argon": 34
+        },
+        "by_task": {
+          "math": {
+            "prompts": 40,
+            "correct": 37,
+            "accuracy": 0.925,
+            "total_cost_usd": 0.004639,
+            "median_latency_ms": 1056.5
+          },
+          "qa": {
+            "prompts": 40,
+            "correct": 32,
+            "accuracy": 0.8,
+            "total_cost_usd": 0.011013,
+            "median_latency_ms": 1945.8
+          },
+          "code": {
+            "prompts": 40,
+            "correct": 33,
+            "accuracy": 0.825,
+            "total_cost_usd": 0.099954,
+            "median_latency_ms": 4926.9
+          }
+        }
+      },
+      {
+        "strategy_id": "learned:balanced",
+        "prompts": 120,
+        "correct": 102,
+        "accuracy": 0.85,
+        "total_cost_usd": 0.115606,
+        "cost_per_correct_usd": 0.00113339,
+        "median_latency_ms": 2085.3,
+        "p95_latency_ms": 9811.4,
+        "selected_models": {
+          "mercury-3": 86,
+          "gemini-4-argon": 34
+        },
+        "by_task": {
+          "math": {
+            "prompts": 40,
+            "correct": 37,
+            "accuracy": 0.925,
+            "total_cost_usd": 0.004639,
+            "median_latency_ms": 1056.5
+          },
+          "qa": {
+            "prompts": 40,
+            "correct": 32,
+            "accuracy": 0.8,
+            "total_cost_usd": 0.011013,
+            "median_latency_ms": 1945.8
+          },
+          "code": {
+            "prompts": 40,
+            "correct": 33,
+            "accuracy": 0.825,
+            "total_cost_usd": 0.099954,
+            "median_latency_ms": 4926.9
+          }
+        }
+      },
+      {
+        "strategy_id": "model_task_prior:cost",
+        "prompts": 120,
+        "correct": 104,
+        "accuracy": 0.8666666666666667,
+        "total_cost_usd": 0.0,
+        "cost_per_correct_usd": 0.0,
+        "median_latency_ms": 13354.0,
+        "p95_latency_ms": 88083.2,
+        "selected_models": {
+          "nemotron-3-ultra-free": 80,
+          "gpt-oss-120b": 40
+        },
+        "by_task": {
+          "math": {
+            "prompts": 40,
+            "correct": 37,
+            "accuracy": 0.925,
+            "total_cost_usd": 0.0,
+            "median_latency_ms": 6964.8
+          },
+          "qa": {
+            "prompts": 40,
+            "correct": 34,
+            "accuracy": 0.85,
+            "total_cost_usd": 0.0,
+            "median_latency_ms": 23845.7
+          },
+          "code": {
+            "prompts": 40,
+            "correct": 33,
+            "accuracy": 0.825,
+            "total_cost_usd": 0.0,
+            "median_latency_ms": 17255.4
+          }
+        }
+      },
+      {
+        "strategy_id": "model_task_prior:quality",
+        "prompts": 120,
+        "correct": 111,
+        "accuracy": 0.925,
+        "total_cost_usd": 0.420106,
+        "cost_per_correct_usd": 0.00378474,
+        "median_latency_ms": 6476.1,
+        "p95_latency_ms": 17356.8,
+        "selected_models": {
+          "gemini-4-argon": 80,
+          "gpt-oss-120b": 40
+        },
+        "by_task": {
+          "math": {
+            "prompts": 40,
+            "correct": 37,
+            "accuracy": 0.925,
+            "total_cost_usd": 0.0,
+            "median_latency_ms": 6964.8
+          },
+          "qa": {
+            "prompts": 40,
+            "correct": 39,
+            "accuracy": 0.975,
+            "total_cost_usd": 0.30838,
+            "median_latency_ms": 9036.7
+          },
+          "code": {
+            "prompts": 40,
+            "correct": 35,
+            "accuracy": 0.875,
+            "total_cost_usd": 0.111726,
+            "median_latency_ms": 4926.9
+          }
+        }
+      },
+      {
+        "strategy_id": "model_task_prior:latency",
+        "prompts": 120,
+        "correct": 104,
+        "accuracy": 0.8666666666666667,
+        "total_cost_usd": 0.127378,
+        "cost_per_correct_usd": 0.00122479,
+        "median_latency_ms": 2557.7,
+        "p95_latency_ms": 8883.4,
+        "selected_models": {
+          "mercury-3": 80,
+          "gemini-4-argon": 40
+        },
+        "by_task": {
+          "math": {
+            "prompts": 40,
+            "correct": 37,
+            "accuracy": 0.925,
+            "total_cost_usd": 0.004639,
+            "median_latency_ms": 1056.5
+          },
+          "qa": {
+            "prompts": 40,
+            "correct": 32,
+            "accuracy": 0.8,
+            "total_cost_usd": 0.011013,
+            "median_latency_ms": 1945.8
+          },
+          "code": {
+            "prompts": 40,
+            "correct": 35,
+            "accuracy": 0.875,
+            "total_cost_usd": 0.111726,
+            "median_latency_ms": 4926.9
+          }
+        }
+      },
+      {
+        "strategy_id": "model_task_prior:balanced",
+        "prompts": 120,
+        "correct": 104,
+        "accuracy": 0.8666666666666667,
+        "total_cost_usd": 0.127378,
+        "cost_per_correct_usd": 0.00122479,
+        "median_latency_ms": 2557.7,
+        "p95_latency_ms": 8883.4,
+        "selected_models": {
+          "mercury-3": 80,
+          "gemini-4-argon": 40
+        },
+        "by_task": {
+          "math": {
+            "prompts": 40,
+            "correct": 37,
+            "accuracy": 0.925,
+            "total_cost_usd": 0.004639,
+            "median_latency_ms": 1056.5
+          },
+          "qa": {
+            "prompts": 40,
+            "correct": 32,
+            "accuracy": 0.8,
+            "total_cost_usd": 0.011013,
+            "median_latency_ms": 1945.8
+          },
+          "code": {
+            "prompts": 40,
+            "correct": 35,
+            "accuracy": 0.875,
+            "total_cost_usd": 0.111726,
+            "median_latency_ms": 4926.9
+          }
+        }
+      }
+    ]
+  },
+  "note": "Classifiers were selected and weights tuned on the validation split. The selected router was then refit on training and validation data and evaluated once on the held-out test split."
 }

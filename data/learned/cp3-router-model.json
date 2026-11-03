@@ -1,0 +1,609 @@
+{
+  "schema_version": "1.0",
+  "artifact_id": "cp3-full-logistic_regression-C0.003",
+  "run_id": "cp3-full",
+  "pool_snapshot_id": "cp3-pool-2026-10-27",
+  "family": "logistic_regression",
+  "params": {
+    "logisticregression__C": 0.003
+  },
+  "selection_rule": "Lower validation log loss between logistic regression and gradient-boosted trees, as the proposal specifies; the train-to-validation gap is the overfitting check.",
+  "trained_on_splits": [
+    "train",
+    "validation"
+  ],
+  "training_rows": 4320,
+  "model_ids": [
+    "deepseek-v4-flash",
+    "gemini-4-argon",
+    "gemma-4-26b",
+    "gpt-oss-120b",
+    "llama-3.3-70b",
+    "mercury-3",
+    "nemotron-3-ultra-free",
+    "qwen-3.5-9b-local",
+    "qwen-3.8-27b"
+  ],
+  "features": [
+    "effort_score",
+    "has_docstring_examples",
+    "has_function_signature",
+    "historical_success",
+    "is_free",
+    "is_local",
+    "log_chars",
+    "log_expected_output_tokens",
+    "log_latency_ms",
+    "log_lines",
+    "log_numbers",
+    "log_price_in_per_million",
+    "log_price_out_per_million",
+    "log_sentences",
+    "log_words",
+    "model_deepseek-v4-flash",
+    "model_deepseek-v4-flash_x_code",
+    "model_deepseek-v4-flash_x_math",
+    "model_deepseek-v4-flash_x_qa",
+    "model_gemini-4-argon",
+    "model_gemini-4-argon_x_code",
+    "model_gemini-4-argon_x_math",
+    "model_gemini-4-argon_x_qa",
+    "model_gemma-4-26b",
+    "model_gemma-4-26b_x_code",
+    "model_gemma-4-26b_x_math",
+    "model_gemma-4-26b_x_qa",
+    "model_gpt-oss-120b",
+    "model_gpt-oss-120b_x_code",
+    "model_gpt-oss-120b_x_math",
+    "model_gpt-oss-120b_x_qa",
+    "model_llama-3.3-70b",
+    "model_llama-3.3-70b_x_code",
+    "model_llama-3.3-70b_x_math",
+    "model_llama-3.3-70b_x_qa",
+    "model_mercury-3",
+    "model_mercury-3_x_code",
+    "model_mercury-3_x_math",
+    "model_mercury-3_x_qa",
+    "model_nemotron-3-ultra-free",
+    "model_nemotron-3-ultra-free_x_code",
+    "model_nemotron-3-ultra-free_x_math",
+    "model_nemotron-3-ultra-free_x_qa",
+    "model_qwen-3.5-9b-local",
+    "model_qwen-3.5-9b-local_x_code",
+    "model_qwen-3.5-9b-local_x_math",
+    "model_qwen-3.5-9b-local_x_qa",
+    "model_qwen-3.8-27b",
+    "model_qwen-3.8-27b_x_code",
+    "model_qwen-3.8-27b_x_math",
+    "model_qwen-3.8-27b_x_qa",
+    "option_count",
+    "signal_code",
+    "signal_long",
+    "signal_many_numbers",
+    "signal_math",
+    "task_code",
+    "task_math",
+    "task_qa"
+  ],
+  "scaler_mean": [
+    1.4520833333333334,
+    0.23541666666666666,
+    0.16666666666666666,
+    0.8328502415458977,
+    0.5555555555555556,
+    0.1111111111111111,
+    5.320540294902401,
+    5.891597583625021,
+    8.938659790985112,
+    1.244935761072296,
+    1.2912744858688108,
+    0.15540730763345104,
+    0.3524439461959974,
+    1.133186030874504,
+    3.5873173456978384,
+    0.1111111111111111,
+    0.037037037037037035,
+    0.037037037037037035,
+    0.037037037037037035,
+    0.1111111111111111,
+    0.037037037037037035,
+    0.037037037037037035,
+    0.037037037037037035,
+    0.1111111111111111,
+    0.037037037037037035,
+    0.037037037037037035,
+    0.037037037037037035,
+    0.1111111111111111,
+    0.037037037037037035,
+    0.037037037037037035,
+    0.037037037037037035,
+    0.1111111111111111,
+    0.037037037037037035,
+    0.037037037037037035,
+    0.037037037037037035,
+    0.1111111111111111,
+    0.037037037037037035,
+    0.037037037037037035,
+    0.037037037037037035,
+    0.1111111111111111,
+    0.037037037037037035,
+    0.037037037037037035,
+    0.037037037037037035,
+    0.1111111111111111,
+    0.037037037037037035,
+    0.037037037037037035,
+    0.037037037037037035,
+    0.1111111111111111,
+    0.037037037037037035,
+    0.037037037037037035,
+    0.037037037037037035,
+    3.1166666666666667,
+    0.2625,
+    0.3625,
+    0.42083333333333334,
+    0.40625,
+    0.3333333333333333,
+    0.3333333333333333,
+    0.3333333333333333
+  ],
+  "scaler_scale": [
+    1.1857644481046299,
+    0.4242589536146995,
+    0.3726779962499691,
+    0.09080303076274039,
+    0.4969039949999711,
+    0.314269680527357,
+    0.7234099680412727,
+    0.6004664201070038,
+    0.8465853972461379,
+    0.7872617975345202,
+    0.9334823001045243,
+    0.336860080109813,
+    0.7329199103764584,
+    0.5503938795480251,
+    0.6930186805765509,
+    0.3142696805273689,
+    0.18885257457754287,
+    0.18885257457754553,
+    0.1888525745775442,
+    0.3142696805273672,
+    0.18885257457753882,
+    0.1888525745775415,
+    0.18885257457754015,
+    0.31426968052736537,
+    0.18885257457753477,
+    0.18885257457753746,
+    0.18885257457753613,
+    0.3142696805273635,
+    0.1888525745775307,
+    0.18885257457753343,
+    0.18885257457753207,
+    0.31426968052736165,
+    0.1888525745775267,
+    0.18885257457752938,
+    0.18885257457752805,
+    0.31426968052735976,
+    0.18885257457752264,
+    0.18885257457752533,
+    0.18885257457752397,
+    0.31426968052735826,
+    0.18885257457751867,
+    0.1888525745775213,
+    0.18885257457751997,
+    0.314269680527357,
+    0.18885257457751478,
+    0.18885257457751736,
+    0.18885257457751609,
+    0.31426968052735577,
+    0.18885257457751084,
+    0.18885257457751345,
+    0.18885257457751212,
+    4.507278065036142,
+    0.43999289766996247,
+    0.48072211307575596,
+    0.493692858859517,
+    0.4911323014219285,
+    0.4714045207910242,
+    0.471404520791022,
+    0.47140452079102313
+  ],
+  "coefficients": [
+    -0.04275742084245726,
+    -0.08298616728349188,
+    0.12578897123791966,
+    0.07231674449656879,
+    -0.031635436723392696,
+    -0.02703679281264908,
+    -0.08993780363126215,
+    -0.08415927903182358,
+    -0.008714642144251274,
+    -0.019682541520453952,
+    0.0719179066114802,
+    0.056659028208051895,
+    0.05630291370142564,
+    -0.010811047573908317,
+    -0.0909926801230485,
+    0.0021690333279511657,
+    0.017098639287206098,
+    0.008752051455939524,
+    -0.022241201105245367,
+    0.05604564017827354,
+    0.04025737170619124,
+    0.031037345322187323,
+    0.021970865784981457,
+    0.015920020459464387,
+    -0.004782621551208011,
+    0.05466523636431343,
+    -0.0233900993947848,
+    0.005632589119261234,
+    -0.01152729641710977,
+    0.07251101236480517,
+    -0.051610521078566014,
+    -0.012198913801832516,
+    -0.03660272004942107,
+    0.054272357972384624,
+    -0.03796985756179623,
+    -0.024114676555662167,
+    -0.024693955514956355,
+    0.005049973224754026,
+    -0.0204852651617969,
+    0.02385733963781862,
+    0.036285631869426634,
+    0.01897835762766187,
+    -0.015562976561560093,
+    -0.02703679281264908,
+    -0.09363094971141862,
+    0.06143271430934987,
+    -0.012793707433363187,
+    -0.04027423955262744,
+    -0.04868473145923614,
+    0.013800410221085779,
+    -0.032136064509842834,
+    -0.0830110427095578,
+    -0.09387891731044602,
+    -0.061837953787764556,
+    0.09964952208722638,
+    -0.05876941552534438,
+    -0.05059014368877865,
+    0.12839747029858697,
+    -0.07780732660980749
+  ],
+  "intercept": 1.7898256417102036,
+  "history": {
+    "splits": [
+      "train",
+      "validation"
+    ],
+    "success_counts": {
+      "deepseek-v4-flash|math": [
+        147.0,
+        160.0
+      ],
+      "deepseek-v4-flash|qa": [
+        127.0,
+        160.0
+      ],
+      "deepseek-v4-flash|code": [
+        135.0,
+        160.0
+      ],
+      "gemini-4-argon|math": [
+        155.0,
+        160.0
+      ],
+      "gemini-4-argon|qa": [
+        146.0,
+        160.0
+      ],
+      "gemini-4-argon|code": [
+        150.0,
+        160.0
+      ],
+      "gemma-4-26b|math": [
+        153.0,
+        160.0
+      ],
+      "gemma-4-26b|qa": [
+        128.0,
+        160.0
+      ],
+      "gemma-4-26b|code": [
+        133.0,
+        160.0
+      ],
+      "gpt-oss-120b|math": [
+        154.0,
+        160.0
+      ],
+      "gpt-oss-120b|qa": [
+        119.0,
+        160.0
+      ],
+      "gpt-oss-120b|code": [
+        124.0,
+        160.0
+      ],
+      "llama-3.3-70b|math": [
+        152.0,
+        160.0
+      ],
+      "llama-3.3-70b|qa": [
+        119.0,
+        160.0
+      ],
+      "llama-3.3-70b|code": [
+        123.0,
+        160.0
+      ],
+      "mercury-3|math": [
+        146.0,
+        160.0
+      ],
+      "mercury-3|qa": [
+        128.0,
+        160.0
+      ],
+      "mercury-3|code": [
+        123.0,
+        160.0
+      ],
+      "nemotron-3-ultra-free|math": [
+        147.0,
+        160.0
+      ],
+      "nemotron-3-ultra-free|qa": [
+        125.0,
+        160.0
+      ],
+      "nemotron-3-ultra-free|code": [
+        137.0,
+        160.0
+      ],
+      "qwen-3.5-9b-local|math": [
+        151.0,
+        160.0
+      ],
+      "qwen-3.5-9b-local|qa": [
+        120.0,
+        160.0
+      ],
+      "qwen-3.5-9b-local|code": [
+        102.0,
+        160.0
+      ],
+      "qwen-3.8-27b|math": [
+        144.0,
+        160.0
+      ],
+      "qwen-3.8-27b|qa": [
+        117.0,
+        160.0
+      ],
+      "qwen-3.8-27b|code": [
+        111.0,
+        160.0
+      ]
+    },
+    "latency_ms": {
+      "deepseek-v4-flash": 5168.338599964045,
+      "gemini-4-argon": 5412.740799947642,
+      "gemma-4-26b": 4904.571800027043,
+      "gpt-oss-120b": 15488.631100044586,
+      "llama-3.3-70b": 15807.17625003308,
+      "mercury-3": 1261.0019000712782,
+      "nemotron-3-ultra-free": 11897.416000021622,
+      "qwen-3.5-9b-local": 6618.704100023024,
+      "qwen-3.8-27b": 25950.52905002376
+    },
+    "output_tokens": {
+      "deepseek-v4-flash|math": 216.5,
+      "deepseek-v4-flash|qa": 581.5,
+      "deepseek-v4-flash|code": 615.0,
+      "gemini-4-argon|math": 144.0,
+      "gemini-4-argon|qa": 489.0,
+      "gemini-4-argon|code": 225.0,
+      "gemma-4-26b|math": 250.5,
+      "gemma-4-26b|qa": 537.0,
+      "gemma-4-26b|code": 390.5,
+      "gpt-oss-120b|math": 206.5,
+      "gpt-oss-120b|qa": 354.0,
+      "gpt-oss-120b|code": 983.0,
+      "llama-3.3-70b|math": 118.5,
+      "llama-3.3-70b|qa": 495.0,
+      "llama-3.3-70b|code": 212.5,
+      "mercury-3|math": 169.0,
+      "mercury-3|qa": 300.0,
+      "mercury-3|code": 773.0,
+      "nemotron-3-ultra-free|math": 332.0,
+      "nemotron-3-ultra-free|qa": 989.5,
+      "nemotron-3-ultra-free|code": 758.0,
+      "qwen-3.5-9b-local|math": 157.5,
+      "qwen-3.5-9b-local|qa": 628.0,
+      "qwen-3.5-9b-local|code": 267.5,
+      "qwen-3.8-27b|math": 215.0,
+      "qwen-3.8-27b|qa": 518.5,
+      "qwen-3.8-27b|code": 669.0
+    }
+  },
+  "estimates": {
+    "deepseek-v4-flash": {
+      "math": {
+        "expected_cost_usd": 0.000098737625,
+        "expected_latency_ms": 4052.1710999892093,
+        "failure_rate": 0.0375
+      },
+      "qa": {
+        "expected_cost_usd": 0.00023716,
+        "expected_latency_ms": 6496.023749990854,
+        "failure_rate": 0.125
+      },
+      "code": {
+        "expected_cost_usd": 0.0002045785,
+        "expected_latency_ms": 5331.77920000162,
+        "failure_rate": 0.025
+      }
+    },
+    "gemini-4-argon": {
+      "math": {
+        "expected_cost_usd": 0.001960475,
+        "expected_latency_ms": 4560.456000035629,
+        "failure_rate": 0.00625
+      },
+      "qa": {
+        "expected_cost_usd": 0.0064824875,
+        "expected_latency_ms": 8633.493150002323,
+        "failure_rate": 0.0
+      },
+      "code": {
+        "expected_cost_usd": 0.0028143499999999998,
+        "expected_latency_ms": 4985.253999999259,
+        "failure_rate": 0.0
+      }
+    },
+    "gemma-4-26b": {
+      "math": {
+        "expected_cost_usd": 0.000075382303125,
+        "expected_latency_ms": 3488.444399961736,
+        "failure_rate": 0.0
+      },
+      "qa": {
+        "expected_cost_usd": 0.00018136481875,
+        "expected_latency_ms": 6477.5423000101,
+        "failure_rate": 0.0
+      },
+      "code": {
+        "expected_cost_usd": 0.0001226314125,
+        "expected_latency_ms": 4718.203699972946,
+        "failure_rate": 0.0
+      }
+    },
+    "gpt-oss-120b": {
+      "math": {
+        "expected_cost_usd": 0.0,
+        "expected_latency_ms": 6820.105999999214,
+        "failure_rate": 0.0
+      },
+      "qa": {
+        "expected_cost_usd": 0.0,
+        "expected_latency_ms": 13169.517900096253,
+        "failure_rate": 0.00625
+      },
+      "code": {
+        "expected_cost_usd": 0.0,
+        "expected_latency_ms": 37962.69419998862,
+        "failure_rate": 0.00625
+      }
+    },
+    "llama-3.3-70b": {
+      "math": {
+        "expected_cost_usd": 0.0,
+        "expected_latency_ms": 9444.564100005664,
+        "failure_rate": 0.0
+      },
+      "qa": {
+        "expected_cost_usd": 0.0,
+        "expected_latency_ms": 34117.40574997384,
+        "failure_rate": 0.0
+      },
+      "code": {
+        "expected_cost_usd": 0.0,
+        "expected_latency_ms": 12976.141849940177,
+        "failure_rate": 0.0
+      }
+    },
+    "mercury-3": {
+      "math": {
+        "expected_cost_usd": 0.000083929625,
+        "expected_latency_ms": 942.0765000395477,
+        "failure_rate": 0.06875
+      },
+      "qa": {
+        "expected_cost_usd": 0.00020859325,
+        "expected_latency_ms": 1294.3613999523222,
+        "failure_rate": 0.10625
+      },
+      "code": {
+        "expected_cost_usd": 0.00031105962500000003,
+        "expected_latency_ms": 2266.3616000209004,
+        "failure_rate": 0.18125
+      }
+    },
+    "nemotron-3-ultra-free": {
+      "math": {
+        "expected_cost_usd": 0.0,
+        "expected_latency_ms": 6675.7346000522375,
+        "failure_rate": 0.00625
+      },
+      "qa": {
+        "expected_cost_usd": 0.0,
+        "expected_latency_ms": 19630.180400039535,
+        "failure_rate": 0.025
+      },
+      "code": {
+        "expected_cost_usd": 0.0,
+        "expected_latency_ms": 15792.534700012766,
+        "failure_rate": 0.0
+      }
+    },
+    "qwen-3.5-9b-local": {
+      "math": {
+        "expected_cost_usd": 0.0,
+        "expected_latency_ms": 3627.9935000347905,
+        "failure_rate": 0.0
+      },
+      "qa": {
+        "expected_cost_usd": 0.0,
+        "expected_latency_ms": 13570.956350013148,
+        "failure_rate": 0.0
+      },
+      "code": {
+        "expected_cost_usd": 0.0,
+        "expected_latency_ms": 5975.006649969146,
+        "failure_rate": 0.0
+      }
+    },
+    "qwen-3.8-27b": {
+      "math": {
+        "expected_cost_usd": 0.0,
+        "expected_latency_ms": 13144.836200051941,
+        "failure_rate": 0.08125
+      },
+      "qa": {
+        "expected_cost_usd": 0.0,
+        "expected_latency_ms": 24176.076749979984,
+        "failure_rate": 0.175
+      },
+      "code": {
+        "expected_cost_usd": 0.0,
+        "expected_latency_ms": 44854.45159999654,
+        "failure_rate": 0.24375
+      }
+    }
+  },
+  "weights": {
+    "cost": {
+      "quality": 1.0,
+      "cost": 1.0,
+      "latency": 0.0,
+      "reliability": 0.0
+    },
+    "quality": {
+      "quality": 1.0,
+      "cost": 0.05,
+      "latency": 0.02,
+      "reliability": 0.0
+    },
+    "latency": {
+      "quality": 1.0,
+      "cost": 0.05,
+      "latency": 1.0,
+      "reliability": 0.0
+    },
+    "balanced": {
+      "quality": 1.0,
+      "cost": 0.05,
+      "latency": 1.0,
+      "reliability": 0.0
+    }
+  }
+}

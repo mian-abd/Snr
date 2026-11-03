@@ -1,9 +1,16 @@
-# Weeks of October 22 and October 29: learned-router groundwork
+# Weeks of October 22 to November 5: the learned router
 
-This records the proposal's work-plan items for the weeks of October 22 and October 29. The week of November 5 (choosing and integrating the learned router, finishing user weights, comparison plots, Checkpoint 3 materials) and everything after is deliberately not started.
+This records the proposal's work-plan items for the weeks of October 22, October 29, and November 5. The week of November 12 (presenting Checkpoint 3, the oracle comparison, routing error analysis) and everything after is deliberately not started.
 
 | Proposal item | Status |
 | --- | --- |
+| **Week of November 5** | |
+| Select and integrate the learned router using validation results | Done: logistic regression, exported and served by the API and the console ([details](#week-of-november-5)) |
+| Finish the multi-objective router and user weights | Done: one preset per priority tuned on validation, plus custom weights |
+| Create accuracy-cost and accuracy-latency comparison plots | Done: `docs/figures/` and the console's Learned tab |
+| Run Checkpoint 3 comparison experiments | Done: held-out test split, against fixed baselines and the rule router |
+| Prepare slides, backup recording, and live demo for Checkpoint 3 | Not done: the owner will handle these the week of November 12 |
+| **Weeks of October 22 and October 29** | |
 | Present Checkpoint 2 and document any routing or interface issues | Issues documented below |
 | Build the train, validation, and test split | Done: `data/benchmarks/cp3_suite.jsonl` |
 | Implement prompt and model feature extraction | Done: `backend/app/learned/features.py` |
@@ -94,18 +101,18 @@ Code answers are scored by `app.benchmarks.code_scoring` inside `ganler/evalplus
 
 - **Labels:** success means the call was served and the answer was correct (exact numeric match, correct letter, or EvalPlus base + extra pass). Failed calls count as failures.
 - **Features:** task group, length, numbers, lines, sentences, options, code markers, and the rule router's visible signals (`backend/app/learned/features.py`). Model features: identity, model × task interactions, price, local / free flags, and median latency, output length, and success rate from **training rows only**, leaving the row's own prompt out.
-- **Classifiers:** logistic regression (standardized, C in {0.01, 0.1, 1, 10}) and histogram gradient-boosted trees (depth 2 or 3, learning rate 0.05 or 0.1, 100 or 300 iterations, L2 1.0). Each family's setting is chosen by validation log loss, and the train-to-validation gap is reported as the overfitting check.
+- **Classifiers:** logistic regression (standardized, C in {0.01, 0.1, 1, 10}; extended below 0.01 on November 5) and histogram gradient-boosted trees (depth 2 or 3, learning rate 0.05 or 0.1, 100 or 300 iterations, L2 1.0). Each family's setting is chosen by validation log loss, and the train-to-validation gap is reported as the overfitting check.
 - **Multi-objective scoring** (`backend/app/routing/multi_objective.py`):
   - score = quality × P(success) − cost × normalized expected cost − latency × normalized expected latency − reliability × failure rate.
   - Hard requirements are applied first.
   - Cost and latency are divided by the largest eligible value, so ratios between models survive.
   - Each priority has a weight preset; the emphasized objective is 0.5, not 1.0, so a model expected to fail can't win just by being cheap. A test covers that case.
 - **Validation replay:** each validation prompt is routed per priority and compared with fixed cheapest, fixed strongest, and the rule router, reporting accuracy, cost, cost per correct answer, and median and p95 latency.
-- **Test split:** never read. It is reserved for Checkpoint 3's held-out evaluation.
+- **Test split:** not read through October 29. It was read once on November 5 for the Checkpoint 3 comparison, after selection and tuning (see below).
 
 `uv run --project backend python -m app.learned.train --run-id cp3-full` writes `data/learned/cp3-full-router-comparison.json`.
 
-The console's read-only **05 Learned** tab shows that report through `GET /api/v1/learned/report`. It covers the matrix, the classifier comparison and the validation replay, and makes no provider call. Live routing still uses the Checkpoint 2 rule policy; integrating a learned router is a week-of-November-5 item.
+The console's **05 Learned** tab shows that report through `GET /api/v1/learned/report`. Since November 5 it also routes live prompts with the learned router (see below); the Route tab keeps the Checkpoint 2 rule policy.
 
 ## Results (2026-10-28)
 
@@ -149,7 +156,7 @@ Training rows: 3,240 (360 prompts × 9 models). Validation rows: 1,080 (120 prom
 - **Logistic regression beats the boosted trees** on every validation metric and overfits half as much. The trees' best setting was the smallest in the grid; larger ones overfit more.
 - **The reference does slightly better than both.** It predicts each model's training success rate on the prompt's task group, with add-one smoothing and no prompt features. With 360 training prompts, the prompt features do not yet add predictive signal beyond knowing which model is good at which task.
 - Logistic regression's chosen C is the strongest regularization in the grid, which points the same way.
-- This is reported as found. Choosing and integrating the learned router is a week-of-November-5 item.
+- This is reported as found. Choosing and integrating the learned router was a week-of-November-5 item; see [Week of November 5](#week-of-november-5).
 
 ### Routing replay (120 validation prompts)
 
@@ -190,3 +197,92 @@ Both keys authenticate, but both free services were overloaded on 2026-10-28, so
 
 - AI Studio returns Gemma's reasoning inline as a leading `<thought>…</thought>` block, and rejects `reasoning_effort` for Gemma. Scoring the raw text could pick up a letter or number from the reasoning, so the adapter removes that block before scoring, with tests.
 - AI Studio's `completion_tokens` excludes those reasoning tokens.
+
+## Week of November 5
+
+`uv run --project backend python -m app.learned.train --run-id cp3-full` now does everything below in one deterministic run (`data/learned/cp3-full-router-comparison.json`). `python -m app.learned.plots` draws the figures from that report.
+
+### Selecting the router
+
+- **Rule (from the proposal):** the classifier family with the lower validation log loss, with the train-to-validation gap as the overfitting check.
+- The October 29 grid's best C (0.01) sat on the grid's edge, so the logistic-regression grid now also tries 0.001, 0.003, and 0.03.
+- **Selected: logistic regression, C = 0.003.** Validation log loss 0.465 (it was 0.467 at C = 0.01), AUC 0.694, gap 0.077. Gradient-boosted trees: 0.491, gap 0.174.
+- The model × task reference still scores 0.454 on validation, so the October 28 finding stands: on 360 training prompts, the prompt features add no predictive signal beyond each model's success rate per task. The October 28 tables above are kept as recorded at the time.
+- The selected setting was then **refit on the training and validation splits** (4,320 rows) with model history from both splits (leave-one-prompt-out).
+
+### Integration
+
+- `data/learned/cp3-router-model.json` holds the refit router as plain numbers: feature names, standardizer means and scales, coefficients, intercept, model-history aggregates, per-model and per-task cost, latency and failure estimates, and the tuned weights. No pickle, no scikit-learn at serving time.
+- `backend/app/learned/router.py` scores a prompt with that file alone. Training checks that it reproduces scikit-learn's probabilities on every held-out row (tolerance 1e-9) and refuses to write the report otherwise.
+- **Hard requirements come first:** a model is excluded when its context window is below the requested minimum, or when its API key (`OPENROUTER_API_KEY`) is not configured on the server.
+- **Live prompts carry no benchmark labels.** The task group is inferred from the rule router's visible signals (code, math, otherwise question answering) unless the user picks one. Lettered answer options are counted from the text.
+- **API:**
+  - `POST /api/v1/learned/decisions` previews the decision (no provider call): every model's P(success), expected cost, latency, failure rate, score terms, and exclusion reason.
+  - `POST /api/v1/learned/routes` sends one call (one retry on a timeout or rate limit) to the selected model through the multi-provider adapter.
+- **Console:** the **05 Learned** tab has the router (prompt, task type, priority presets, custom weight sliders, minimum context, preview, route), the held-out comparison with both plots, the tuned presets, the matrix, and the classifier comparison.
+
+### User weights
+
+The multi-objective score is unchanged (quality × P(success) − cost × normalized cost − latency × normalized latency − reliability × failure rate). The starting presets are replaced by presets tuned on the validation split (`backend/app/learned/evaluate.py`). Quality weight is 1 throughout.
+
+| Priority | Cost | Latency | Reliability | Validation correct | Accuracy floor | Validation cost | Median latency |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Higher quality | 0.05 | 0.02 | 0 | 110 / 120 | best | $0.443 | 5.1 s |
+| Lower cost | 1.0 | 0 | 0 | 100 / 120 | 99 | $0.004 | 11.6 s |
+| Faster response | 0.05 | 1.0 | 0 | 106 / 120 | 99 | $0.124 | 1.8 s |
+| Balanced | 0.05 | 1.0 | 0 | 106 / 120 | 105 | $0.124 | 1.8 s |
+
+- **Higher quality:** the most correct answers, then the lowest cost.
+- **Lower cost and faster response:** the cheapest and the fastest weights with at least as many correct answers as always using the cheapest paid model (99 of 120 on validation).
+- **Balanced:** at least halfway between that baseline and the quality preset (105), and the smallest equal-weight sum of the accuracy shortfall, normalized cost, and normalized median latency.
+- **Balanced equals faster response.** The faster preset was close to the best on all three axes, so no other weighting was a better compromise. A first attempt with tolerances relative to the quality preset (5%, 2.5%) was discarded: the lower-cost preset then cost almost as much as the quality preset.
+- Grids: emphasized weights 0.05–1.0, secondary weights 0–0.05, reliability 0 or 0.5. Reliability 0 won everywhere.
+- Users can override any preset with custom weights in the API (`weights`) or with the console's sliders.
+
+### Checkpoint 3 comparison experiment (held-out test split)
+
+The test split (120 prompts: 40 GSM8K, 40 MMLU-Pro, 40 code) was read once, after selection, tuning, and refitting; nothing was changed afterwards. Outcomes are replayed from the saved matrix, so no model was called again.
+
+| Strategy | Correct | GSM8K | MMLU-Pro | Code | Cost | Median latency | p95 latency |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Always cheapest paid (Gemma 4 26B) | 103 | 38 | 34 | 31 | $0.018 | 5.1 s | 16.5 s |
+| Always strongest (Gemini 4 Argon) | 112 | 38 | 39 | 35 | $0.493 | 5.1 s | 12.7 s |
+| Checkpoint 2 rule router | 105 | 37 | 35 | 33 | $0.186 | 3.5 s | 11.6 s |
+| **Learned router, higher quality** | **112** | 38 | 39 | 35 | **$0.422** | 5.4 s | 14.2 s |
+| **Learned router, lower cost** | **103** | 37 | 33 | 33 | **$0.0003** | 12.7 s | 88.1 s |
+| **Learned router, faster / balanced** | **102** | 37 | 32 | 33 | $0.116 | **2.1 s** | **9.8 s** |
+| Reference (model × task), quality | 111 | 37 | 39 | 35 | $0.420 | 6.5 s | 17.4 s |
+| Reference, lower cost | 104 | 37 | 34 | 33 | $0.000 | 13.4 s | 88.1 s |
+| Reference, faster / balanced | 104 | 37 | 32 | 35 | $0.127 | 2.6 s | 8.9 s |
+
+- **Higher quality** matches always-strongest (112 of 120) for 14% less, by sending 40 prompts (the math ones) to Gemma 4 26B.
+- **Lower cost** matches always-cheapest (103) for 2% of its cost by using the free Nemotron and gpt-oss models, but it is much slower (median 12.7 s, p95 88 s).
+- **Faster / balanced** is the fastest strategy (median 2.1 s, p95 9.8 s, mostly Mercury 3), one answer below always-cheapest at six times its cost.
+- **The reference routes about as well** as the learned router: within one or two answers on every priority. Held-out log loss: learned 0.432, reference 0.434. The router's value comes from the multi-objective scoring over per-model, per-task estimates more than from prompt features.
+- **Choices are almost entirely per task.** Within a task group the learned router sent every prompt to the same model, except 1 code prompt under higher quality and 6 under faster response (Mercury 3 rather than Gemini 4 Argon). This is the same finding seen from the routing side.
+- With 120 prompts, a difference of one to three correct answers is within noise.
+
+### Plots
+
+`docs/figures/cp3-heldout-accuracy-cost.{png,svg}` and `docs/figures/cp3-heldout-accuracy-latency.{png,svg}`.
+
+- One axis pair each (no dual axes), as small multiples for all prompts and each task group.
+- The learned router is blue circles and the baselines are orange squares. These are slots 1 and 2 of a colorblind-validated palette, checked against the chart surface in light and dark modes.
+- Every point is labeled; coincident strategies share a label.
+- The console draws the same charts with a task filter, hover and keyboard tooltips, and the table as the text equivalent.
+
+### The two keyed models, retested 2026-11-03
+
+| Model | Result |
+| --- | --- |
+| DeepSeek V4.1 Flash (NVIDIA NIM) | 0 of 8 answered; every attempt timed out at 180 s |
+| Gemma 4 31B (Google AI Studio) | 3 of 8 answered (36–73 s each); 11 attempts returned HTTP 500 or 503 |
+
+They stay out of the matrix.
+
+### Limitations
+
+- The task-group inference for live prompts is a keyword heuristic. The console lets the user override it.
+- Live learned routes record the provider's reported cost but do not re-check OpenRouter prices against the dated 2026-10-27 snapshot, unlike the Checkpoint 2 routes.
+- The local model is only available while Ollama runs on this laptop. If it is selected and not running, the call fails as a provider error.
+- Expected costs for Mercury 3 and DeepSeek V4 Flash are slightly low, because truncated answers were recorded at $0 before 2026-10-28.

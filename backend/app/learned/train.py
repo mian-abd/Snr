@@ -1,17 +1,23 @@
-"""Train and compare the lightweight routers (proposal weeks of Oct 22 and Oct 29).
+"""Train, select, tune, and evaluate the learned router (proposal weeks of Oct 22 to Nov 5).
 
     uv run --project backend python -m app.learned.train --run-id cp3-full
 
-Fits logistic regression and gradient-boosted trees to predict P(success | prompt, model) on the
-training split, compares them on the validation split, and replays routing decisions on the
-validation prompts with the multi-objective scorer. The held-out test split is never read here.
+1. Fit logistic regression and gradient-boosted trees for P(success | prompt, model) on the
+   training split and compare them on the validation split (log loss, Brier, AUC, overfitting).
+2. Select the family with the lower validation log loss, the proposal's rule, and replay
+   validation routing for every family with the starting weight presets.
+3. Tune one weight preset per user priority on the validation split with the selected family.
+4. Refit the selected family on the training and validation splits and export it to
+   ``data/learned/cp3-router-model.json``, which the API serves without scikit-learn.
+5. Evaluate that exported router once on the held-out test split against the fixed baselines,
+   the Checkpoint 2 rule router, and a model-by-task reference. Nothing is tuned on test.
 """
 
 from __future__ import annotations
 
 import argparse
-import math
-from collections import Counter, defaultdict
+from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from statistics import median
@@ -29,15 +35,26 @@ from app.config import REPOSITORY_ROOT
 from app.domain.models import (
     ClassifierMetrics,
     ClassifierReport,
+    HeldoutEvaluation,
     LearnedMatrixRow,
     LearnedRouterReport,
     LearnedStrategyOutcome,
     RoutingPriority,
+    WeightTuningResult,
+)
+from app.learned.evaluate import (
+    Chooser,
+    complete_prompts,
+    fixed_and_rule_choosers,
+    replay,
+    routing_estimates,
+    score_chooser,
+    tune_weights,
 )
 from app.learned.features import Cell, ModelHistory, feature_row
+from app.learned.router import ROUTER_MODEL_PATH, LearnedRouter, RouterArtifact, policy_weights
 from app.registry.pool import PoolModel, PoolSnapshot, load_pool
-from app.routing.multi_objective import CandidateEstimate, choose
-from app.routing.policy import effort_score, prompt_signals
+from app.routing.multi_objective import POLICY_WEIGHTS
 from app.storage import read_jsonl
 
 SUITE_PATH = REPOSITORY_ROOT / "data" / "benchmarks" / "cp3_suite.jsonl"
@@ -45,15 +62,34 @@ POOL_PATH = REPOSITORY_ROOT / "data" / "registry" / "cp3-pool-2026-10-27.json"
 RUNS_DIR = REPOSITORY_ROOT / "data" / "local" / "cp3"
 REPORT_DIR = REPOSITORY_ROOT / "data" / "learned"
 
-LR_GRID = [{"logisticregression__C": value} for value in (0.01, 0.1, 1.0, 10.0)]
+TRAIN_ONLY = frozenset({RouterSplit.TRAIN})
+FIT_SPLITS = frozenset({RouterSplit.TRAIN, RouterSplit.VALIDATION})
+# Week of Nov 5: the Oct 29 grid's best C (0.01) sat on its edge, so the grid now extends below.
+LR_GRID = [
+    {"logisticregression__C": value} for value in (0.001, 0.003, 0.01, 0.03, 0.1, 1.0, 10.0)
+]
 GBT_GRID = [
     {"max_depth": depth, "learning_rate": rate, "max_iter": iterations}
     for depth in (2, 3)
     for rate in (0.05, 0.1)
     for iterations in (100, 300)
 ]
-# Rule-router roles for this pool, mirroring the Checkpoint 2 paid policy.
-CHEAPEST, FASTEST, STRONGEST = "gemma-4-26b", "mercury-3", "gemini-4-argon"
+SELECTION_RULE = (
+    "Lower validation log loss between logistic regression and gradient-boosted trees, as the "
+    "proposal specifies; the train-to-validation gap is the overfitting check."
+)
+FAMILY_FACTORIES: dict[str, Callable[[], Any]] = {
+    "logistic_regression": lambda: make_pipeline(
+        StandardScaler(), LogisticRegression(max_iter=5000)
+    ),
+    "gradient_boosted_trees": lambda: HistGradientBoostingClassifier(
+        l2_regularization=1.0, random_state=0
+    ),
+}
+FAMILY_GRIDS: dict[str, list[dict[str, Any]]] = {
+    "logistic_regression": LR_GRID,
+    "gradient_boosted_trees": GBT_GRID,
+}
 
 
 def load_cells(run_dir: Path, items: dict[str, SuiteItem]) -> list[Cell]:
@@ -97,20 +133,25 @@ class Dataset:
     y: np.ndarray
     keys: list[tuple[str, str]]  # (sample_id, model_id)
 
+    def probability(self, values: np.ndarray) -> Callable[[str, str], float]:
+        index = {key: position for position, key in enumerate(self.keys)}
+        return lambda sample_id, model_id: float(values[index[(sample_id, model_id)]])
+
 
 def build_dataset(
-    split: RouterSplit,
+    split: RouterSplit | frozenset[RouterSplit],
     cells: list[Cell],
     items: dict[str, SuiteItem],
     models: dict[str, PoolModel],
     history: ModelHistory,
 ) -> Dataset:
+    splits = frozenset({split}) if isinstance(split, RouterSplit) else split
     pool_ids = sorted(models)
     rows: list[dict[str, float]] = []
     labels: list[int] = []
     keys: list[tuple[str, str]] = []
     for cell in cells:
-        if cell.router_split != split or cell.model_id not in models:
+        if cell.router_split not in splits or cell.model_id not in models:
             continue
         rows.append(feature_row(items[cell.sample_id], models[cell.model_id], history, pool_ids))
         labels.append(int(cell.correct))
@@ -133,20 +174,10 @@ def _metrics(y: np.ndarray, p: np.ndarray) -> dict[str, float | None]:
 
 def fit_and_compare(train: Dataset, validation: Dataset) -> dict[str, Any]:
     """Pick each family's best setting by validation log loss and report the overfitting gap."""
-    families: dict[str, tuple[Any, list[dict[str, Any]]]] = {
-        "logistic_regression": (
-            lambda: make_pipeline(StandardScaler(), LogisticRegression(max_iter=5000)),
-            LR_GRID,
-        ),
-        "gradient_boosted_trees": (
-            lambda: HistGradientBoostingClassifier(l2_regularization=1.0, random_state=0),
-            GBT_GRID,
-        ),
-    }
     report: dict[str, Any] = {}
-    for name, (factory, grid) in families.items():
+    for name, factory in FAMILY_FACTORIES.items():
         trials = []
-        for params in grid:
+        for params in FAMILY_GRIDS[name]:
             model: Pipeline | HistGradientBoostingClassifier = factory()
             model.set_params(**params)
             model.fit(train.x, train.y)
@@ -172,21 +203,31 @@ def fit_and_compare(train: Dataset, validation: Dataset) -> dict[str, Any]:
     return report
 
 
+def select_family(comparison: dict[str, Any]) -> str:
+    return min(
+        comparison,
+        key=lambda name: (
+            comparison[name]["validation"]["log_loss"],
+            comparison[name]["overfit_gap_log_loss"],
+        ),
+    )
+
+
 def model_task_prior(
-    cells: list[Cell], validation: Dataset, items: dict[str, SuiteItem]
+    cells: list[Cell],
+    dataset: Dataset,
+    items: dict[str, SuiteItem],
+    splits: frozenset[RouterSplit] = TRAIN_ONLY,
 ) -> np.ndarray:
-    """Reference with no prompt features: each model's training success rate on the task group."""
-    counts: dict[tuple[str, TaskGroup], list[int]] = defaultdict(lambda: [0, 0])
-    for cell in cells:
-        if cell.router_split == RouterSplit.TRAIN:
-            tally = counts[(cell.model_id, cell.task_group)]
-            tally[0] += int(cell.correct)
-            tally[1] += 1
-    rates = []
-    for sample_id, model_id in validation.keys:
-        successes, total = counts[(model_id, items[sample_id].task_group)]
-        rates.append((successes + 1) / (total + 2))
-    return np.array(rates, dtype=float)
+    """Reference with no prompt features: each model's success rate on the task group."""
+    history = ModelHistory(cells, splits)
+    return np.array(
+        [
+            history.success_rate(model_id, items[sample_id].task_group, None)
+            for sample_id, model_id in dataset.keys
+        ],
+        dtype=float,
+    )
 
 
 def matrix_summary(cells: list[Cell], models: dict[str, PoolModel]) -> list[LearnedMatrixRow]:
@@ -220,96 +261,127 @@ def matrix_summary(cells: list[Cell], models: dict[str, PoolModel]) -> list[Lear
     return sorted(rows, key=lambda row: (-row.correct, row.model_id))
 
 
-def _summarize(outcomes: list[tuple[bool, float, float]]) -> dict[str, float | int | None]:
-    correct = sum(1 for ok, _, _ in outcomes if ok)
-    cost = sum(cost for _, cost, _ in outcomes)
-    latencies = sorted(latency for _, _, latency in outcomes)
-    return {
-        "prompts": len(outcomes),
-        "correct": correct,
-        "accuracy": correct / len(outcomes) if outcomes else 0.0,
-        "total_cost_usd": round(cost, 6),
-        "cost_per_correct_usd": round(cost / correct, 8) if correct else None,
-        "median_latency_ms": round(median(latencies), 1) if latencies else None,
-        "p95_latency_ms": (
-            round(latencies[math.ceil(0.95 * len(latencies)) - 1], 1) if latencies else None
-        ),
-    }
-
-
-def replay_routing(
+def validation_replay(
     validation: Dataset,
     probabilities: dict[str, np.ndarray],
     cells: list[Cell],
     items: dict[str, SuiteItem],
     models: dict[str, PoolModel],
-) -> dict[str, Any]:
-    """Route each validation prompt once per strategy and look up that model's saved outcome."""
-    by_key = {(cell.sample_id, cell.model_id): cell for cell in cells}
-    train_cells = [cell for cell in cells if cell.router_split == RouterSplit.TRAIN]
-    expected_cost: dict[tuple[str, TaskGroup], float] = {}
-    expected_latency: dict[tuple[str, TaskGroup], float] = {}
-    grouped: dict[tuple[str, TaskGroup], list[Cell]] = defaultdict(list)
-    for cell in train_cells:
-        grouped[(cell.model_id, cell.task_group)].append(cell)
-    for key, members in grouped.items():
-        expected_cost[key] = sum(cell.cost_usd for cell in members) / len(members)
-        served = [cell.latency_ms for cell in members if cell.served] or [60000.0]
-        expected_latency[key] = median(served)
-    failure = {
-        key: sum(1 for cell in members if not cell.served) / len(members)
-        for key, members in grouped.items()
-    }
+    tuned: list[WeightTuningResult] | None = None,
+    tuned_family: str | None = None,
+) -> tuple[int, list[LearnedStrategyOutcome]]:
+    """Fixed, rule, and every family under the starting presets; the tuned presets if given."""
+    model_ids = sorted(models)
+    prompts = complete_prompts(cells, RouterSplit.VALIDATION, model_ids)
+    estimates = routing_estimates(cells, TRAIN_ONLY)
+    choosers: dict[str, Chooser] = dict(fixed_and_rule_choosers(items, model_ids))
+    for family, values in probabilities.items():
+        for priority in RoutingPriority:
+            choosers[f"{family}:{priority.value}"] = score_chooser(
+                validation.probability(values), estimates, model_ids, items,
+                POLICY_WEIGHTS[priority],
+            )
+    if tuned and tuned_family:
+        for result in tuned:
+            choosers[f"{tuned_family}_tuned:{result.priority.value}"] = score_chooser(
+                validation.probability(probabilities[tuned_family]), estimates, model_ids,
+                items, policy_weights(result.weights),
+            )
+    return len(prompts), replay(prompts, choosers, cells, items)
 
-    prompts = sorted({sample_id for sample_id, _ in validation.keys})
-    complete = [
-        sample_id for sample_id in prompts
-        if all((sample_id, model_id) in by_key for model_id in models)
-    ]
 
-    def outcome(sample_id: str, model_id: str) -> tuple[bool, float, float]:
-        cell = by_key[(sample_id, model_id)]
-        return cell.correct, cell.cost_usd, cell.latency_ms
+def export_router(
+    family: str,
+    params: dict[str, Any],
+    fit: Dataset,
+    history: ModelHistory,
+    cells: list[Cell],
+    tuned: list[WeightTuningResult],
+    snapshot: PoolSnapshot,
+    run_id: str,
+    models: dict[str, PoolModel],
+) -> tuple[RouterArtifact, Pipeline]:
+    """Refit the selected family on ``fit`` and describe it as plain numbers."""
+    if family != "logistic_regression":
+        raise ValueError(f"Only the linear router can be exported, not {family}")
+    model: Pipeline = FAMILY_FACTORIES[family]()
+    model.set_params(**params)
+    model.fit(fit.x, fit.y)
+    scaler = model.named_steps["standardscaler"]
+    linear = model.named_steps["logisticregression"]
+    artifact = RouterArtifact(
+        artifact_id=f"{run_id}-{family}-C{params['logisticregression__C']}",
+        run_id=run_id,
+        pool_snapshot_id=snapshot.snapshot_id,
+        family=family,
+        params=params,
+        selection_rule=SELECTION_RULE,
+        trained_on_splits=sorted(split.value for split in history.splits),
+        training_rows=len(fit.y),
+        model_ids=sorted(models),
+        features=fit.names,
+        scaler_mean=[float(value) for value in scaler.mean_],
+        scaler_scale=[float(value) for value in scaler.scale_],
+        coefficients=[float(value) for value in linear.coef_[0]],
+        intercept=float(linear.intercept_[0]),
+        history=history.snapshot(),
+        estimates=routing_estimates(cells, history.splits),
+        weights={result.priority: result.weights for result in tuned},
+    )
+    return artifact, model
 
-    strategies: dict[str, list[tuple[bool, float, float]]] = defaultdict(list)
-    picks: dict[str, Counter[str]] = defaultdict(Counter)
 
-    def route(strategy: str, sample_id: str, model_id: str) -> None:
-        strategies[strategy].append(outcome(sample_id, model_id))
-        picks[strategy][model_id] += 1
+def heldout_evaluation(
+    router: LearnedRouter,
+    fitted: Pipeline,
+    cells: list[Cell],
+    items: dict[str, SuiteItem],
+    models: dict[str, PoolModel],
+) -> HeldoutEvaluation:
+    """The exported router on the test split, read once, against every baseline."""
+    history = ModelHistory(cells, FIT_SPLITS)
+    test = build_dataset(RouterSplit.TEST, cells, items, models, history)
+    sklearn_p = fitted.predict_proba(test.x)[:, 1]
+    served_p = np.array(
+        [
+            router.p_success(
+                items[sample].question, items[sample].task_group, len(items[sample].options),
+                router.models[model_id],
+            )
+            for sample, model_id in test.keys
+        ]
+    )
+    if not np.allclose(sklearn_p, served_p, atol=1e-9):
+        raise RuntimeError("The exported router does not reproduce the fitted model")
+    prior = model_task_prior(cells, test, items, FIT_SPLITS)
+    model_ids = sorted(models)
+    prompts = complete_prompts(cells, RouterSplit.TEST, model_ids)
+    estimates = router.artifact.estimates
+    choosers: dict[str, Chooser] = dict(fixed_and_rule_choosers(items, model_ids))
+    for priority in RoutingPriority:
+        weights = router.artifact.weights[priority]
 
-    index = {key: position for position, key in enumerate(validation.keys)}
-    baselines = {CHEAPEST, FASTEST, STRONGEST} <= set(models)
-    for sample_id in complete:
-        item = items[sample_id]
-        group = item.task_group
-        if baselines:
-            route("fixed_cheapest", sample_id, CHEAPEST)
-            route("fixed_strongest", sample_id, STRONGEST)
-            score = effort_score(prompt_signals(item.question))
-            route("rule_balanced", sample_id,
-                  STRONGEST if score >= 3 else FASTEST if score else CHEAPEST)
-        for family, probs in probabilities.items():
-            for priority in RoutingPriority:
-                candidates = [
-                    CandidateEstimate(
-                        model_id=model_id,
-                        p_success=float(probs[index[(sample_id, model_id)]]),
-                        expected_cost_usd=expected_cost.get((model_id, group), 0.0),
-                        expected_latency_ms=expected_latency.get((model_id, group), 60000.0),
-                        failure_rate=failure.get((model_id, group), 0.0),
-                    )
-                    for model_id in sorted(models)
-                ]
-                route(f"{family}:{priority.value}", sample_id,
-                      choose(candidates, priority).model_id)
-    return {
-        "validation_prompts_with_all_models": len(complete),
-        "strategies": {
-            name: {**_summarize(rows), "selected_models": dict(picks[name].most_common())}
-            for name, rows in strategies.items()
-        },
-    }
+        def learned(sample: str, weights: Any = weights) -> str:
+            item = items[sample]
+            return router.decide_for(
+                item.question, group=item.task_group, option_count=len(item.options),
+                weights=weights,
+            )[0]
+
+        choosers[f"learned:{priority.value}"] = learned
+    for priority in RoutingPriority:
+        choosers[f"model_task_prior:{priority.value}"] = score_chooser(
+            test.probability(prior), estimates, model_ids, items,
+            policy_weights(router.artifact.weights[priority]),
+        )
+    return HeldoutEvaluation(
+        artifact_id=router.artifact.artifact_id,
+        trained_on=router.artifact.trained_on_splits,
+        prompts=len(prompts),
+        classifier=ClassifierMetrics.model_validate(_metrics(test.y, sklearn_p)),
+        reference_model_task_prior=ClassifierMetrics.model_validate(_metrics(test.y, prior)),
+        strategies=replay(prompts, choosers, cells, items),
+    )
 
 
 def main() -> int:
@@ -327,14 +399,34 @@ def main() -> int:
     if not len(train.y) or not len(validation.y):
         print("Not enough scored cells yet to train.")
         return 1
+
     comparison = fit_and_compare(train, validation)
+    selected = select_family(comparison)
     probabilities = {
         name: entry["_model"].predict_proba(validation.x)[:, 1]
         for name, entry in comparison.items()
     }
     # Routing on the prior too shows what the prompt features add beyond a model-by-task table.
     probabilities["model_task_prior"] = model_task_prior(cells, validation, items)
-    routing = replay_routing(validation, probabilities, cells, items, models)
+    validation_prompts = complete_prompts(cells, RouterSplit.VALIDATION, sorted(models))
+    tuned = tune_weights(
+        validation_prompts, validation.probability(probabilities[selected]),
+        routing_estimates(cells, TRAIN_ONLY), sorted(models), cells, items,
+    )
+    prompt_count, strategies = validation_replay(
+        validation, probabilities, cells, items, models, tuned, selected
+    )
+
+    fit_history = ModelHistory(cells, FIT_SPLITS)
+    fit = build_dataset(FIT_SPLITS, cells, items, models, fit_history)
+    artifact, fitted = export_router(
+        selected, comparison[selected]["best_params"], fit, fit_history, cells, tuned,
+        snapshot, args.run_id, models,
+    )
+    ROUTER_MODEL_PATH.write_text(artifact.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    router = LearnedRouter(artifact, snapshot)
+    heldout = heldout_evaluation(router, fitted, cells, items, models)
+
     report = LearnedRouterReport(
         run_id=args.run_id,
         pool_snapshot_id=snapshot.snapshot_id,
@@ -352,12 +444,17 @@ def main() -> int:
         reference_model_task_prior=ClassifierMetrics.model_validate(
             _metrics(validation.y, probabilities["model_task_prior"])
         ),
-        validation_prompts=routing["validation_prompts_with_all_models"],
-        strategies=[
-            LearnedStrategyOutcome(strategy_id=name, **summary)
-            for name, summary in routing["strategies"].items()
-        ],
-        note="Validation split only; the held-out test split is reserved for Checkpoint 3.",
+        selected_family=selected,
+        selection_rule=SELECTION_RULE,
+        validation_prompts=prompt_count,
+        strategies=strategies,
+        weight_tuning=tuned,
+        heldout=heldout,
+        note=(
+            "Classifiers were selected and weights tuned on the validation split. The selected "
+            "router was then refit on training and validation data and evaluated once on the "
+            "held-out test split."
+        ),
     )
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     out = REPORT_DIR / f"{args.run_id}-router-comparison.json"
@@ -367,7 +464,18 @@ def main() -> int:
               f"AUC {classifier.validation.roc_auc}, gap {classifier.overfit_gap_log_loss:.4f}")
     prior = report.reference_model_task_prior
     print(f"model_task_prior: val log loss {prior.log_loss:.4f}, AUC {prior.roc_auc}")
-    print(f"wrote {out.relative_to(REPOSITORY_ROOT)}")
+    print(f"selected: {selected} {comparison[selected]['best_params']}")
+    for result in tuned:
+        print(f"tuned {result.priority.value}: {result.weights.model_dump()} -> "
+              f"{result.validation_correct}/{prompt_count} correct, "
+              f"${result.validation_cost_usd:.4f}")
+    print(f"held-out test log loss {heldout.classifier.log_loss:.4f} "
+          f"(reference {heldout.reference_model_task_prior.log_loss:.4f})")
+    for strategy in heldout.strategies:
+        print(f"  test {strategy.strategy_id}: {strategy.correct}/{strategy.prompts}, "
+              f"${strategy.total_cost_usd:.4f}, median {strategy.median_latency_ms} ms")
+    print(f"wrote {out.relative_to(REPOSITORY_ROOT)} and "
+          f"{ROUTER_MODEL_PATH.relative_to(REPOSITORY_ROOT)}")
     return 0
 
 

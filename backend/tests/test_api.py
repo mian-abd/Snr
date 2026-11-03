@@ -1,6 +1,8 @@
+import json
 import shutil
 from datetime import UTC, datetime
 
+import httpx
 from fastapi.testclient import TestClient
 
 from app.config import REPOSITORY_ROOT, Settings
@@ -11,7 +13,10 @@ from app.domain.models import (
     GenerationStatus,
 )
 from app.main import create_app
-from app.state import AppServices
+from app.providers import GenerationService
+from app.providers.openai_compatible import OpenAICompatibleAdapter
+from app.registry.pool import endpoint_for
+from app.state import AppServices, build_learned_services
 
 
 class FakeGenerationService:
@@ -305,3 +310,86 @@ def test_paid_benchmark_requires_the_confirmed_estimate(
         assert coordinator.started == ["pilot"]
         assert confirmed.json()["manifest"]["total_cells"] == 6
         assert confirmed.json()["manifest"]["model_ids"] == [m.id for m in paid_registry.models]
+
+
+def _learned_services(registry, tmp_path, *, api_key: str | None, handler):
+    _copy_evidence(tmp_path)
+    shutil.copytree(REPOSITORY_ROOT / "data" / "registry", tmp_path / "registry")
+    settings = Settings(openrouter_api_key=api_key, data_dir=tmp_path)
+    router, _ = build_learned_services(settings)
+    assert router is not None
+    adapter = OpenAICompatibleAdapter(
+        [endpoint_for(model) for model in router.models.values()],
+        transport=httpx.MockTransport(handler),
+        keys={"OPENROUTER_API_KEY": api_key} if api_key else {},
+    )
+    services = AppServices(
+        settings=settings, registry=registry, generation_service=None, benchmark_runner=None,
+        learned_router=router, learned_generation_service=GenerationService(adapter),
+    )
+    return settings, services
+
+
+def test_learned_router_previews_without_calls_and_routes_one_live_call(
+    registry, tmp_path
+) -> None:
+    calls: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        body = json.loads(request.content)
+        calls.append(body["model"])
+        return httpx.Response(200, json={
+            "model": body["model"],
+            "choices": [{"message": {"content": "36"}, "finish_reason": "stop"}],
+            "usage": {"prompt_tokens": 12, "completion_tokens": 2, "total_tokens": 14},
+        })
+
+    settings, services = _learned_services(registry, tmp_path, api_key="test-key", handler=handler)
+    prompt = "Calculate 15 percent of 240."
+    with TestClient(create_app(settings=settings, services=services)) as client:
+        preview = client.post("/api/v1/learned/decisions", json={"prompt": prompt})
+        assert preview.status_code == 200
+        decision = preview.json()
+        assert decision["task_group"] == "math" and decision["task_group_inferred"] is True
+        assert len(decision["candidates"]) == 9 and calls == []
+        by_id = {item["model_id"]: item for item in decision["candidates"]}
+        selected = by_id[decision["selected_model_id"]]
+        assert selected["eligible"] and selected["score"] == max(
+            item["score"] for item in decision["candidates"] if item["eligible"]
+        )
+        custom = client.post("/api/v1/learned/decisions", json={
+            "prompt": prompt, "weights": {"quality": 1, "cost": 0, "latency": 10},
+        })
+        assert custom.json()["custom_weights"] is True
+        long_context = client.post(
+            "/api/v1/learned/decisions", json={"prompt": prompt, "min_context_tokens": 500000}
+        )
+        excluded = {
+            item["model_id"] for item in long_context.json()["candidates"] if not item["eligible"]
+        }
+        assert {"qwen-3.5-9b-local", "gpt-oss-120b", "llama-3.3-70b"} <= excluded
+        bad = client.post(
+            "/api/v1/learned/decisions",
+            json={"prompt": prompt, "weights": {"quality": 0, "cost": 1, "latency": 1}},
+        )
+        assert bad.status_code == 422
+        live = client.post("/api/v1/learned/routes", json={"prompt": prompt})
+        assert live.status_code == 200
+        assert live.json()["result"]["status"] == "success"
+        assert live.json()["decision"]["selected_model_id"] == decision["selected_model_id"]
+        assert len(calls) == 1
+
+
+def test_learned_router_excludes_openrouter_models_without_a_key(registry, tmp_path) -> None:
+    settings, services = _learned_services(
+        registry, tmp_path, api_key=None, handler=lambda request: httpx.Response(500)
+    )
+    with TestClient(create_app(settings=settings, services=services)) as client:
+        decision = client.post(
+            "/api/v1/learned/decisions", json={"prompt": "Explain the water cycle."}
+        ).json()
+        reasons = {item["model_id"]: item["exclusion_reason"] for item in decision["candidates"]}
+        assert reasons["gemini-4-argon"] == "OPENROUTER_API_KEY is not configured on the server"
+        assert reasons["gpt-oss-120b"] is None
+        assert decision["selected_model_id"] in {"gpt-oss-120b", "llama-3.3-70b",
+                                                  "qwen-3.8-27b", "qwen-3.5-9b-local"}
