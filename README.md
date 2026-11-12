@@ -24,7 +24,7 @@ Adaptive LLM Router is a local, reproducible console for comparing pinned OpenRo
 
 Checkpoint 2 is deliberately a simple, rule-based policy—not a learned router or a claim of statistically conclusive model rankings.
 
-## Toward Checkpoint 3 (weeks of Oct 22 to Nov 5)
+## Checkpoint 3 (weeks of Oct 22 to Nov 12)
 
 - A fixed 600-prompt suite (200 GSM8K, 200 MMLU-Pro, 100 HumanEval+, 100 MBPP+) built from pinned, checksummed sources, with a 60/20/20 train/validation/test split fixed before any model runs: `python -m app.benchmarks.prepare_suite`.
 - An 11-model pool across 8 families and 5 access paths: paid OpenRouter, free OpenRouter, anonymous OVHcloud, Google AI Studio, NVIDIA NIM, and a local Ollama model (`data/registry/cp3-pool-2026-10-27.json`).
@@ -37,6 +37,8 @@ Checkpoint 2 is deliberately a simple, rule-based policy—not a learned router 
   - the weight presets are tuned on validation per priority;
   - the router is tested once on the held-out split against the fixed baselines and the rule router, with accuracy-cost and accuracy-latency plots (`docs/figures/`, `python -m app.learned.plots`).
 - The **Learned** tab routes a prompt with the learned router: priority presets or custom weights, a provider-free preview of every model's score, and a one-call live route. It also shows the held-out comparison charts, the tuned presets, the matrix, and the classifier comparison. The Route tab keeps the Checkpoint 2 rule policy.
+- Week of Nov 12: a hindsight oracle per priority and an under- and over-routing analysis on the held-out split, in the same report and tab.
+- Checkpoint 3 deck: [docs/presentations/Adaptive_LLM_Router_Checkpoint_3.pptx](docs/presentations/Adaptive_LLM_Router_Checkpoint_3.pptx). Backup demo recording: `docs/demo/checkpoint-3-backup-demo.webm`.
 
 Run each command with `uv run --project backend` from the repository root. See [weeks of Oct 22 and Oct 29](docs/checkpoint-3-progress.md) and the [data provenance errata](docs/data-provenance-errata.md).
 

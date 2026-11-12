@@ -1,15 +1,20 @@
-# Weeks of October 22 to November 5: the learned router
+# Weeks of October 22 to November 12: the learned router
 
-This records the proposal's work-plan items for the weeks of October 22, October 29, and November 5. The week of November 12 (presenting Checkpoint 3, the oracle comparison, routing error analysis) and everything after is deliberately not started.
+This records the proposal's work-plan items for the weeks of October 22, October 29, November 5, and November 12. The week of November 19 (completing the held-out evaluation and error analysis, robustness tests, export) and everything after is deliberately not started.
 
 | Proposal item | Status |
 | --- | --- |
+| **Week of November 12** | |
+| Present Checkpoint 3 and record any remaining problems | Materials ready on 2026-11-12 (deck, backup recording, local class script); the owner presents. Problem recorded: the OpenRouter key expired the same day ([details](#week-of-november-12)) |
+| Begin the held-out evaluation across coding, mathematics, and question answering | Begun: per-task held-out results for every strategy, oracle, and error count |
+| Implement the oracle comparison | Done: one hindsight oracle per priority, with the router's weights |
+| Begin routing error analysis | Begun: under- and over-routing counts and examples per priority |
 | **Week of November 5** | |
 | Select and integrate the learned router using validation results | Done: logistic regression, exported and served by the API and the console ([details](#week-of-november-5)) |
 | Finish the multi-objective router and user weights | Done: one preset per priority tuned on validation, plus custom weights |
 | Create accuracy-cost and accuracy-latency comparison plots | Done: `docs/figures/` and the console's Learned tab |
 | Run Checkpoint 3 comparison experiments | Done: held-out test split, against fixed baselines and the rule router |
-| Prepare slides, backup recording, and live demo for Checkpoint 3 | Not done: the owner will handle these the week of November 12 |
+| Prepare slides, backup recording, and live demo for Checkpoint 3 | Done on 2026-11-12, at the owner's request (see the week of November 12) |
 | **Weeks of October 22 and October 29** | |
 | Present Checkpoint 2 and document any routing or interface issues | Issues documented below |
 | Build the train, validation, and test split | Done: `data/benchmarks/cp3_suite.jsonl` |
@@ -248,14 +253,14 @@ The test split (120 prompts: 40 GSM8K, 40 MMLU-Pro, 40 code) was read once, afte
 | Always cheapest paid (Gemma 4 26B) | 103 | 38 | 34 | 31 | $0.018 | 5.1 s | 16.5 s |
 | Always strongest (Gemini 4 Argon) | 112 | 38 | 39 | 35 | $0.493 | 5.1 s | 12.7 s |
 | Checkpoint 2 rule router | 105 | 37 | 35 | 33 | $0.186 | 3.5 s | 11.6 s |
-| **Learned router, higher quality** | **112** | 38 | 39 | 35 | **$0.422** | 5.4 s | 14.2 s |
+| **Learned router, higher quality** | **112** | 38 | 39 | 35 | **$0.421** | 5.4 s | 14.2 s |
 | **Learned router, lower cost** | **103** | 37 | 33 | 33 | **$0.0003** | 12.7 s | 88.1 s |
 | **Learned router, faster / balanced** | **102** | 37 | 32 | 33 | $0.116 | **2.1 s** | **9.8 s** |
 | Reference (model × task), quality | 111 | 37 | 39 | 35 | $0.420 | 6.5 s | 17.4 s |
 | Reference, lower cost | 104 | 37 | 34 | 33 | $0.000 | 13.4 s | 88.1 s |
 | Reference, faster / balanced | 104 | 37 | 32 | 35 | $0.127 | 2.6 s | 8.9 s |
 
-- **Higher quality** matches always-strongest (112 of 120) for 14% less, by sending 40 prompts (the math ones) to Gemma 4 26B.
+- **Higher quality** matches always-strongest (112 of 120) for 15% less ($0.421 against $0.493), by sending 40 prompts (the math ones) to Gemma 4 26B.
 - **Lower cost** matches always-cheapest (103) for 2% of its cost by using the free Nemotron and gpt-oss models, but it is much slower (median 12.7 s, p95 88 s).
 - **Faster / balanced** is the fastest strategy (median 2.1 s, p95 9.8 s, mostly Mercury 3), one answer below always-cheapest at six times its cost.
 - **The reference routes about as well** as the learned router: within one or two answers on every priority. Held-out log loss: learned 0.432, reference 0.434. The router's value comes from the multi-objective scoring over per-model, per-task estimates more than from prompt features.
@@ -286,3 +291,52 @@ They stay out of the matrix.
 - Live learned routes record the provider's reported cost but do not re-check OpenRouter prices against the dated 2026-10-27 snapshot, unlike the Checkpoint 2 routes.
 - The local model is only available while Ollama runs on this laptop. If it is selected and not running, the call fails as a provider error.
 - Expected costs for Mercury 3 and DeepSeek V4 Flash are slightly low, because truncated answers were recorded at $0 before 2026-10-28.
+
+## Week of November 12
+
+### Checkpoint 3 materials
+
+- **Deck:** `docs/presentations/Adaptive_LLM_Router_Checkpoint_3.pptx`, 9 slides in the Checkpoint 2 format, with speaker notes on every slide and the live demo on slide 8. It covers the pipeline, the 600 × 9 matrix, the router selection, the held-out results, and the comparison plots. The plots are the all-prompts panels drawn by `python -m app.learned.plots --slides DIR` (dark, larger type).
+- **Backup recording:** `docs/demo/checkpoint-3-backup-demo.webm`, a silent recording of the Learned tab:
+  - previews for three priorities and a 500,000-token requirement;
+  - one real routed call to the free gpt-oss-120b (answer 72 km/h, status success, checked while recording);
+  - the held-out charts overall and for MMLU-Pro, and the tuned presets.
+- **Class script:** kept local and never pushed, like the Checkpoint 2 one. Every expected demo result in it was checked against the running app.
+
+### Problem recorded on 2026-11-12: the OpenRouter key expired
+
+OpenRouter now answers `401 API key expired` for the key in `backend/.env`. The server still reports the key as configured, because it only checks that a key is present.
+
+- **Previews are unaffected.**
+- Live calls to OpenRouter models fail with a 401, both learned routes and the Checkpoint 2 Route and Compare tabs.
+- Live routes to the free OVHcloud and local models still work.
+- **Fix:** the owner creates a new key and puts it in `backend/.env`. The demo uses the lower-cost priority (free gpt-oss-120b) for its live call, so it works either way.
+
+### Oracle comparison (held-out test split)
+
+`app.learned.evaluate.oracle_chooser` gives each prompt the model with the best *observed* outcome. It uses the same multi-objective formula and the same tuned weights as the router, with the observed result in place of the estimates: correct or not, actual cost and latency, served or not. It is not deployable; it shows how much room is left.
+
+| Priority | Learned correct | Oracle correct | Learned cost | Oracle cost |
+| --- | ---: | ---: | ---: | ---: |
+| Higher quality | 112 | 116 | $0.421 | $0.017 |
+| Lower cost | 103 | 113 | $0.0003 | $0.0007 |
+| Faster response / balanced | 102 | 116 | $0.116 | $0.058 |
+
+With perfect hindsight, a cheap or free model was right on almost every prompt the router paid more for. Closing that gap needs prompt-level signal the current features do not carry (see "Choices are almost entirely per task" above).
+
+### Routing error analysis (begun)
+
+`app.learned.evaluate.routing_errors` follows the proposal's definitions, ranking models by their expected cost for the prompt's task. Examples are stored in the report.
+
+- **Under-routing:** the chosen model failed while a model with a higher expected cost succeeded.
+- **Over-routing:** the chosen model succeeded although a model with a lower expected cost also did.
+
+| Priority | Wrong answers | Under-routed | Over-routed |
+| --- | ---: | ---: | ---: |
+| Higher quality | 8 | 0 | 108 |
+| Lower cost | 17 | 12 | 1 |
+| Faster response / balanced | 18 | 10 | 99 |
+
+- **Lower cost's misses are mostly under-routing.** For 12 of its 17 wrong answers a paid model was right.
+- **Higher quality never under-routes but over-routes heavily.** Free models count as the cheapest, and one of them was usually also right after the fact; the quality preset pays for nine more correct answers than the lower-cost preset (112 against 103). Faster response over-routes for the same reason: it pays for speed.
+- Completing the analysis (per task, with worked examples) is a week-of-November-19 item.

@@ -1,12 +1,14 @@
 """Accuracy-cost and accuracy-latency comparison plots for the held-out test (week of Nov 5).
 
     uv run --project backend python -m app.learned.plots
+    uv run --project backend python -m app.learned.plots --slides OUT_DIR   # dark, one panel
 
 Reads the committed report and writes PNG and SVG figures to ``docs/figures``. Each plot has one
 axis pair (no dual axes): accuracy against total cost, and accuracy against median latency, as
 small multiples for all prompts and for each task group. The learned router and the baselines
 use categorical slots 1 and 2 of a colorblind-validated palette, plus different marker shapes,
-and every point is labeled directly; the report's tables hold the exact values.
+and every point is labeled directly; the report's tables hold the exact values. ``--slides``
+writes the all-prompts panel alone, in the same slots' dark steps and larger type, for a deck.
 """
 
 from __future__ import annotations
@@ -29,10 +31,27 @@ from app.domain.models import LearnedRouterReport, LearnedStrategyOutcome  # noq
 
 REPORT_PATH = REPOSITORY_ROOT / "data" / "learned" / "cp3-full-router-comparison.json"
 FIGURE_DIR = REPOSITORY_ROOT / "docs" / "figures"
+
+
+@dataclass(frozen=True)
+class Theme:
+    surface: str
+    ink: str
+    ink_secondary: str
+    muted: str
+    grid: str
+    axis: str
+    learned: str
+    baseline: str
+    scale: float = 1.0  # type, marker, and label-offset scale
+
+
 # Light-mode chart tokens from the dataviz reference palette (validated, slots 1 and 2).
-SURFACE, INK, INK_SECONDARY, MUTED = "#fcfcfb", "#0b0b0b", "#52514e", "#898781"
-GRID, AXIS = "#e1e0d9", "#c3c2b7"
-LEARNED_COLOR, BASELINE_COLOR = "#2a78d6", "#eb6834"
+LIGHT = Theme("#fcfcfb", "#0b0b0b", "#52514e", "#898781", "#e1e0d9", "#c3c2b7",
+              "#2a78d6", "#eb6834")
+# The same slots' dark steps (validated on dark surfaces), on the deck's card color.
+SLIDE = Theme("#111316", "#f0efec", "#c3c2b7", "#898781", "#2c2c2a", "#383835",
+              "#3987e5", "#d95926", scale=1.75)
 LABELS = {
     "fixed_cheapest": "Always cheapest",
     "fixed_strongest": "Always strongest",
@@ -88,14 +107,17 @@ def _points(strategies: list[LearnedStrategyOutcome], task: str | None) -> list[
     return points
 
 
-def _place_labels(ax: Axes, points: list[Point], x_of: Callable[[Point], float]) -> None:
+def _place_labels(
+    ax: Axes, points: list[Point], x_of: Callable[[Point], float], theme: Theme
+) -> None:
     figure = ax.figure
     renderer = figure.canvas.get_renderer()  # type: ignore[attr-defined]
     frame = ax.get_window_extent(renderer)
     taken: list[Bbox] = []
     centers = [tuple(ax.transData.transform((x_of(point), point.accuracy))) for point in points]
+    reach = 7 * theme.scale
     for x, y in centers:
-        taken.append(Bbox.from_extents(x - 7, y - 7, x + 7, y + 7))
+        taken.append(Bbox.from_extents(x - reach, y - reach, x + reach, y + reach))
 
     def overlap(box: Bbox, own: tuple[float, float]) -> float:
         inside = frame.contains(box.x0, box.y0) and frame.contains(box.x1, box.y1)
@@ -116,12 +138,14 @@ def _place_labels(ax: Axes, points: list[Point], x_of: Callable[[Point], float])
     for point in sorted(points, key=lambda item: -item.accuracy):
         if not point.label:
             continue
-        best: tuple[float, Bbox, tuple[int, int, str]] | None = None
-        for offset in OFFSETS:
-            dx, dy, align = offset
+        best: tuple[float, Bbox, tuple[float, float, str]] | None = None
+        for base_dx, base_dy, align in OFFSETS:
+            offset = (base_dx * theme.scale, base_dy * theme.scale, align)
+            dx, dy, _ = offset
             text = ax.annotate(
                 point.label, (x_of(point), point.accuracy), xytext=(dx, dy),
-                textcoords="offset points", ha=align, fontsize=8.5, color=INK_SECONDARY,
+                textcoords="offset points", ha=align, fontsize=8.5 * theme.scale,
+                color=theme.ink_secondary,
             )
             box = text.get_window_extent(renderer).expanded(1.04, 1.15)
             own = tuple(ax.transData.transform((x_of(point), point.accuracy)))
@@ -134,7 +158,8 @@ def _place_labels(ax: Axes, points: list[Point], x_of: Callable[[Point], float])
         assert best is not None
         _, box, (dx, dy, align) = best
         ax.annotate(point.label, (x_of(point), point.accuracy), xytext=(dx, dy),
-                    textcoords="offset points", ha=align, fontsize=8.5, color=INK_SECONDARY)
+                    textcoords="offset points", ha=align, fontsize=8.5 * theme.scale,
+                    color=theme.ink_secondary)
         taken.append(box)
 
 
@@ -145,17 +170,19 @@ def _panel(
     title: str,
     x_label: str,
     x_unit: tuple[str, str],
+    theme: Theme,
 ) -> None:
-    ax.set_facecolor(SURFACE)
+    size = theme.scale
+    ax.set_facecolor(theme.surface)
     # Baseline squares are drawn larger and underneath, so a shared spot still shows both.
-    for learned, color, marker, size in (
-        (False, BASELINE_COLOR, "s", 110), (True, LEARNED_COLOR, "o", 70)
+    for learned, color, marker, area in (
+        (False, theme.baseline, "s", 110), (True, theme.learned, "o", 70)
     ):
         group = [point for point in points if point.learned == learned]
         ax.scatter(
             [x_of(point) for point in group], [point.accuracy for point in group],
-            s=size, marker=marker, color=color, edgecolors=SURFACE, linewidths=2,
-            zorder=3 + learned, clip_on=False,
+            s=area * size * size, marker=marker, color=color, edgecolors=theme.surface,
+            linewidths=2 * size, zorder=3 + learned, clip_on=False,
             label="Learned router" if learned else "Baselines",
         )
     xs = [x_of(point) for point in points]
@@ -175,19 +202,21 @@ def _panel(
     ax.xaxis.set_major_formatter(FuncFormatter(
         lambda value, _: "" if value < 0 else f"{prefix}{value:.{decimals}f}{suffix}"
     ))
-    ax.grid(True, color=GRID, linewidth=0.8, linestyle="-")
+    ax.grid(True, color=theme.grid, linewidth=0.8 * size, linestyle="-")
     ax.set_axisbelow(True)
     for side in ("top", "right"):
         ax.spines[side].set_visible(False)
     for side in ("left", "bottom"):
-        ax.spines[side].set_color(AXIS)
-        ax.spines[side].set_linewidth(0.8)
-    ax.tick_params(colors=MUTED, labelsize=8.5, length=0)
-    ax.set_title(title, loc="left", fontsize=10.5, color=INK, fontweight="semibold", pad=8)
-    ax.set_xlabel(x_label, fontsize=9, color=INK_SECONDARY)
-    ax.set_ylabel("Correct answers", fontsize=9, color=INK_SECONDARY)
+        ax.spines[side].set_color(theme.axis)
+        ax.spines[side].set_linewidth(0.8 * size)
+    ax.tick_params(colors=theme.muted, labelsize=8.5 * size, length=0)
+    if title:
+        ax.set_title(title, loc="left", fontsize=10.5 * size, color=theme.ink,
+                     fontweight="semibold", pad=8)
+    ax.set_xlabel(x_label, fontsize=9 * size, color=theme.ink_secondary)
+    ax.set_ylabel("Correct answers", fontsize=9 * size, color=theme.ink_secondary)
     ax.figure.canvas.draw()
-    _place_labels(ax, points, x_of)
+    _place_labels(ax, points, x_of, theme)
 
 
 def figure(
@@ -197,36 +226,48 @@ def figure(
     x_label: str,
     x_unit: tuple[str, str],
     out: Path,
+    theme: Theme = LIGHT,
 ) -> list[Path]:
-    fig, axes = plt.subplots(2, 2, figsize=(12, 8.2), facecolor=SURFACE)
+    """All four panels with a heading (docs), or the all-prompts panel alone (slides)."""
     held = report.heldout
-    for ax, (task, name) in zip(axes.flat, PANELS, strict=True):
-        points = _points(held.strategies, task)
+    slide = theme is SLIDE
+    panels = PANELS[:1] if slide else PANELS
+    fig, grid = plt.subplots(
+        1 if slide else 2, 1 if slide else 2, figsize=(9.2, 6.3) if slide else (12, 8.2),
+        facecolor=theme.surface, squeeze=False,
+    )
+    axes = list(grid.flat)
+    for ax, (task, name) in zip(axes, panels, strict=True):
         count = (
             held.prompts if task is None
             else next(iter(held.strategies)).by_task[task].prompts
         )
-        _panel(ax, points, x_of, f"{name} · {count} prompts", x_label, x_unit)
-    handles, labels = axes.flat[0].get_legend_handles_labels()
-    fig.legend(handles, labels, loc="upper right", frameon=False, fontsize=9.5, ncol=2,
-               labelcolor=INK_SECONDARY, bbox_to_anchor=(0.985, 0.985))
-    fig.suptitle(title, x=0.015, y=0.975, ha="left", fontsize=13, color=INK,
-                 fontweight="semibold")
-    fig.text(0.015, 0.935, (
-        f"Held-out test split, read once. Router {held.artifact_id}, trained on "
-        f"{' + '.join(held.trained_on)}; outcomes replayed from the saved matrix."
-    ), fontsize=9, color=MUTED)
-    fig.tight_layout(rect=(0, 0, 1, 0.92), h_pad=2.2, w_pad=2.5)
-    for ax in axes.flat:  # tight_layout moved the axes, so place the labels again
+        _panel(ax, _points(held.strategies, task), x_of,
+               "" if slide else f"{name} · {count} prompts", x_label, x_unit, theme)
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc="upper right", frameon=False, fontsize=9.5 * theme.scale,
+               ncol=2, labelcolor=theme.ink_secondary,
+               bbox_to_anchor=(0.985, 0.995 if slide else 0.985))
+    if slide:
+        fig.tight_layout(rect=(0, 0, 1, 0.93))
+    else:
+        fig.suptitle(title, x=0.015, y=0.975, ha="left", fontsize=13, color=theme.ink,
+                     fontweight="semibold")
+        fig.text(0.015, 0.935, (
+            f"Held-out test split, read once. Router {held.artifact_id}, trained on "
+            f"{' + '.join(held.trained_on)}; outcomes replayed from the saved matrix."
+        ), fontsize=9, color=theme.muted)
+        fig.tight_layout(rect=(0, 0, 1, 0.92), h_pad=2.2, w_pad=2.5)
+    for ax in axes:  # tight_layout moved the axes, so place the labels again
         for text in list(ax.texts):
             text.remove()
     fig.canvas.draw()
-    for ax, (task, _) in zip(axes.flat, PANELS, strict=True):
-        _place_labels(ax, _points(held.strategies, task), x_of)
+    for ax, (task, _) in zip(axes, panels, strict=True):
+        _place_labels(ax, _points(held.strategies, task), x_of, theme)
     written = []
     for suffix in (".png", ".svg"):
         path = out.with_suffix(suffix)
-        fig.savefig(path, dpi=160, facecolor=SURFACE,
+        fig.savefig(path, dpi=160 if not slide else 220, facecolor=theme.surface,
                     metadata={"Date": None} if suffix == ".svg" else {"Software": None})
         written.append(path)
     plt.close(fig)
@@ -236,22 +277,24 @@ def figure(
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--report", type=Path, default=REPORT_PATH)
+    parser.add_argument("--slides", type=Path, help="Write the dark one-panel slide versions here")
     args = parser.parse_args()
     report = LearnedRouterReport.model_validate_json(args.report.read_text(encoding="utf-8"))
-    FIGURE_DIR.mkdir(parents=True, exist_ok=True)
+    theme, out_dir = (SLIDE, args.slides) if args.slides else (LIGHT, FIGURE_DIR)
+    out_dir.mkdir(parents=True, exist_ok=True)
     plt.rcParams["svg.fonttype"] = "none"
     plt.rcParams["svg.hashsalt"] = "cp3-heldout"  # fixed element IDs, so reruns are identical
     written = figure(
         report, "Accuracy against cost on held-out prompts", lambda point: point.cost,
-        "Total paid cost (USD)", ("$", ""), FIGURE_DIR / "cp3-heldout-accuracy-cost",
+        "Total paid cost (USD)", ("$", ""), out_dir / "cp3-heldout-accuracy-cost", theme,
     )
     written += figure(
         report, "Accuracy against response time on held-out prompts",
         lambda point: point.latency_s, "Median latency (seconds)", ("", " s"),
-        FIGURE_DIR / "cp3-heldout-accuracy-latency",
+        out_dir / "cp3-heldout-accuracy-latency", theme,
     )
     for path in written:
-        print(f"wrote {path.relative_to(REPOSITORY_ROOT)}")
+        print(f"wrote {path}")
     return 0
 
 

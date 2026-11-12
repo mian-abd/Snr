@@ -338,6 +338,26 @@ class WeightTuningResult(StrictModel):
     candidates_tried: int
 
 
+class RoutingErrorExample(StrictModel):
+    kind: str  # "under" or "over"
+    sample_id: str
+    task_group: TaskGroup
+    chosen_model_id: str
+    alternative_model_id: str
+
+
+class RoutingErrorSummary(StrictModel):
+    """Proposal: under-routing picks a cheaper model that fails while a costlier eligible model
+    succeeds; over-routing picks a costlier model although a cheaper eligible one also succeeds."""
+
+    strategy_id: str
+    prompts: int
+    wrong: int
+    under_routed: int
+    over_routed: int
+    examples: list[RoutingErrorExample]
+
+
 class HeldoutEvaluation(StrictModel):
     """The selected router, refit on train + validation, evaluated once on the test split."""
 
@@ -347,6 +367,8 @@ class HeldoutEvaluation(StrictModel):
     classifier: ClassifierMetrics
     reference_model_task_prior: ClassifierMetrics
     strategies: list[LearnedStrategyOutcome]
+    oracle: list[LearnedStrategyOutcome] = Field(default_factory=list)
+    routing_errors: list[RoutingErrorSummary] = Field(default_factory=list)
 
 
 class LearnedRouterReport(StrictModel):

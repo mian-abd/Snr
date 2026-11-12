@@ -12,7 +12,14 @@ from app.domain.models import (
     RoutingPriority,
     StrategyTaskOutcome,
 )
-from app.learned.evaluate import complete_prompts, routing_estimates, tune_weights, weight_grid
+from app.learned.evaluate import (
+    complete_prompts,
+    oracle_chooser,
+    routing_errors,
+    routing_estimates,
+    tune_weights,
+    weight_grid,
+)
 from app.learned.features import (
     Cell,
     ModelHistory,
@@ -35,6 +42,7 @@ from app.learned.train import (
     validation_replay,
 )
 from app.registry.pool import Access, PoolModel, PoolSnapshot, models_sha256
+from app.routing.multi_objective import PolicyWeights
 
 GROUPS = {Benchmark.GSM8K: TaskGroup.MATH, Benchmark.MMLU_PRO: TaskGroup.QA}
 
@@ -300,3 +308,32 @@ def test_plot_points_merge_strategies_that_land_on_the_same_spot() -> None:
     # A shared spot keeps one marker per series; the reference strategy is not plotted.
     assert len(points) == 3
     assert len(_points([outcome("learned:latency", 3, 0.0)], "math")) == 1
+
+
+def test_oracle_uses_hindsight_and_errors_follow_the_proposal_definitions() -> None:
+    items, cells = _synthetic()
+    test_cells = [cell for cell in cells if cell.router_split == RouterSplit.TEST]
+    prompts = complete_prompts(cells, RouterSplit.TEST, sorted(MODELS))
+    by_key = {(cell.sample_id, cell.model_id): cell for cell in test_cells}
+    weights = PolicyWeights(quality=1, cost=0.5, latency=0)
+    oracle = oracle_chooser(test_cells, sorted(MODELS), weights)
+    for sample_id in prompts:
+        # Some model (the strong one) is always right, so hindsight is never wrong.
+        assert by_key[(sample_id, oracle(sample_id))].correct
+    estimates = routing_estimates(cells, FIT_SPLITS)
+    cheapest = routing_errors(
+        "cheap", prompts, lambda _: "gemma-4-26b", test_cells, estimates, items
+    )
+    strongest = routing_errors(
+        "strong", prompts, lambda _: "gemini-4-argon", test_cells, estimates, items
+    )
+    gemma_wrong = sum(not by_key[(sample, "gemma-4-26b")].correct for sample in prompts)
+    # Every Gemma miss had a costlier model (Gemini) that was right: all under-routing.
+    assert cheapest.wrong == cheapest.under_routed == gemma_wrong
+    assert strongest.wrong == 0 and strongest.under_routed == 0
+    # Gemini is the costliest, so every prompt a cheaper model also solved is over-routing.
+    assert strongest.over_routed == sum(
+        any(by_key[(sample, model)].correct for model in ("gemma-4-26b", "mercury-3"))
+        for sample in prompts
+    )
+    assert all(example.kind in {"under", "over"} for example in cheapest.examples)

@@ -1821,6 +1821,347 @@
           }
         }
       }
+    ],
+    "oracle": [
+      {
+        "strategy_id": "oracle:cost",
+        "prompts": 120,
+        "correct": 113,
+        "accuracy": 0.9416666666666667,
+        "total_cost_usd": 0.000725,
+        "cost_per_correct_usd": 6.42e-6,
+        "median_latency_ms": 16051.7,
+        "p95_latency_ms": 66651.5,
+        "selected_models": {
+          "gpt-oss-120b": 104,
+          "llama-3.3-70b": 10,
+          "nemotron-3-ultra-free": 2,
+          "gemma-4-26b": 2,
+          "qwen-3.5-9b-local": 1,
+          "deepseek-v4-flash": 1
+        },
+        "by_task": {
+          "math": {
+            "prompts": 40,
+            "correct": 38,
+            "accuracy": 0.95,
+            "total_cost_usd": 0.0,
+            "median_latency_ms": 6706.3
+          },
+          "qa": {
+            "prompts": 40,
+            "correct": 39,
+            "accuracy": 0.975,
+            "total_cost_usd": 0.000555,
+            "median_latency_ms": 18513.7
+          },
+          "code": {
+            "prompts": 40,
+            "correct": 36,
+            "accuracy": 0.9,
+            "total_cost_usd": 0.00017,
+            "median_latency_ms": 27950.7
+          }
+        }
+      },
+      {
+        "strategy_id": "oracle:quality",
+        "prompts": 120,
+        "correct": 116,
+        "accuracy": 0.9666666666666667,
+        "total_cost_usd": 0.016602,
+        "cost_per_correct_usd": 0.00014312,
+        "median_latency_ms": 4219.7,
+        "p95_latency_ms": 16037.6,
+        "selected_models": {
+          "qwen-3.5-9b-local": 41,
+          "mercury-3": 36,
+          "gemma-4-26b": 10,
+          "llama-3.3-70b": 9,
+          "qwen-3.8-27b": 8,
+          "nemotron-3-ultra-free": 8,
+          "gpt-oss-120b": 5,
+          "gemini-4-argon": 3
+        },
+        "by_task": {
+          "math": {
+            "prompts": 40,
+            "correct": 38,
+            "accuracy": 0.95,
+            "total_cost_usd": 0.000871,
+            "median_latency_ms": 2686.0
+          },
+          "qa": {
+            "prompts": 40,
+            "correct": 39,
+            "accuracy": 0.975,
+            "total_cost_usd": 0.006067,
+            "median_latency_ms": 4235.8
+          },
+          "code": {
+            "prompts": 40,
+            "correct": 39,
+            "accuracy": 0.975,
+            "total_cost_usd": 0.009664,
+            "median_latency_ms": 5180.7
+          }
+        }
+      },
+      {
+        "strategy_id": "oracle:latency",
+        "prompts": 120,
+        "correct": 116,
+        "accuracy": 0.9666666666666667,
+        "total_cost_usd": 0.058066,
+        "cost_per_correct_usd": 0.00050057,
+        "median_latency_ms": 1679.3,
+        "p95_latency_ms": 9802.1,
+        "selected_models": {
+          "mercury-3": 94,
+          "gemma-4-26b": 9,
+          "gemini-4-argon": 6,
+          "deepseek-v4-flash": 5,
+          "qwen-3.5-9b-local": 4,
+          "llama-3.3-70b": 1,
+          "gpt-oss-120b": 1
+        },
+        "by_task": {
+          "math": {
+            "prompts": 40,
+            "correct": 38,
+            "accuracy": 0.95,
+            "total_cost_usd": 0.003727,
+            "median_latency_ms": 1056.5
+          },
+          "qa": {
+            "prompts": 40,
+            "correct": 39,
+            "accuracy": 0.975,
+            "total_cost_usd": 0.038359,
+            "median_latency_ms": 1945.8
+          },
+          "code": {
+            "prompts": 40,
+            "correct": 39,
+            "accuracy": 0.975,
+            "total_cost_usd": 0.015981,
+            "median_latency_ms": 2161.5
+          }
+        }
+      },
+      {
+        "strategy_id": "oracle:balanced",
+        "prompts": 120,
+        "correct": 116,
+        "accuracy": 0.9666666666666667,
+        "total_cost_usd": 0.058066,
+        "cost_per_correct_usd": 0.00050057,
+        "median_latency_ms": 1679.3,
+        "p95_latency_ms": 9802.1,
+        "selected_models": {
+          "mercury-3": 94,
+          "gemma-4-26b": 9,
+          "gemini-4-argon": 6,
+          "deepseek-v4-flash": 5,
+          "qwen-3.5-9b-local": 4,
+          "llama-3.3-70b": 1,
+          "gpt-oss-120b": 1
+        },
+        "by_task": {
+          "math": {
+            "prompts": 40,
+            "correct": 38,
+            "accuracy": 0.95,
+            "total_cost_usd": 0.003727,
+            "median_latency_ms": 1056.5
+          },
+          "qa": {
+            "prompts": 40,
+            "correct": 39,
+            "accuracy": 0.975,
+            "total_cost_usd": 0.038359,
+            "median_latency_ms": 1945.8
+          },
+          "code": {
+            "prompts": 40,
+            "correct": 39,
+            "accuracy": 0.975,
+            "total_cost_usd": 0.015981,
+            "median_latency_ms": 2161.5
+          }
+        }
+      }
+    ],
+    "routing_errors": [
+      {
+        "strategy_id": "learned:cost",
+        "prompts": 120,
+        "wrong": 17,
+        "under_routed": 12,
+        "over_routed": 1,
+        "examples": [
+          {
+            "kind": "under",
+            "sample_id": "gsm8k-test-0989",
+            "task_group": "math",
+            "chosen_model_id": "gpt-oss-120b",
+            "alternative_model_id": "gemma-4-26b"
+          },
+          {
+            "kind": "under",
+            "sample_id": "humaneval_plus-099",
+            "task_group": "code",
+            "chosen_model_id": "nemotron-3-ultra-free",
+            "alternative_model_id": "gemma-4-26b"
+          },
+          {
+            "kind": "under",
+            "sample_id": "mbpp_plus-244",
+            "task_group": "code",
+            "chosen_model_id": "nemotron-3-ultra-free",
+            "alternative_model_id": "gemma-4-26b"
+          },
+          {
+            "kind": "over",
+            "sample_id": "mmlu_pro-test-01725",
+            "task_group": "qa",
+            "chosen_model_id": "gemma-4-26b",
+            "alternative_model_id": "gpt-oss-120b"
+          }
+        ]
+      },
+      {
+        "strategy_id": "learned:quality",
+        "prompts": 120,
+        "wrong": 8,
+        "under_routed": 0,
+        "over_routed": 108,
+        "examples": [
+          {
+            "kind": "over",
+            "sample_id": "gsm8k-test-0101",
+            "task_group": "math",
+            "chosen_model_id": "gemma-4-26b",
+            "alternative_model_id": "gpt-oss-120b"
+          },
+          {
+            "kind": "over",
+            "sample_id": "gsm8k-test-0201",
+            "task_group": "math",
+            "chosen_model_id": "gemma-4-26b",
+            "alternative_model_id": "gpt-oss-120b"
+          },
+          {
+            "kind": "over",
+            "sample_id": "gsm8k-test-0202",
+            "task_group": "math",
+            "chosen_model_id": "gemma-4-26b",
+            "alternative_model_id": "gpt-oss-120b"
+          }
+        ]
+      },
+      {
+        "strategy_id": "learned:latency",
+        "prompts": 120,
+        "wrong": 18,
+        "under_routed": 10,
+        "over_routed": 99,
+        "examples": [
+          {
+            "kind": "over",
+            "sample_id": "gsm8k-test-0101",
+            "task_group": "math",
+            "chosen_model_id": "mercury-3",
+            "alternative_model_id": "gpt-oss-120b"
+          },
+          {
+            "kind": "over",
+            "sample_id": "gsm8k-test-0201",
+            "task_group": "math",
+            "chosen_model_id": "mercury-3",
+            "alternative_model_id": "gpt-oss-120b"
+          },
+          {
+            "kind": "over",
+            "sample_id": "gsm8k-test-0202",
+            "task_group": "math",
+            "chosen_model_id": "mercury-3",
+            "alternative_model_id": "gpt-oss-120b"
+          },
+          {
+            "kind": "under",
+            "sample_id": "gsm8k-test-0293",
+            "task_group": "math",
+            "chosen_model_id": "mercury-3",
+            "alternative_model_id": "deepseek-v4-flash"
+          },
+          {
+            "kind": "under",
+            "sample_id": "humaneval_plus-047",
+            "task_group": "code",
+            "chosen_model_id": "mercury-3",
+            "alternative_model_id": "gemini-4-argon"
+          },
+          {
+            "kind": "under",
+            "sample_id": "humaneval_plus-083",
+            "task_group": "code",
+            "chosen_model_id": "mercury-3",
+            "alternative_model_id": "gemini-4-argon"
+          }
+        ]
+      },
+      {
+        "strategy_id": "learned:balanced",
+        "prompts": 120,
+        "wrong": 18,
+        "under_routed": 10,
+        "over_routed": 99,
+        "examples": [
+          {
+            "kind": "over",
+            "sample_id": "gsm8k-test-0101",
+            "task_group": "math",
+            "chosen_model_id": "mercury-3",
+            "alternative_model_id": "gpt-oss-120b"
+          },
+          {
+            "kind": "over",
+            "sample_id": "gsm8k-test-0201",
+            "task_group": "math",
+            "chosen_model_id": "mercury-3",
+            "alternative_model_id": "gpt-oss-120b"
+          },
+          {
+            "kind": "over",
+            "sample_id": "gsm8k-test-0202",
+            "task_group": "math",
+            "chosen_model_id": "mercury-3",
+            "alternative_model_id": "gpt-oss-120b"
+          },
+          {
+            "kind": "under",
+            "sample_id": "gsm8k-test-0293",
+            "task_group": "math",
+            "chosen_model_id": "mercury-3",
+            "alternative_model_id": "deepseek-v4-flash"
+          },
+          {
+            "kind": "under",
+            "sample_id": "humaneval_plus-047",
+            "task_group": "code",
+            "chosen_model_id": "mercury-3",
+            "alternative_model_id": "gemini-4-argon"
+          },
+          {
+            "kind": "under",
+            "sample_id": "humaneval_plus-083",
+            "task_group": "code",
+            "chosen_model_id": "mercury-3",
+            "alternative_model_id": "gemini-4-argon"
+          }
+        ]
+      }
     ]
   },
   "note": "Classifiers were selected and weights tuned on the validation split. The selected router was then refit on training and validation data and evaluated once on the held-out test split."

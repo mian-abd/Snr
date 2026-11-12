@@ -150,6 +150,35 @@ export function LearnedPanel() {
           <p className={styles.disclaimer}>Read once, after selection and tuning; nothing was changed afterwards. Held-out log loss: learned router {metric(held.classifier.log_loss)}, model × task reference {metric(held.reference_model_task_prior.log_loss)}. Outcomes are replayed from the saved matrix, so no model was called again. Per-task views have no p95 or model counts. With {held.prompts} prompts, a difference of one to three correct answers is within noise.</p>
         </section>
 
+        {(held.oracle ?? []).length > 0 && (
+          <section className={styles.dashboard} aria-labelledby="oracle-heading">
+            <div className={styles.dashboardHeading}><div><span className={styles.eyebrow}>Oracle gap and routing errors · held-out test split</span><h3 id="oracle-heading">How far each priority is from perfect hindsight.</h3></div></div>
+            <div className={styles.tableWrap}>
+              <table aria-label="Oracle gap and routing errors">
+                <thead><tr><th>Priority</th><th>Learned correct</th><th>Oracle correct</th><th>Learned cost</th><th>Oracle cost</th><th>Wrong answers</th><th>Under-routed</th><th>Over-routed</th></tr></thead>
+                <tbody>{held.routing_errors.map((errors) => {
+                  const priority = errors.strategy_id.split(':')[1]
+                  const learned = find(errors.strategy_id)
+                  const oracle = held.oracle.find((item) => item.strategy_id === `oracle:${priority}`)
+                  return (
+                    <tr key={errors.strategy_id}>
+                      <td><strong>{priorities[priority] ?? priority}</strong></td>
+                      <td className={strong}>{learned ? `${learned.correct} / ${learned.prompts}` : '—'}</td>
+                      <td className={number}>{oracle ? `${oracle.correct} / ${oracle.prompts}` : '—'}</td>
+                      <td className={number}>{learned ? usd(learned.total_cost_usd) : '—'}</td>
+                      <td className={number}>{oracle ? usd(oracle.total_cost_usd) : '—'}</td>
+                      <td className={number}>{errors.wrong}</td>
+                      <td className={number}>{errors.under_routed}</td>
+                      <td className={number}>{errors.over_routed}</td>
+                    </tr>
+                  )
+                })}</tbody>
+              </table>
+            </div>
+            <p className={styles.disclaimer}>The oracle scores each prompt with the same weights but the observed outcome, so it is not deployable; it bounds what any router could reach. Under-routed: the chosen model failed while a model with a higher expected cost succeeded. Over-routed: the chosen model succeeded but a model with a lower expected cost also did. Free models count as cheapest, so any paid choice that a free model could have matched counts as over-routing, even when the free model is much slower.</p>
+          </section>
+        )}
+
         <section className={styles.dashboard} aria-labelledby="tuning-heading">
           <div className={styles.dashboardHeading}><div><span className={styles.eyebrow}>User weights · tuned on the validation split</span><h3 id="tuning-heading">One weight preset per priority.</h3></div></div>
           <div className={styles.tableWrap}>

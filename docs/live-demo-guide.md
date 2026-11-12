@@ -1,4 +1,6 @@
-# Checkpoint 2 live demo guide
+# Live demo guide (Checkpoints 2 and 3)
+
+Checkpoint 2 comes first; the Checkpoint 3 walkthrough is at the end.
 
 ## Start the production application
 
@@ -73,3 +75,20 @@ Scroll up, click **Checkpoint 1 free pool**. The acceptance matrix becomes 5/5 a
 - Keep manual prompt saving off unless the prompt is safe to store.
 - Do not claim the 12-question sample is a statistically conclusive ranking.
 - Describe Gemma’s nine Checkpoint 1 failures as provider rate limits, and Mercury’s two as empty provider responses, not wrong math answers.
+
+## Checkpoint 3 live demo (Learned tab)
+
+Start the app the same way (`./scripts/demo.ps1`, then `http://127.0.0.1:8000`) and open **05 Learned**. The prompt box already holds the demo prompt: "A train travels 180 km in 2.5 hours. What is its average speed in km/h?" Previews make no provider call.
+
+1. **Higher quality**, then **Preview decision**: Gemma 4 26B A4B, "math (inferred)". For math, Gemma is about as accurate as Gemini at a small fraction of the cost.
+2. **Faster response**, then **Preview decision**: Mercury 3.
+3. **Lower cost**, then **Preview decision**: gpt-oss-120b (free).
+4. Keep **Lower cost**, set **Minimum context** to `500000`, then **Preview decision**: Nemotron 3 Ultra 550B (free). Gemma, gpt-oss-120b, Llama 3.3 70B and both Qwen models show "Context … is below the required 500,000 tokens".
+5. Set **Minimum context** back to `1`, keep **Lower cost**, then **Route prompt**: one real call to gpt-oss-120b, status success, 72 km/h, free.
+6. Scroll to **Checkpoint 3 comparison** and click **MMLU-Pro** to redraw both plots for that task. The **Oracle gap and routing errors** table is just below.
+
+Checkpoint 3 fallbacks:
+
+- **OpenRouter key expired or missing:** live calls to OpenRouter models fail with a 401, but previews and step 5 still work. The key in `backend/.env` expired on 2026-11-12 and must be replaced before demoing paid routes.
+- **The free OVHcloud endpoint times out:** the app reports the failure. Say so, and do not retry more than once.
+- **The application cannot be restarted:** play `docs/demo/checkpoint-3-backup-demo.webm`. The deck is `docs/presentations/Adaptive_LLM_Router_Checkpoint_3.pptx`.

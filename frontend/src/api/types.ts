@@ -296,6 +296,15 @@ export type WeightTuningResult = {
   candidates_tried: number
 }
 
+export type RoutingErrorSummary = {
+  strategy_id: string
+  prompts: number
+  wrong: number
+  under_routed: number
+  over_routed: number
+  examples: Array<{ kind: string; sample_id: string; task_group: TaskGroup; chosen_model_id: string; alternative_model_id: string }>
+}
+
 export type HeldoutEvaluation = {
   artifact_id: string
   trained_on: string[]
@@ -303,6 +312,8 @@ export type HeldoutEvaluation = {
   classifier: ClassifierMetrics
   reference_model_task_prior: ClassifierMetrics
   strategies: LearnedStrategyOutcome[]
+  oracle: LearnedStrategyOutcome[]
+  routing_errors: RoutingErrorSummary[]
 }
 
 export type LearnedRouterReport = {

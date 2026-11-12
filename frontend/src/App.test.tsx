@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, test, vi } from 'vitest'
 import App from './App'
@@ -128,6 +128,8 @@ const report = {
       strategy('learned:quality', 112, 0.421, 5300, { 'gemini-4-argon': 80, 'gemma-4-26b': 40 }),
       strategy('learned:cost', 103, 0.0003, 12700, { 'gemma-4-26b': 1, 'gpt-oss-120b': 119 }),
     ],
+    oracle: [strategy('oracle:quality', 116, 0.0166, 4200, { 'gemma-4-26b': 60, 'gpt-oss-120b': 60 })],
+    routing_errors: [{ strategy_id: 'learned:quality', prompts: 120, wrong: 8, under_routed: 0, over_routed: 108, examples: [] }],
   },
   note: 'Selected on validation, tested once.',
 }
@@ -177,6 +179,9 @@ test('shows the held-out comparison and learned-router results without any provi
   expect(screen.getByText(/predicts as well as either classifier/)).toBeInTheDocument()
   expect(screen.getByText('gemma-4-31b')).toBeInTheDocument()
   expect(screen.getAllByRole('img', { name: /Accuracy against/ })).toHaveLength(2)
+  const oracleTable = screen.getByRole('table', { name: 'Oracle gap and routing errors' })
+  expect(within(oracleTable).getByText('116 / 120')).toBeInTheDocument()
+  expect(within(oracleTable).getByText('108')).toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: 'MMLU-Pro' }))
   expect(screen.getByRole('table', { name: 'Held-out comparison · MMLU-Pro' })).toBeInTheDocument()
   expect(requested.some(({ url }) => url.includes('/comparisons') || url.includes('/routes'))).toBe(false)

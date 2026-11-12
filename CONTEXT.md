@@ -94,11 +94,16 @@ Implemented:
 
 The proposal's next items (train/validation/test split, feature extraction, learned router) belonged to the week of October 22 onward and Checkpoint 3; they were not started before Checkpoint 2.
 
-### Checkpoint 3 (Nov 12): work through the week of November 5 done
+### Checkpoint 3 (Nov 12): work through the week of November 12 done
 
-- The work-plan items for the weeks of October 22, October 29, and November 5 are done; the October 29 ethics prep was skipped at the owner's request. See section 25a and `docs/checkpoint-3-progress.md`.
-- Checkpoint 3 slides, backup recording, and live-demo preparation are the owner's, for the week of November 12.
-- Not started (week of November 12 and after): presenting Checkpoint 3, the held-out evaluation for Checkpoint 4, the oracle comparison, under- and over-routing analysis, and robustness tests.
+- The work-plan items for the weeks of October 22 through November 12 are done or begun as the plan says. The October 29 ethics prep was skipped at the owner's request. See section 25a and `docs/checkpoint-3-progress.md`.
+- **Checkpoint 3 materials (2026-11-12):**
+  - deck `docs/presentations/Adaptive_LLM_Router_Checkpoint_3.pptx` (9 slides, speaker notes, demo on slide 8);
+  - backup recording `docs/demo/checkpoint-3-backup-demo.webm`;
+  - a local, unpushed class script.
+- **Done for the week of November 12:** the oracle comparison. Begun: routing error analysis and the per-task held-out evaluation.
+- **Not started (week of November 19 and after):** completing those, robustness tests, export.
+- **Known problem (2026-11-12):** the OpenRouter key in `backend/.env` returns `401 API key expired`. Live calls to OpenRouter models fail until the owner replaces it; previews and the free OVHcloud and local models still work.
 
 ## 5. Current system architecture
 
@@ -1010,7 +1015,7 @@ The full record is `docs/checkpoint-3-progress.md`. Key facts:
   - Custom weights are accepted by the API and the console sliders.
 - **Held-out test** (120 prompts, read once), correct answers and cost:
   - always cheapest: 103, $0.018; always strongest: 112, $0.493; CP2 rules: 105, $0.186;
-  - learned, quality: 112 for $0.422;
+  - learned, quality: 112 for $0.421;
   - learned, cost: 103 for $0.0003 (median 12.7 s);
   - learned, faster / balanced: 102 for $0.116 (median 2.1 s, the fastest).
   - The model × task reference routes within one or two answers of the learned router, and the router's choices are almost entirely per task.
@@ -1020,6 +1025,16 @@ The full record is `docs/checkpoint-3-progress.md`. Key facts:
   - `TaskGroup` moved to `app/domain/models.py`; `app.benchmarks.suite` re-exports it.
   - `ModelHistory` takes its history splits and can be snapshotted.
   - `PolicyWeights` validates itself, and `ScoredCandidate` carries the four score terms.
+
+**Week of Nov 12 (2026-11-12).** Full record: `docs/checkpoint-3-progress.md`, "Week of November 12".
+- **Oracle** (`evaluate.oracle_chooser`): the same scoring and weights, applied to observed outcomes. Held-out, correct and cost: quality 116 for $0.017 (router: 112 for $0.421); cost 113 for $0.0007 (router: 103); faster 116 for $0.058 (router: 102).
+- **Routing errors** (`evaluate.routing_errors`), ranked by expected cost per task. Wrong answers, under-routed, over-routed:
+  - quality: 8, 0, 108;
+  - cost: 17, 12, 1;
+  - faster: 18, 10, 99.
+  - Free models count as the cheapest, so paid choices dominate over-routing.
+- **Both are in the report** (`heldout.oracle`, `heldout.routing_errors`) and in the Learned tab's "Oracle gap and routing errors" table.
+- **`app.learned.plots --slides DIR`** writes the dark one-panel versions used in the deck.
 
 **Local environment.**
 - mypy must run as `python -m mypy --config-file backend/pyproject.toml`: Application Control blocks `mypy.exe`, and without `--config-file` strict mode was silently not applied. The check script and CI are fixed.

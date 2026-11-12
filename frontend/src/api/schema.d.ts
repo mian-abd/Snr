@@ -673,9 +673,13 @@ export interface components {
             /** Artifact Id */
             artifact_id: string;
             classifier: components["schemas"]["ClassifierMetrics"];
+            /** Oracle */
+            oracle?: components["schemas"]["LearnedStrategyOutcome"][];
             /** Prompts */
             prompts: number;
             reference_model_task_prior: components["schemas"]["ClassifierMetrics"];
+            /** Routing Errors */
+            routing_errors?: components["schemas"]["RoutingErrorSummary"][];
             /** Strategies */
             strategies: components["schemas"]["LearnedStrategyOutcome"][];
             /** Trained On */
@@ -1055,6 +1059,37 @@ export interface components {
             strategy_id: string;
             /** Task Signals */
             task_signals: string[];
+        };
+        /** RoutingErrorExample */
+        RoutingErrorExample: {
+            /** Alternative Model Id */
+            alternative_model_id: string;
+            /** Chosen Model Id */
+            chosen_model_id: string;
+            /** Kind */
+            kind: string;
+            /** Sample Id */
+            sample_id: string;
+            task_group: components["schemas"]["TaskGroup"];
+        };
+        /**
+         * RoutingErrorSummary
+         * @description Proposal: under-routing picks a cheaper model that fails while a costlier eligible model
+         *     succeeds; over-routing picks a costlier model although a cheaper eligible one also succeeds.
+         */
+        RoutingErrorSummary: {
+            /** Examples */
+            examples: components["schemas"]["RoutingErrorExample"][];
+            /** Over Routed */
+            over_routed: number;
+            /** Prompts */
+            prompts: number;
+            /** Strategy Id */
+            strategy_id: string;
+            /** Under Routed */
+            under_routed: number;
+            /** Wrong */
+            wrong: number;
         };
         /**
          * RoutingPool

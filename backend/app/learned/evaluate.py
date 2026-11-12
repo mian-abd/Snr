@@ -25,6 +25,8 @@ from typing import Any
 from app.benchmarks.suite import RouterSplit, SuiteItem, TaskGroup
 from app.domain.models import (
     LearnedStrategyOutcome,
+    RoutingErrorExample,
+    RoutingErrorSummary,
     RoutingPriority,
     RoutingWeights,
     StrategyTaskOutcome,
@@ -32,7 +34,12 @@ from app.domain.models import (
 )
 from app.learned.features import Cell
 from app.learned.router import TaskEstimate, policy_weights
-from app.routing.multi_objective import CandidateEstimate, PolicyWeights, choose
+from app.routing.multi_objective import (
+    CandidateEstimate,
+    PolicyWeights,
+    choose,
+    score_candidates,
+)
 from app.routing.policy import effort_score, prompt_signals
 
 # Rule-router roles for this pool, mirroring the Checkpoint 2 paid policy.
@@ -169,6 +176,85 @@ def score_chooser(
         return choose(candidates, weights).model_id
 
     return pick
+
+
+def oracle_chooser(cells: list[Cell], models: list[str], weights: PolicyWeights) -> Chooser:
+    """Perfect hindsight (proposal, week of Nov 12): the model with the best observed outcome.
+
+    Each prompt is scored with the same multi-objective formula and weights as the router, but
+    with the observed result (correct or not, actual cost and latency, served or not) in place
+    of the estimates. It is not deployable; it bounds what any router could reach.
+    """
+    by_key = {(cell.sample_id, cell.model_id): cell for cell in cells}
+
+    def pick(sample_id: str) -> str:
+        observed = [by_key[(sample_id, model_id)] for model_id in sorted(models)]
+        return score_candidates(
+            [
+                CandidateEstimate(
+                    model_id=cell.model_id,
+                    p_success=float(cell.correct),
+                    expected_cost_usd=cell.cost_usd,
+                    expected_latency_ms=cell.latency_ms,
+                    failure_rate=0.0 if cell.served else 1.0,
+                )
+                for cell in observed
+            ],
+            weights,
+        )[0].model_id
+
+    return pick
+
+
+def routing_errors(
+    strategy_id: str,
+    prompts: list[str],
+    chooser: Chooser,
+    cells: list[Cell],
+    estimates: dict[str, dict[TaskGroup, TaskEstimate]],
+    items: dict[str, SuiteItem],
+    examples_per_kind: int = 3,
+) -> RoutingErrorSummary:
+    """Count under- and over-routing, ranking models by their expected cost for the task."""
+    by_key = {(cell.sample_id, cell.model_id): cell for cell in cells}
+    models = sorted({cell.model_id for cell in cells})
+    wrong = under = over = 0
+    examples: list[RoutingErrorExample] = []
+    for sample_id in prompts:
+        group = items[sample_id].task_group
+        price = {model_id: estimates[model_id][group].expected_cost_usd for model_id in models}
+        chosen = chooser(sample_id)
+        if not by_key[(sample_id, chosen)].correct:
+            wrong += 1
+            costlier = [
+                model_id for model_id in models
+                if price[model_id] > price[chosen] and by_key[(sample_id, model_id)].correct
+            ]
+            if costlier:
+                under += 1
+                alternative = min(costlier, key=lambda model_id: (price[model_id], model_id))
+                kind = "under"
+            else:
+                continue
+        else:
+            cheaper = [
+                model_id for model_id in models
+                if price[model_id] < price[chosen] and by_key[(sample_id, model_id)].correct
+            ]
+            if not cheaper:
+                continue
+            over += 1
+            alternative = min(cheaper, key=lambda model_id: (price[model_id], model_id))
+            kind = "over"
+        if sum(example.kind == kind for example in examples) < examples_per_kind:
+            examples.append(RoutingErrorExample(
+                kind=kind, sample_id=sample_id, task_group=group, chosen_model_id=chosen,
+                alternative_model_id=alternative,
+            ))
+    return RoutingErrorSummary(
+        strategy_id=strategy_id, prompts=len(prompts), wrong=wrong, under_routed=under,
+        over_routed=over, examples=examples,
+    )
 
 
 def weight_grid(priority: RoutingPriority) -> list[RoutingWeights]:

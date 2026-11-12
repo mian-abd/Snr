@@ -46,7 +46,9 @@ from app.learned.evaluate import (
     Chooser,
     complete_prompts,
     fixed_and_rule_choosers,
+    oracle_chooser,
     replay,
+    routing_errors,
     routing_estimates,
     score_chooser,
     tune_weights,
@@ -374,6 +376,15 @@ def heldout_evaluation(
             test.probability(prior), estimates, model_ids, items,
             policy_weights(router.artifact.weights[priority]),
         )
+    # Week of Nov 12: the oracle with perfect hindsight, and where the router under- or
+    # over-routes, both for the same priorities and weights.
+    test_cells = [cell for cell in cells if cell.router_split == RouterSplit.TEST]
+    oracles: dict[str, Chooser] = {
+        f"oracle:{priority.value}": oracle_chooser(
+            test_cells, model_ids, policy_weights(router.artifact.weights[priority])
+        )
+        for priority in RoutingPriority
+    }
     return HeldoutEvaluation(
         artifact_id=router.artifact.artifact_id,
         trained_on=router.artifact.trained_on_splits,
@@ -381,6 +392,12 @@ def heldout_evaluation(
         classifier=ClassifierMetrics.model_validate(_metrics(test.y, sklearn_p)),
         reference_model_task_prior=ClassifierMetrics.model_validate(_metrics(test.y, prior)),
         strategies=replay(prompts, choosers, cells, items),
+        oracle=replay(prompts, oracles, cells, items),
+        routing_errors=[
+            routing_errors(f"learned:{priority.value}", prompts,
+                           choosers[f"learned:{priority.value}"], test_cells, estimates, items)
+            for priority in RoutingPriority
+        ],
     )
 
 
@@ -471,9 +488,12 @@ def main() -> int:
               f"${result.validation_cost_usd:.4f}")
     print(f"held-out test log loss {heldout.classifier.log_loss:.4f} "
           f"(reference {heldout.reference_model_task_prior.log_loss:.4f})")
-    for strategy in heldout.strategies:
+    for strategy in heldout.strategies + heldout.oracle:
         print(f"  test {strategy.strategy_id}: {strategy.correct}/{strategy.prompts}, "
               f"${strategy.total_cost_usd:.4f}, median {strategy.median_latency_ms} ms")
+    for errors in heldout.routing_errors:
+        print(f"  errors {errors.strategy_id}: wrong {errors.wrong}, "
+              f"under-routed {errors.under_routed}, over-routed {errors.over_routed}")
     print(f"wrote {out.relative_to(REPOSITORY_ROOT)} and "
           f"{ROUTER_MODEL_PATH.relative_to(REPOSITORY_ROOT)}")
     return 0

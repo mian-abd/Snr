@@ -953,12 +953,26 @@
           "classifier": {
             "$ref": "#/components/schemas/ClassifierMetrics"
           },
+          "oracle": {
+            "items": {
+              "$ref": "#/components/schemas/LearnedStrategyOutcome"
+            },
+            "title": "Oracle",
+            "type": "array"
+          },
           "prompts": {
             "title": "Prompts",
             "type": "integer"
           },
           "reference_model_task_prior": {
             "$ref": "#/components/schemas/ClassifierMetrics"
+          },
+          "routing_errors": {
+            "items": {
+              "$ref": "#/components/schemas/RoutingErrorSummary"
+            },
+            "title": "Routing Errors",
+            "type": "array"
           },
           "strategies": {
             "items": {
@@ -2084,6 +2098,82 @@
           "reason"
         ],
         "title": "RoutingDecision",
+        "type": "object"
+      },
+      "RoutingErrorExample": {
+        "additionalProperties": false,
+        "properties": {
+          "alternative_model_id": {
+            "title": "Alternative Model Id",
+            "type": "string"
+          },
+          "chosen_model_id": {
+            "title": "Chosen Model Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "sample_id": {
+            "title": "Sample Id",
+            "type": "string"
+          },
+          "task_group": {
+            "$ref": "#/components/schemas/TaskGroup"
+          }
+        },
+        "required": [
+          "kind",
+          "sample_id",
+          "task_group",
+          "chosen_model_id",
+          "alternative_model_id"
+        ],
+        "title": "RoutingErrorExample",
+        "type": "object"
+      },
+      "RoutingErrorSummary": {
+        "additionalProperties": false,
+        "description": "Proposal: under-routing picks a cheaper model that fails while a costlier eligible model\nsucceeds; over-routing picks a costlier model although a cheaper eligible one also succeeds.",
+        "properties": {
+          "examples": {
+            "items": {
+              "$ref": "#/components/schemas/RoutingErrorExample"
+            },
+            "title": "Examples",
+            "type": "array"
+          },
+          "over_routed": {
+            "title": "Over Routed",
+            "type": "integer"
+          },
+          "prompts": {
+            "title": "Prompts",
+            "type": "integer"
+          },
+          "strategy_id": {
+            "title": "Strategy Id",
+            "type": "string"
+          },
+          "under_routed": {
+            "title": "Under Routed",
+            "type": "integer"
+          },
+          "wrong": {
+            "title": "Wrong",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "strategy_id",
+          "prompts",
+          "wrong",
+          "under_routed",
+          "over_routed",
+          "examples"
+        ],
+        "title": "RoutingErrorSummary",
         "type": "object"
       },
       "RoutingPool": {
