@@ -89,6 +89,7 @@ Start the app the same way (`./scripts/demo.ps1`, then `http://127.0.0.1:8000`) 
 
 Checkpoint 3 fallbacks:
 
-- **OpenRouter key expired or missing:** live calls to OpenRouter models fail with a 401, but previews and step 5 still work. The key in `backend/.env` expired on 2026-11-12 and must be replaced before demoing paid routes.
+- **Mercury 3 retired (2026-11-12):** OpenRouter no longer serves it. Previews for Faster response and Balanced still show it, but don't route live with those presets; use Lower cost (step 5) or Higher quality. The Checkpoint 2 Route tab refuses live calls for the same reason.
+- **OpenRouter key expired or missing:** live calls to OpenRouter models fail with a 401, but previews and step 5 still work.
 - **The free OVHcloud endpoint times out:** the app reports the failure. Say so, and do not retry more than once.
 - **The application cannot be restarted:** play `docs/demo/checkpoint-3-backup-demo.webm`. The deck is `docs/presentations/Adaptive_LLM_Router_Checkpoint_3.pptx`.

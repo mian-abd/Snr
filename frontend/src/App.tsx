@@ -13,6 +13,8 @@ export default function App() {
   const health = useQuery({ queryKey: ['health'], queryFn: client.health, refetchInterval: 10_000 })
   const models = useQuery({ queryKey: ['models', 'baseline'], queryFn: () => client.models('baseline') })
   const paidModels = useQuery({ queryKey: ['models', 'paid'], queryFn: () => client.models('paid') })
+  // The Checkpoint 3 pool's dated snapshot, from the learned-router report (absent until trained).
+  const learned = useQuery({ queryKey: ['learned-report'], queryFn: client.learnedReport })
 
   if (health.isError || models.isError || paidModels.isError) {
     return <main className={styles.main}><p className={styles.error}>The backend could not be loaded. Confirm FastAPI is running on port 8000.</p></main>
@@ -24,12 +26,13 @@ export default function App() {
     <div className={styles.app}>
       <header className={styles.header}>
         <div className={styles.headerInner}>
-          <div className={styles.brand}><span className={styles.mark}>AR</span><div><strong>Adaptive LLM Router</strong><span>CP3 IN PROGRESS</span></div></div>
+          <div className={styles.brand}><span className={styles.mark}>AR</span><div><strong>Adaptive LLM Router</strong><span>CHECKPOINT 3</span></div></div>
           <div className={styles.statusRail}>
             <StatusBadge status={health.data.status} label="Backend online" />
             <StatusBadge status={health.data.credential_configured ? 'success' : 'neutral'} label={health.data.credential_configured ? 'OpenRouter ready' : 'Key not configured'} />
             <StatusBadge status="neutral" label={models.data.snapshot_id} />
             <StatusBadge status="neutral" label={paidModels.data.snapshot_id} />
+            {learned.data?.pool_snapshot_id && <StatusBadge status="neutral" label={`${learned.data.pool_snapshot_id}-cp3`} />}
           </div>
         </div>
       </header>

@@ -105,7 +105,7 @@ const strategy = (id: string, correct: number, cost: number, latency: number, mo
 })
 const weights = (cost: number, latency: number) => ({ quality: 1, cost, latency, reliability: 0 })
 const report = {
-  run_id: 'cp3-test', pool_snapshot_id: 'pool', models: ['gemini-4-argon', 'gemma-4-26b'], models_without_results: ['gemma-4-31b'], features: [], rows: { train: 12, validation: 4 },
+  run_id: 'cp3-test', pool_snapshot_id: 'cp3-pool-test', models: ['gemini-4-argon', 'gemma-4-26b'], models_without_results: ['gemma-4-31b'], features: [], rows: { train: 12, validation: 4 },
   matrix: [
     { model_id: 'gemini-4-argon', display_name: 'Gemini 4 Argon', access: 'paid', prompts: 600, correct: 563, prompts_by_task: { math: 200, qa: 200, code: 200 }, correct_by_task: { math: 193, qa: 185, code: 185 }, failed_calls: 1, median_latency_ms: 5400, cost_usd: 2.29 },
     { model_id: 'gemma-4-26b', display_name: 'Gemma 4 26B', access: 'paid', prompts: 600, correct: 517, prompts_by_task: { math: 200, qa: 200, code: 200 }, correct_by_task: { math: 191, qa: 162, code: 164 }, failed_calls: 0, median_latency_ms: 5000, cost_usd: 0.08 },
@@ -172,6 +172,8 @@ test('shows the held-out comparison and learned-router results without any provi
   await screen.findByText('Adaptive LLM Router')
   await user.click(screen.getByRole('tab', { name: /learned/i }))
   expect(await screen.findByText('563 / 600')).toBeInTheDocument()
+  expect(screen.getByText('CHECKPOINT 3')).toBeInTheDocument()
+  expect(screen.getByText('cp3-pool-test-cp3')).toBeInTheDocument()
   expect(screen.getByText(/Higher-quality preset: 112 of 120 correct for \$0\.421; always strongest: 112 for \$0\.493/)).toBeInTheDocument()
   expect(screen.getByText('Learned router · lower cost')).toBeInTheDocument()
   expect(screen.getByText('Logistic regression · higher quality')).toBeInTheDocument()

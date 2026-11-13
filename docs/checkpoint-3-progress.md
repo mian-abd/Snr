@@ -5,7 +5,7 @@ This records the proposal's work-plan items for the weeks of October 22, October
 | Proposal item | Status |
 | --- | --- |
 | **Week of November 12** | |
-| Present Checkpoint 3 and record any remaining problems | Materials ready on 2026-11-12 (deck, backup recording, local class script); the owner presents. Problem recorded: the OpenRouter key expired the same day ([details](#week-of-november-12)) |
+| Present Checkpoint 3 and record any remaining problems | Materials ready on 2026-11-12 (deck, backup recording, local class script); the owner presents. Problems recorded: an expired OpenRouter key (replaced), Mercury 3 retired by OpenRouter, and a Gemma price change ([details](#week-of-november-12)) |
 | Begin the held-out evaluation across coding, mathematics, and question answering | Begun: per-task held-out results for every strategy, oracle, and error count |
 | Implement the oracle comparison | Done: one hindsight oracle per priority, with the router's weights |
 | Begin routing error analysis | Begun: under- and over-routing counts and examples per priority |
@@ -303,14 +303,16 @@ They stay out of the matrix.
   - the held-out charts overall and for MMLU-Pro, and the tuned presets.
 - **Class script:** kept local and never pushed, like the Checkpoint 2 one. Every expected demo result in it was checked against the running app.
 
-### Problem recorded on 2026-11-12: the OpenRouter key expired
+### Problems recorded on 2026-11-12
 
-OpenRouter now answers `401 API key expired` for the key in `backend/.env`. The server still reports the key as configured, because it only checks that a key is present.
+1. **The OpenRouter key expired** (`401 API key expired`). The server reported it as configured, because it only checks that a key is present. Resolved the same day: the owner issued a new key, and a live higher-quality learned route to Gemma 4 26B succeeded (72 km/h, $0.00004).
+2. **Mercury 3 was retired.** OpenRouter answers `404 … no longer available on OpenRouter: no provider serves this model anymore`, and it is gone from the catalog.
+   - Previews still show Mercury for the faster-response and balanced presets, because the pool snapshot is dated.
+   - A live learned route with those presets fails as a provider error; the app does not silently substitute another model.
+   - Held-out results are unaffected: they replay saved answers.
+3. **Gemma 4 26B's price dropped:** $0.09 → $0.0765 per million input tokens, and $0.30 → $0.255 per million output tokens. Together with Mercury's retirement, this makes the Checkpoint 2 **01 Route** tab refuse every live call (its catalog check fails closed, by design); its previews still work.
 
-- **Previews are unaffected.**
-- Live calls to OpenRouter models fail with a 401, both learned routes and the Checkpoint 2 Route and Compare tabs.
-- Live routes to the free OVHcloud and local models still work.
-- **Fix:** the owner creates a new key and puts it in `backend/.env`. The demo uses the lower-cost priority (free gpt-oss-120b) for its live call, so it works either way.
+At the owner's choice, nothing was changed before the Checkpoint 3 presentation: the demo makes its live call with the lower-cost preset (free gpt-oss-120b). Handling retired models and price changes automatically belongs to the Checkpoint 4 robustness work.
 
 ### Oracle comparison (held-out test split)
 

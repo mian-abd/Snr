@@ -103,7 +103,11 @@ The proposal's next items (train/validation/test split, feature extraction, lear
   - a local, unpushed class script.
 - **Done for the week of November 12:** the oracle comparison. Begun: routing error analysis and the per-task held-out evaluation.
 - **Not started (week of November 19 and after):** completing those, robustness tests, export.
-- **Known problem (2026-11-12):** the OpenRouter key in `backend/.env` returns `401 API key expired`. Live calls to OpenRouter models fail until the owner replaces it; previews and the free OVHcloud and local models still work.
+- **Known problems (2026-11-12):**
+  - The OpenRouter key expired; the owner replaced it the same day, and a live paid route works again.
+  - **Mercury 3 was retired by OpenRouter (404).** Live learned routes with the faster-response or balanced presets fail; previews still show it.
+  - Gemma 4 26B's price dropped ($0.0765 / $0.255 per million tokens). With Mercury gone, the Checkpoint 2 Route tab refuses all live calls (fails closed on drift).
+  - The owner chose to leave these as they are for the presentation.
 
 ## 5. Current system architecture
 
@@ -612,7 +616,7 @@ The header shows project name, checkpoint label, backend state, key-configured s
 - routing replay on the 120 validation prompts, collapsed by default: correct answers, cost, median and p95 latency, and the models each strategy picked;
 - an empty state until `python -m app.learned.train` has written the report.
 
-The header label reads "CP3 IN PROGRESS".
+The header label reads "CHECKPOINT 3", and a fourth snapshot tag shows the Checkpoint 3 pool (`cp3-pool-2026-10-27-cp3`, read from the learned-router report).
 
 ### Visual system
 
