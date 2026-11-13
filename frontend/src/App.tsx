@@ -39,23 +39,23 @@ export default function App() {
       <main className={styles.main}>
         <section className={styles.intro}>
           <h1>Evidence first.<br /><span>Route with intent.</span></h1>
-          <div className={styles.introAside}>A transparent rule policy selects from eligible, pinned models using a priority you can inspect and change.</div>
+          <div className={styles.introAside}>A learned router predicts each model's chance of answering correctly and weighs it against cost and speed for the priority you choose. The Checkpoint 2 rule router stays available for comparison.</div>
         </section>
-        <Tabs.Root defaultValue="route">
+        <Tabs.Root defaultValue="learned">
           <Tabs.List className={styles.tabsList} aria-label="Checkpoint sections">
-            <Tabs.Trigger className={styles.tab} value="route">01 Route</Tabs.Trigger>
-            <Tabs.Trigger className={styles.tab} value="compare">02 Compare</Tabs.Trigger>
-            <Tabs.Trigger className={styles.tab} value="eligibility">03 Eligibility</Tabs.Trigger>
-            <Tabs.Trigger className={styles.tab} value="benchmark">04 Benchmark</Tabs.Trigger>
-            <Tabs.Trigger className={styles.tab} value="learned">05 Learned</Tabs.Trigger>
+            <Tabs.Trigger className={styles.tab} value="learned">01 Learned</Tabs.Trigger>
+            <Tabs.Trigger className={styles.tab} value="route">02 Rule route</Tabs.Trigger>
+            <Tabs.Trigger className={styles.tab} value="compare">03 Compare</Tabs.Trigger>
+            <Tabs.Trigger className={styles.tab} value="eligibility">04 Eligibility</Tabs.Trigger>
+            <Tabs.Trigger className={styles.tab} value="benchmark">05 Benchmark</Tabs.Trigger>
           </Tabs.List>
+          <Tabs.Content value="learned"><LearnedPanel /></Tabs.Content>
           <Tabs.Content value="route"><RouterPanel models={models.data.models} credentialConfigured={health.data.credential_configured} /></Tabs.Content>
           <Tabs.Content value="compare"><ComparePanel pools={pools} credentialConfigured={health.data.credential_configured} /></Tabs.Content>
           <Tabs.Content value="eligibility"><EligibilityPanel pools={pools} /></Tabs.Content>
           <Tabs.Content value="benchmark"><BenchmarkPanel pools={pools} credentialConfigured={health.data.credential_configured} /></Tabs.Content>
-          <Tabs.Content value="learned"><LearnedPanel /></Tabs.Content>
         </Tabs.Root>
-        <footer className={styles.footer}><span>EXPLICIT RULE POLICY · FIXED MODEL IDENTITIES</span><span>SCHEMA 1.0 · {models.data.metadata_as_of.slice(0, 10)}</span></footer>
+        <footer className={styles.footer}><span>LEARNED ROUTER · FIXED MODEL IDENTITIES</span><span>SCHEMA 1.0 · {models.data.metadata_as_of.slice(0, 10)}</span></footer>
       </main>
     </div>
   )

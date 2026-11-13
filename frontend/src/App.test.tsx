@@ -15,9 +15,26 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
+const noReport = () => new Response(JSON.stringify({ detail: 'No learned-router report has been generated yet' }), { status: 404, headers: { 'Content-Type': 'application/json' } })
+
+test('opens on the learned router and shows its empty state before training', async () => {
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+    const url = String(input)
+    if (url.endsWith('/learned/report')) return noReport()
+    const body = url.endsWith('/health') ? health : { schema_version: '1.0', snapshot_id: 'snapshot', metadata_as_of: '2026-09-30T00:00:00Z', source_url: 'https://example.com', models_sha256: 'abc', models: [] }
+    return new Response(JSON.stringify(body), { status: 200, headers: { 'Content-Type': 'application/json' } })
+  }))
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  render(<QueryClientProvider client={queryClient}><App /></QueryClientProvider>)
+  expect(await screen.findByText('CHECKPOINT 3')).toBeInTheDocument()
+  expect(screen.getByRole('tab', { name: /01 learned/i })).toHaveAttribute('data-state', 'active')
+  expect(await screen.findByText(/No learned-router report yet/)).toBeInTheDocument()
+})
+
 test('renders checkpoint status and keeps live actions unavailable without a key', async () => {
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
     const url = String(input)
+    if (url.endsWith('/learned/report')) return noReport()
     const body = url.endsWith('/health')
       ? health
       : url.includes('/routing/dashboard')
@@ -31,15 +48,17 @@ test('renders checkpoint status and keeps live actions unavailable without a key
   render(<QueryClientProvider client={queryClient}><App /></QueryClientProvider>)
   expect(await screen.findByText('Adaptive LLM Router')).toBeInTheDocument()
   expect(screen.getByText('Key not configured')).toBeInTheDocument()
+  await userEvent.setup().click(screen.getByRole('tab', { name: /rule route/i }))
   expect(screen.getByRole('button', { name: /route prompt/i })).toBeDisabled()
   expect(screen.getByRole('button', { name: /preview decision/i })).toBeEnabled()
-  expect(await screen.findByText(/same saved matrix/i)).toBeInTheDocument()
+  expect(await screen.findByText(/Offline replay selects from the same saved matrix/i)).toBeInTheDocument()
   expect(await screen.findByText('5/5 passed')).toBeInTheDocument()
 })
 
 test('previews a different route priority without a provider credential', async () => {
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
     const url = String(input)
+    if (url.endsWith('/learned/report')) return noReport()
     const body = url.endsWith('/health')
       ? health
       : url.includes('/routing/dashboard')
@@ -55,6 +74,7 @@ test('previews a different route priority without a provider credential', async 
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(<QueryClientProvider client={queryClient}><App /></QueryClientProvider>)
   await screen.findByText('Adaptive LLM Router')
+  await user.click(screen.getByRole('tab', { name: /rule route/i }))
   await user.click(screen.getByRole('button', { name: /higher quality/i }))
   await user.click(screen.getByRole('button', { name: /preview decision/i }))
   expect(await screen.findByText(/Previewed model/)).toBeInTheDocument()
@@ -69,6 +89,7 @@ test('starts a paid benchmark only after the cost estimate is confirmed', async 
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input)
     if (url.includes('/benchmarks/runs/latest')) return new Response(JSON.stringify({ detail: 'No benchmark run found' }), { status: 404, headers: { 'Content-Type': 'application/json' } })
+    if (url.endsWith('/learned/report')) return noReport()
     if (url.includes('/benchmarks/gsm8k/runs')) posts.push(String(init?.body))
     const body = url.endsWith('/health')
       ? { ...health, credential_configured: true }

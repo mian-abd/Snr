@@ -18,7 +18,7 @@ Everything except step 4 works without a provider call: decision previews, accep
 
 ### 1. Paid-pool acceptance matrix
 
-Open **01 Route**. Make sure **Checkpoint 2 paid pool** is selected (it is the default). Scroll to the policy acceptance matrix and show **7/7 passed**. Point out the expected and actual model columns and the 500,000-token override case.
+Open **02 Rule route** (it was **01 Route** at Checkpoint 2). Make sure **Checkpoint 2 paid pool** is selected (it is the default). Scroll to the policy acceptance matrix and show **7/7 passed**. Point out the expected and actual model columns and the 500,000-token override case.
 
 Say: “These are fixed reference prompts. They make no provider call and prove the rules behave as documented.”
 
@@ -78,7 +78,7 @@ Scroll up, click **Checkpoint 1 free pool**. The acceptance matrix becomes 5/5 a
 
 ## Checkpoint 3 live demo (Learned tab)
 
-Start the app the same way (`./scripts/demo.ps1`, then `http://127.0.0.1:8000`) and open **05 Learned**. The prompt box already holds the demo prompt: "A train travels 180 km in 2.5 hours. What is its average speed in km/h?" Previews make no provider call.
+Start the app the same way (`./scripts/demo.ps1`, then `http://127.0.0.1:8000`). It opens on **01 Learned**. The prompt box already holds the demo prompt: "A train travels 180 km in 2.5 hours. What is its average speed in km/h?" Previews make no provider call.
 
 1. **Higher quality**, then **Preview decision**: Gemma 4 26B A4B, "math (inferred)". For math, Gemma is about as accurate as Gemini at a small fraction of the cost.
 2. **Faster response**, then **Preview decision**: Mercury 3.
@@ -89,7 +89,7 @@ Start the app the same way (`./scripts/demo.ps1`, then `http://127.0.0.1:8000`) 
 
 Checkpoint 3 fallbacks:
 
-- **Mercury 3 retired (2026-11-12):** OpenRouter no longer serves it. Previews for Faster response and Balanced still show it, but don't route live with those presets; use Lower cost (step 5) or Higher quality. The Checkpoint 2 Route tab refuses live calls for the same reason.
+- **Mercury 3 retired (2026-11-12):** OpenRouter no longer serves it. Previews for Faster response and Balanced still show it, but don't route live with those presets; use Lower cost (step 5) or Higher quality. The Checkpoint 2 **02 Rule route** tab refuses live calls for the same reason.
 - **OpenRouter key expired or missing:** live calls to OpenRouter models fail with a 401, but previews and step 5 still work.
 - **The free OVHcloud endpoint times out:** the app reports the failure. Say so, and do not retry more than once.
 - **The application cannot be restarted:** play `docs/demo/checkpoint-3-backup-demo.webm`. The deck is `docs/presentations/Adaptive_LLM_Router_Checkpoint_3.pptx`.

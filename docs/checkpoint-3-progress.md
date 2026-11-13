@@ -117,7 +117,7 @@ Code answers are scored by `app.benchmarks.code_scoring` inside `ganler/evalplus
 
 `uv run --project backend python -m app.learned.train --run-id cp3-full` writes `data/learned/cp3-full-router-comparison.json`.
 
-The console's **05 Learned** tab shows that report through `GET /api/v1/learned/report`. Since November 5 it also routes live prompts with the learned router (see below); the Route tab keeps the Checkpoint 2 rule policy.
+The console's **Learned** tab (first since November 12) shows that report through `GET /api/v1/learned/report`. Since November 5 it also routes live prompts with the learned router (see below); the Route tab keeps the Checkpoint 2 rule policy.
 
 ## Results (2026-10-28)
 
@@ -224,7 +224,7 @@ Both keys authenticate, but both free services were overloaded on 2026-10-28, so
 - **API:**
   - `POST /api/v1/learned/decisions` previews the decision (no provider call): every model's P(success), expected cost, latency, failure rate, score terms, and exclusion reason.
   - `POST /api/v1/learned/routes` sends one call (one retry on a timeout or rate limit) to the selected model through the multi-provider adapter.
-- **Console:** the **05 Learned** tab has the router (prompt, task type, priority presets, custom weight sliders, minimum context, preview, route), the held-out comparison with both plots, the tuned presets, the matrix, and the classifier comparison.
+- **Console:** the **Learned** tab (**01 Learned** since November 12) has the router (prompt, task type, priority presets, custom weight sliders, minimum context, preview, route), the held-out comparison with both plots, the tuned presets, the matrix, and the classifier comparison.
 
 ### User weights
 
@@ -310,7 +310,7 @@ They stay out of the matrix.
    - Previews still show Mercury for the faster-response and balanced presets, because the pool snapshot is dated.
    - A live learned route with those presets fails as a provider error; the app does not silently substitute another model.
    - Held-out results are unaffected: they replay saved answers.
-3. **Gemma 4 26B's price dropped:** $0.09 → $0.0765 per million input tokens, and $0.30 → $0.255 per million output tokens. Together with Mercury's retirement, this makes the Checkpoint 2 **01 Route** tab refuse every live call (its catalog check fails closed, by design); its previews still work.
+3. **Gemma 4 26B's price dropped:** $0.09 → $0.0765 per million input tokens, and $0.30 → $0.255 per million output tokens. Together with Mercury's retirement, this makes the Checkpoint 2 Route tab (**02 Rule route** since November 12) refuse every live call (its catalog check fails closed, by design); its previews still work.
 
 At the owner's choice, nothing was changed before the Checkpoint 3 presentation: the demo makes its live call with the lower-cost preset (free gpt-oss-120b). Handling retired models and price changes automatically belongs to the Checkpoint 4 robustness work.
 

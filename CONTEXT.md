@@ -618,6 +618,10 @@ The header shows project name, checkpoint label, backend state, key-configured s
 
 The header label reads "CHECKPOINT 3", and a fourth snapshot tag shows the Checkpoint 3 pool (`cp3-pool-2026-10-27-cp3`, read from the learned-router report).
 
+Since 2026-11-12 the app opens on the Learned tab, which is first:
+- tab order: **01 Learned**, **02 Rule route** (the Checkpoint 2 Route tab, whose pools are the Checkpoint 1 and 2 model sets), **03 Compare**, **04 Eligibility**, **05 Benchmark**;
+- the intro text describes the learned router, and the footer reads "LEARNED ROUTER · FIXED MODEL IDENTITIES".
+
 ### Visual system
 
 The interface uses a dark, data-dense console style inspired by OpenRouter's structure without copying its brand assets. It uses thin borders, restrained status colors, Inter for interface text, JetBrains Mono for identifiers and metrics, responsive stacking, visible focus states, reduced-motion support, and explicit loading, empty, error, partial-success, and completed states.

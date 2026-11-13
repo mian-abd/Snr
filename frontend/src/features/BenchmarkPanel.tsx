@@ -59,7 +59,7 @@ export function BenchmarkPanel({ pools, credentialConfigured }: Props) {
     <section className={styles.panel} aria-labelledby="benchmark-heading">
       <div className={styles.sectionHeading}>
         <div>
-          <span className={styles.index}>04 / BENCHMARK</span>
+          <span className={styles.index}>05 / BENCHMARK</span>
           <h2 id="benchmark-heading">A small baseline, captured completely.</h2>
           <p>The same twelve fixed GSM8K questions, prompt, and scorer run against each pool, so both matrices stay comparable.</p>
         </div>

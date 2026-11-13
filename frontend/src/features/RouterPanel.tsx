@@ -53,7 +53,7 @@ export function RouterPanel({ models, credentialConfigured }: Props) {
     <section className={styles.panel} aria-labelledby="router-heading">
       <div className={styles.sectionHeading}>
         <div>
-          <span className={styles.index}>01 / ROUTE</span>
+          <span className={styles.index}>02 / RULE ROUTE · CHECKPOINT 2</span>
           <h2 id="router-heading">One explicit policy. One selected model.</h2>
           <p>Choose the preserved two-model free pool from Checkpoint 1 or the dated three-model paid pool. The policy never substitutes a hidden model.</p>
         </div>

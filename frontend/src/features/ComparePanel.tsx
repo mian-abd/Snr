@@ -91,7 +91,7 @@ export function ComparePanel({ pools, credentialConfigured }: Props) {
     <section className={styles.panel} aria-labelledby="compare-heading">
       <div className={styles.sectionHeading}>
         <div>
-          <span className={styles.index}>02 / COMPARE</span>
+          <span className={styles.index}>03 / COMPARE</span>
           <h2 id="compare-heading">One prompt. Every model in the pool.</h2>
           <p>The same prompt goes to each pinned model in the selected pool. Calls run concurrently for interaction speed; benchmark timing uses a separate sequential protocol.</p>
         </div>

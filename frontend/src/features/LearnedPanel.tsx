@@ -102,7 +102,7 @@ export function LearnedPanel() {
     <section className={styles.panel} aria-labelledby="learned-heading">
       <div className={styles.sectionHeading}>
         <div>
-          <span className={styles.index}>05 / LEARNED ROUTER</span>
+          <span className={styles.index}>01 / LEARNED ROUTER · CHECKPOINT 3</span>
           <h2 id="learned-heading">Learned from measured outcomes.</h2>
           <p>Logistic regression predicts whether each model answers a prompt correctly, and multi-objective scoring weighs that against expected cost, latency, and failures under the chosen priority. It was selected on the validation split, refit on training and validation data, and tested once on held-out prompts.</p>
         </div>
