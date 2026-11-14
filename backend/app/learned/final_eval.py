@@ -168,12 +168,17 @@ def build_cell_table() -> dict[str, Any]:
     return meta
 
 
-def load_suites() -> dict[str, Suite]:
+def load_suites(cell_tables: tuple[Path, ...] = (CELLS_PATH,)) -> dict[str, Suite]:
     suites = {
         "cp3": Suite("cp3", {item.sample_id: item for item in load_suite(SUITE_PATH)}, []),
         "final": Suite("final", {item.sample_id: item for item in load_suite(FINAL_PATH)}, []),
     }
-    for row in read_jsonl(CELLS_PATH):
+    seen: set[tuple[str, str, str]] = set()
+    for row in (row for table in cell_tables for row in read_jsonl(table)):
+        key = (row["suite"], row["sample_id"], row["model_id"])
+        if key in seen:
+            raise ValueError(f"Duplicate cell {key}: a model answered a prompt twice")
+        seen.add(key)
         suite = suites[row["suite"]]
         item = suite.items[row["sample_id"]]
         suite.cells.append(Cell(
@@ -223,7 +228,10 @@ def evaluate_set(
     comparisons: list[tuple[str, str, str]],
     retired_latency_ms: float,
     allow_partial: bool = False,
+    extra_picks: Callable[[list[str]], dict[str, dict[str, str]]] | None = None,
 ) -> tuple[EvaluationSet, dict[str, dict[str, str]], RouterView, World, list[str]]:
+    """Every strategy on one prompt set. ``extra_picks`` adds strategies chosen elsewhere (for
+    example another router) as {strategy_id: {sample_id: model_id}} for the evaluated prompts."""
     models = router.pool_ids
     prompts = complete(suite.cells, split, models)
     expected = sum(item.router_split == split for item in suite.items.values())
@@ -267,6 +275,12 @@ def evaluate_set(
         picks[f"model_task_prior:{priority.value}"] = {
             sample: prior.choose(sample, weights, base) for sample in prompts
         }
+    if extra_picks is not None:
+        extra = extra_picks(prompts)
+        clash = set(extra) & set(picks)
+        if clash:
+            raise ValueError(f"Extra strategies would replace built-in ones: {sorted(clash)}")
+        picks.update(extra)
     oracle_picks = {
         f"oracle:{priority.value}": {
             sample: _oracle_choice(world, sample, models, presets[priority], None,

@@ -1,0 +1,5475 @@
+{
+  "title": "With flagship models",
+  "question": "Does adding 3 flagship models to the pool pay off?",
+  "flagship_snapshot_id": "flagship-pool-2026-11-14",
+  "flagships": [
+    {
+      "id": "gpt-6.1-sol",
+      "display_name": "GPT-6.1 Sol",
+      "family": "OpenAI GPT",
+      "open_weight": false,
+      "parameters": "undisclosed",
+      "access": "paid",
+      "provider": "openrouter",
+      "base_url": "https://openrouter.ai/api/v1",
+      "upstream_model": "openai/gpt-6.1-sol",
+      "api_key_env": "OPENROUTER_API_KEY",
+      "prompt_price_per_token": "0.000002",
+      "completion_price_per_token": "0.00001",
+      "context_length": 1050000,
+      "requests_per_minute": 60.0,
+      "max_concurrency": 3,
+      "request_options": {
+        "provider": {
+          "allow_fallbacks": false,
+          "order": [
+            "openai"
+          ]
+        }
+      },
+      "data_policy": "OpenRouter paid route pinned to OpenAI (standard tier).",
+      "enabled": true
+    },
+    {
+      "id": "gemini-4-carbon",
+      "display_name": "Gemini 4 Carbon",
+      "family": "Google Gemini",
+      "open_weight": false,
+      "parameters": "undisclosed",
+      "access": "paid",
+      "provider": "openrouter",
+      "base_url": "https://openrouter.ai/api/v1",
+      "upstream_model": "google/gemini-4-carbon",
+      "api_key_env": "OPENROUTER_API_KEY",
+      "prompt_price_per_token": "0.000002",
+      "completion_price_per_token": "0.00001",
+      "context_length": 1048576,
+      "requests_per_minute": 60.0,
+      "max_concurrency": 3,
+      "request_options": {
+        "provider": {
+          "allow_fallbacks": false,
+          "order": [
+            "google-ai-studio"
+          ]
+        }
+      },
+      "data_policy": "OpenRouter paid route pinned to Google AI Studio (standard tier).",
+      "enabled": true
+    },
+    {
+      "id": "kimi-k3.1-pro",
+      "display_name": "Kimi K3.1 Pro",
+      "family": "Moonshot Kimi",
+      "open_weight": true,
+      "parameters": "not recorded",
+      "access": "paid",
+      "provider": "openrouter",
+      "base_url": "https://openrouter.ai/api/v1",
+      "upstream_model": "moonshotai/kimi-k3.1-pro",
+      "api_key_env": "OPENROUTER_API_KEY",
+      "prompt_price_per_token": "0.000002",
+      "completion_price_per_token": "0.00001",
+      "context_length": 1048576,
+      "requests_per_minute": 60.0,
+      "max_concurrency": 3,
+      "request_options": {
+        "provider": {
+          "allow_fallbacks": false,
+          "order": [
+            "moonshotai/mxfp4"
+          ]
+        }
+      },
+      "data_policy": "OpenRouter paid route pinned to Moonshot AI (its own MXFP4 deployment).",
+      "enabled": true
+    }
+  ],
+  "excluded_flagships": [
+    {
+      "model_id": "grok-4.7",
+      "display_name": "Grok 4.7",
+      "prompts_scored": 375,
+      "prompts_total": 900,
+      "spend_usd": 3.325592,
+      "reason": "Stopped on 2026-11-14 after 375 of 900 prompts. Its reasoning ignored the 4,096-token answer limit on knowledge questions (one answer ran to 35,234 tokens and ten minutes), so finishing would have taken the flagship runs past their $25 budget."
+    }
+  ],
+  "strongest_flagship_id": "gemini-4-carbon",
+  "router": {
+    "artifact_id": "cp3-full+flagship-cp3-logistic_regression-C0.003",
+    "family": "logistic_regression",
+    "params": {
+      "logisticregression__C": 0.003
+    },
+    "selection_rule": "Lower validation log loss between logistic regression and gradient-boosted trees, as the proposal specifies; the train-to-validation gap is the overfitting check.",
+    "training_rows": 5760,
+    "features": 71,
+    "classifiers": {
+      "logistic_regression": {
+        "best_params": {
+          "logisticregression__C": 0.003
+        },
+        "train": {
+          "log_loss": 0.3598030958247319,
+          "brier": 0.10857208906933492,
+          "roc_auc": 0.7364881594618577,
+          "accuracy_at_0_5": 0.8618055555555556,
+          "rows": 4320
+        },
+        "validation": {
+          "log_loss": 0.43325774180959703,
+          "brier": 0.13658224704513033,
+          "roc_auc": 0.703883544252577,
+          "accuracy_at_0_5": 0.8263888888888888,
+          "rows": 1440
+        },
+        "overfit_gap_log_loss": 0.07345464598486512,
+        "grid": [
+          {
+            "params": {
+              "logisticregression__C": 0.001
+            },
+            "train": {
+              "log_loss": 0.3672895455468484,
+              "brier": 0.11035020728409202,
+              "roc_auc": 0.7267639717988618,
+              "accuracy_at_0_5": 0.8625,
+              "rows": 4320
+            },
+            "validation": {
+              "log_loss": 0.4348820810358285,
+              "brier": 0.1366876582967921,
+              "roc_auc": 0.7026021803418544,
+              "accuracy_at_0_5": 0.8270833333333333,
+              "rows": 1440
+            }
+          },
+          {
+            "params": {
+              "logisticregression__C": 0.003
+            },
+            "train": {
+              "log_loss": 0.3598030958247319,
+              "brier": 0.10857208906933492,
+              "roc_auc": 0.7364881594618577,
+              "accuracy_at_0_5": 0.8618055555555556,
+              "rows": 4320
+            },
+            "validation": {
+              "log_loss": 0.43325774180959703,
+              "brier": 0.13658224704513033,
+              "roc_auc": 0.703883544252577,
+              "accuracy_at_0_5": 0.8263888888888888,
+              "rows": 1440
+            }
+          },
+          {
+            "params": {
+              "logisticregression__C": 0.01
+            },
+            "train": {
+              "log_loss": 0.3540482841477771,
+              "brier": 0.10727715250779947,
+              "roc_auc": 0.7485067168373664,
+              "accuracy_at_0_5": 0.8613425925925926,
+              "rows": 4320
+            },
+            "validation": {
+              "log_loss": 0.4352130051294119,
+              "brier": 0.1374969155939851,
+              "roc_auc": 0.7040622607980199,
+              "accuracy_at_0_5": 0.8222222222222222,
+              "rows": 1440
+            }
+          },
+          {
+            "params": {
+              "logisticregression__C": 0.03
+            },
+            "train": {
+              "log_loss": 0.34570757027877785,
+              "brier": 0.10499254149448956,
+              "roc_auc": 0.7688885635745539,
+              "accuracy_at_0_5": 0.861574074074074,
+              "rows": 4320
+            },
+            "validation": {
+              "log_loss": 0.4375974160100449,
+              "brier": 0.13830802568826656,
+              "roc_auc": 0.7014658128736609,
+              "accuracy_at_0_5": 0.8194444444444444,
+              "rows": 1440
+            }
+          },
+          {
+            "params": {
+              "logisticregression__C": 0.1
+            },
+            "train": {
+              "log_loss": 0.32197732934884793,
+              "brier": 0.09775217000036289,
+              "roc_auc": 0.8252664414768549,
+              "accuracy_at_0_5": 0.8659722222222223,
+              "rows": 4320
+            },
+            "validation": {
+              "log_loss": 0.43944298763087486,
+              "brier": 0.13880411181678556,
+              "roc_auc": 0.6989536652065862,
+              "accuracy_at_0_5": 0.8194444444444444,
+              "rows": 1440
+            }
+          },
+          {
+            "params": {
+              "logisticregression__C": 1.0
+            },
+            "train": {
+              "log_loss": 0.16885516057426636,
+              "brier": 0.042766719790671,
+              "roc_auc": 0.9985297599360938,
+              "accuracy_at_0_5": 0.9356481481481481,
+              "rows": 4320
+            },
+            "validation": {
+              "log_loss": 0.4445885079776408,
+              "brier": 0.13921883080891456,
+              "roc_auc": 0.7024841599816563,
+              "accuracy_at_0_5": 0.8263888888888888,
+              "rows": 1440
+            }
+          },
+          {
+            "params": {
+              "logisticregression__C": 10.0
+            },
+            "train": {
+              "log_loss": 0.03643619113904798,
+              "brier": 0.0030149871655178627,
+              "roc_auc": 1.0,
+              "accuracy_at_0_5": 1.0,
+              "rows": 4320
+            },
+            "validation": {
+              "log_loss": 0.5152935924765618,
+              "brier": 0.14971790107963662,
+              "roc_auc": 0.7067362649590807,
+              "accuracy_at_0_5": 0.8270833333333333,
+              "rows": 1440
+            }
+          }
+        ]
+      },
+      "gradient_boosted_trees": {
+        "best_params": {
+          "max_depth": 2,
+          "learning_rate": 0.05,
+          "max_iter": 100
+        },
+        "train": {
+          "log_loss": 0.29914802255688244,
+          "brier": 0.08758004262195616,
+          "roc_auc": 0.8665967240846467,
+          "accuracy_at_0_5": 0.88125,
+          "rows": 4320
+        },
+        "validation": {
+          "log_loss": 0.4512032876440832,
+          "brier": 0.14202997606047277,
+          "roc_auc": 0.6732859228686365,
+          "accuracy_at_0_5": 0.8243055555555555,
+          "rows": 1440
+        },
+        "overfit_gap_log_loss": 0.15205526508720074,
+        "grid": [
+          {
+            "params": {
+              "max_depth": 2,
+              "learning_rate": 0.05,
+              "max_iter": 100
+            },
+            "train": {
+              "log_loss": 0.29914802255688244,
+              "brier": 0.08758004262195616,
+              "roc_auc": 0.8665967240846467,
+              "accuracy_at_0_5": 0.88125,
+              "rows": 4320
+            },
+            "validation": {
+              "log_loss": 0.4512032876440832,
+              "brier": 0.14202997606047277,
+              "roc_auc": 0.6732859228686365,
+              "accuracy_at_0_5": 0.8243055555555555,
+              "rows": 1440
+            }
+          },
+          {
+            "params": {
+              "max_depth": 2,
+              "learning_rate": 0.05,
+              "max_iter": 300
+            },
+            "train": {
+              "log_loss": 0.2235961453340909,
+              "brier": 0.061691224244247306,
+              "roc_auc": 0.9427937001071729,
+              "accuracy_at_0_5": 0.9175925925925926,
+              "rows": 4320
+            },
+            "validation": {
+              "log_loss": 0.47611442113744223,
+              "brier": 0.14616839829501527,
+              "roc_auc": 0.6540654642077969,
+              "accuracy_at_0_5": 0.8180555555555555,
+              "rows": 1440
+            }
+          },
+          {
+            "params": {
+              "max_depth": 2,
+              "learning_rate": 0.1,
+              "max_iter": 100
+            },
+            "train": {
+              "log_loss": 0.25088050691091657,
+              "brier": 0.07055560206615812,
+              "roc_auc": 0.9214603089401802,
+              "accuracy_at_0_5": 0.9064814814814814,
+              "rows": 4320
+            },
+            "validation": {
+              "log_loss": 0.4639136521506928,
+              "brier": 0.14451070600459986,
+              "roc_auc": 0.6657747699445977,
+              "accuracy_at_0_5": 0.8201388888888889,
+              "rows": 1440
+            }
+          },
+          {
+            "params": {
+              "max_depth": 2,
+              "learning_rate": 0.1,
+              "max_iter": 300
+            },
+            "train": {
+              "log_loss": 0.16710387938877416,
+              "brier": 0.04356255623893839,
+              "roc_auc": 0.9741585202535284,
+              "accuracy_at_0_5": 0.9444444444444444,
+              "rows": 4320
+            },
+            "validation": {
+              "log_loss": 0.5067114051789008,
+              "brier": 0.14919431069782177,
+              "roc_auc": 0.6346696610118054,
+              "accuracy_at_0_5": 0.8208333333333333,
+              "rows": 1440
+            }
+          },
+          {
+            "params": {
+              "max_depth": 3,
+              "learning_rate": 0.05,
+              "max_iter": 100
+            },
+            "train": {
+              "log_loss": 0.255847689151058,
+              "brier": 0.07215500266369101,
+              "roc_auc": 0.9150344471734704,
+              "accuracy_at_0_5": 0.9011574074074075,
+              "rows": 4320
+            },
+            "validation": {
+              "log_loss": 0.4540484918138522,
+              "brier": 0.14229166050499034,
+              "roc_auc": 0.6850491807700998,
+              "accuracy_at_0_5": 0.8243055555555555,
+              "rows": 1440
+            }
+          },
+          {
+            "params": {
+              "max_depth": 3,
+              "learning_rate": 0.05,
+              "max_iter": 300
+            },
+            "train": {
+              "log_loss": 0.15756172097405674,
+              "brier": 0.040073850612264775,
+              "roc_auc": 0.9768873201508737,
+              "accuracy_at_0_5": 0.9481481481481482,
+              "rows": 4320
+            },
+            "validation": {
+              "log_loss": 0.5033481822388318,
+              "brier": 0.1484146103037277,
+              "roc_auc": 0.6432362531570446,
+              "accuracy_at_0_5": 0.8222222222222222,
+              "rows": 1440
+            }
+          },
+          {
+            "params": {
+              "max_depth": 3,
+              "learning_rate": 0.1,
+              "max_iter": 100
+            },
+            "train": {
+              "log_loss": 0.19363246028370243,
+              "brier": 0.051650762760794076,
+              "roc_auc": 0.9629604779229042,
+              "accuracy_at_0_5": 0.9321759259259259,
+              "rows": 4320
+            },
+            "validation": {
+              "log_loss": 0.4839450972946278,
+              "brier": 0.14771475338353013,
+              "roc_auc": 0.6540115120431347,
+              "accuracy_at_0_5": 0.8166666666666667,
+              "rows": 1440
+            }
+          },
+          {
+            "params": {
+              "max_depth": 3,
+              "learning_rate": 0.1,
+              "max_iter": 300
+            },
+            "train": {
+              "log_loss": 0.07672595403664303,
+              "brier": 0.014907303452333714,
+              "roc_auc": 0.9972447683129381,
+              "accuracy_at_0_5": 0.9849537037037037,
+              "rows": 4320
+            },
+            "validation": {
+              "log_loss": 0.5788007064315843,
+              "brier": 0.1554046647679772,
+              "roc_auc": 0.6168249825498467,
+              "accuracy_at_0_5": 0.8256944444444444,
+              "rows": 1440
+            }
+          }
+        ]
+      }
+    },
+    "reference_model_task_prior": {
+      "log_loss": 0.42493269007027756,
+      "brier": 0.13378086834482963,
+      "roc_auc": 0.7065693504496575,
+      "accuracy_at_0_5": 0.8270833333333333,
+      "rows": 1440
+    },
+    "validation_prompts": 120,
+    "weight_tuning": [
+      {
+        "priority": "cost",
+        "weights": {
+          "quality": 1.0,
+          "cost": 1.0,
+          "latency": 0.05,
+          "reliability": 0.5
+        },
+        "validation_correct": 101,
+        "validation_cost_usd": 0.008153,
+        "validation_median_latency_ms": 8300.0,
+        "accuracy_floor": 99,
+        "candidates_tried": 42
+      },
+      {
+        "priority": "quality",
+        "weights": {
+          "quality": 1.0,
+          "cost": 0.05,
+          "latency": 0.05,
+          "reliability": 0.0
+        },
+        "validation_correct": 110,
+        "validation_cost_usd": 0.475502,
+        "validation_median_latency_ms": 4849.2,
+        "accuracy_floor": null,
+        "candidates_tried": 18
+      },
+      {
+        "priority": "latency",
+        "weights": {
+          "quality": 1.0,
+          "cost": 0.05,
+          "latency": 1.0,
+          "reliability": 0.0
+        },
+        "validation_correct": 106,
+        "validation_cost_usd": 0.104029,
+        "validation_median_latency_ms": 1672.7,
+        "accuracy_floor": 99,
+        "candidates_tried": 42
+      },
+      {
+        "priority": "balanced",
+        "weights": {
+          "quality": 1.0,
+          "cost": 0.3,
+          "latency": 0.5,
+          "reliability": 0.0
+        },
+        "validation_correct": 106,
+        "validation_cost_usd": 0.099942,
+        "validation_median_latency_ms": 1672.7,
+        "accuracy_floor": 105,
+        "candidates_tried": 98
+      }
+    ]
+  },
+  "protocol": [
+    "The flagships (GPT-6.1 Sol, Gemini 4 Carbon, Kimi K3.1 Pro) answered the 600 suite prompts and the 300 fresh prompts on 2026-11-14 through OpenRouter, each pinned to its maker's own standard tier, with the same prompts, token limits, retry policy, and grading as the Checkpoint 3 pool.",
+    "Grok 4.7 is left out: Stopped on 2026-11-14 after 375 of 900 prompts. Its reasoning ignored the 4,096-token answer limit on knowledge questions (one answer ran to 35,234 tokens and ten minutes), so finishing would have taken the flagship runs past their $25 budget.",
+    "The second router uses the Checkpoint 3 recipe unchanged on all 12 models: classifier family and regularization chosen on validation log loss, presets tuned on the validation split with the same grids and accuracy floors, then refit on train + validation.",
+    "The strongest flagship, Gemini 4 Carbon, is the one with the most right answers on the train and validation prompts, fixed before the test and fresh results were read.",
+    "The paired comparisons were fixed in code before the flagships' results were read; p-values are Holm-adjusted within each evaluation. Intervals are 95% bootstrap intervals over prompts (10,000 resamples, fixed seed).",
+    "The fresh prompts were already used once, to evaluate the frozen router. Nothing in this extension was chosen on them; they are read once more here."
+  ],
+  "evaluations": [
+    {
+      "evaluation_id": "cp3_test",
+      "title": "Original test split",
+      "description": "The 120 held-out test prompts of the 600-prompt suite, answered by the Checkpoint 3 pool in late October and by the flagships on 2026-11-14.",
+      "prompts": 120,
+      "prompts_by_task": {
+        "math": 40,
+        "qa": 40,
+        "code": 40
+      },
+      "models": [
+        "deepseek-v4-flash",
+        "gemini-4-argon",
+        "gemini-4-carbon",
+        "gemma-4-26b",
+        "gpt-6.1-sol",
+        "gpt-oss-120b",
+        "kimi-k3.1-pro",
+        "llama-3.3-70b",
+        "mercury-3",
+        "nemotron-3-ultra-free",
+        "qwen-3.5-9b-local",
+        "qwen-3.8-27b"
+      ],
+      "catalog_applied": false,
+      "classifier": {
+        "log_loss": 0.40625679110917134,
+        "brier": 0.12304491139952446,
+        "roc_auc": 0.6740559541794884,
+        "accuracy_at_0_5": 0.8465277777777778,
+        "rows": 1440
+      },
+      "reference_model_task_prior": {
+        "log_loss": 0.40886823886521995,
+        "brier": 0.1245033785500178,
+        "roc_auc": 0.6617674898570522,
+        "accuracy_at_0_5": 0.8465277777777778,
+        "rows": 1440
+      },
+      "matrix": [
+        {
+          "model_id": "gemini-4-argon",
+          "display_name": "Gemini 4 Argon",
+          "access": "paid",
+          "prompts": 120,
+          "correct": 112,
+          "prompts_by_task": {
+            "math": 40,
+            "qa": 40,
+            "code": 40
+          },
+          "correct_by_task": {
+            "math": 38,
+            "qa": 39,
+            "code": 35
+          },
+          "failed_calls": 0,
+          "median_latency_ms": 5118.8,
+          "cost_usd": 0.49303
+        },
+        {
+          "model_id": "gemini-4-carbon",
+          "display_name": "Gemini 4 Carbon",
+          "access": "paid",
+          "prompts": 120,
+          "correct": 110,
+          "prompts_by_task": {
+            "math": 40,
+            "qa": 40,
+            "code": 40
+          },
+          "correct_by_task": {
+            "math": 38,
+            "qa": 37,
+            "code": 35
+          },
+          "failed_calls": 2,
+          "median_latency_ms": 11674.5,
+          "cost_usd": 0.90575
+        },
+        {
+          "model_id": "gpt-6.1-sol",
+          "display_name": "GPT-6.1 Sol",
+          "access": "paid",
+          "prompts": 120,
+          "correct": 109,
+          "prompts_by_task": {
+            "math": 40,
+            "qa": 40,
+            "code": 40
+          },
+          "correct_by_task": {
+            "math": 37,
+            "qa": 38,
+            "code": 34
+          },
+          "failed_calls": 0,
+          "median_latency_ms": 2950.9,
+          "cost_usd": 0.21779
+        },
+        {
+          "model_id": "gemma-4-26b",
+          "display_name": "Gemma 4 26B A4B",
+          "access": "paid",
+          "prompts": 120,
+          "correct": 103,
+          "prompts_by_task": {
+            "math": 40,
+            "qa": 40,
+            "code": 40
+          },
+          "correct_by_task": {
+            "math": 38,
+            "qa": 34,
+            "code": 31
+          },
+          "failed_calls": 0,
+          "median_latency_ms": 5128.1,
+          "cost_usd": 0.018229
+        },
+        {
+          "model_id": "kimi-k3.1-pro",
+          "display_name": "Kimi K3.1 Pro",
+          "access": "paid",
+          "prompts": 120,
+          "correct": 103,
+          "prompts_by_task": {
+            "math": 40,
+            "qa": 40,
+            "code": 40
+          },
+          "correct_by_task": {
+            "math": 38,
+            "qa": 34,
+            "code": 31
+          },
+          "failed_calls": 4,
+          "median_latency_ms": 13431.6,
+          "cost_usd": 0.99944
+        },
+        {
+          "model_id": "nemotron-3-ultra-free",
+          "display_name": "Nemotron 3 Ultra 550B (free)",
+          "access": "free",
+          "prompts": 120,
+          "correct": 102,
+          "prompts_by_task": {
+            "math": 40,
+            "qa": 40,
+            "code": 40
+          },
+          "correct_by_task": {
+            "math": 35,
+            "qa": 34,
+            "code": 33
+          },
+          "failed_calls": 0,
+          "median_latency_ms": 15234.7,
+          "cost_usd": 0.0
+        },
+        {
+          "model_id": "deepseek-v4-flash",
+          "display_name": "DeepSeek V4 Flash",
+          "access": "paid",
+          "prompts": 120,
+          "correct": 99,
+          "prompts_by_task": {
+            "math": 40,
+            "qa": 40,
+            "code": 40
+          },
+          "correct_by_task": {
+            "math": 35,
+            "qa": 31,
+            "code": 33
+          },
+          "failed_calls": 11,
+          "median_latency_ms": 5299.9,
+          "cost_usd": 0.023574
+        },
+        {
+          "model_id": "llama-3.3-70b",
+          "display_name": "Llama 3.3 70B Instruct",
+          "access": "free",
+          "prompts": 120,
+          "correct": 99,
+          "prompts_by_task": {
+            "math": 40,
+            "qa": 40,
+            "code": 40
+          },
+          "correct_by_task": {
+            "math": 35,
+            "qa": 34,
+            "code": 30
+          },
+          "failed_calls": 0,
+          "median_latency_ms": 18693.7,
+          "cost_usd": 0.0
+        },
+        {
+          "model_id": "gpt-oss-120b",
+          "display_name": "gpt-oss-120b",
+          "access": "free",
+          "prompts": 120,
+          "correct": 98,
+          "prompts_by_task": {
+            "math": 40,
+            "qa": 40,
+            "code": 40
+          },
+          "correct_by_task": {
+            "math": 37,
+            "qa": 35,
+            "code": 26
+          },
+          "failed_calls": 1,
+          "median_latency_ms": 19493.2,
+          "cost_usd": 0.0
+        },
+        {
+          "model_id": "qwen-3.5-9b-local",
+          "display_name": "Qwen 3.5 9B (local)",
+          "access": "local",
+          "prompts": 120,
+          "correct": 98,
+          "prompts_by_task": {
+            "math": 40,
+            "qa": 40,
+            "code": 40
+          },
+          "correct_by_task": {
+            "math": 38,
+            "qa": 33,
+            "code": 27
+          },
+          "failed_calls": 0,
+          "median_latency_ms": 6758.5,
+          "cost_usd": 0.0
+        },
+        {
+          "model_id": "mercury-3",
+          "display_name": "Mercury 3",
+          "access": "paid",
+          "prompts": 120,
+          "correct": 97,
+          "prompts_by_task": {
+            "math": 40,
+            "qa": 40,
+            "code": 40
+          },
+          "correct_by_task": {
+            "math": 37,
+            "qa": 32,
+            "code": 28
+          },
+          "failed_calls": 14,
+          "median_latency_ms": 1430.6,
+          "cost_usd": 0.026529
+        },
+        {
+          "model_id": "qwen-3.8-27b",
+          "display_name": "Qwen 3.8 27B",
+          "access": "free",
+          "prompts": 120,
+          "correct": 89,
+          "prompts_by_task": {
+            "math": 40,
+            "qa": 40,
+            "code": 40
+          },
+          "correct_by_task": {
+            "math": 37,
+            "qa": 27,
+            "code": 25
+          },
+          "failed_calls": 24,
+          "median_latency_ms": 17773.7,
+          "cost_usd": 0.0
+        }
+      ],
+      "strategies": [
+        {
+          "strategy_id": "fixed_cheapest",
+          "prompts": 120,
+          "correct": 103,
+          "accuracy": 0.8583333333333333,
+          "total_cost_usd": 0.018229,
+          "cost_per_correct_usd": 0.00017698,
+          "median_latency_ms": 5128.1,
+          "p95_latency_ms": 16535.2,
+          "selected_models": {
+            "gemma-4-26b": 120
+          },
+          "by_task": {
+            "math": {
+              "prompts": 40,
+              "correct": 38,
+              "accuracy": 0.95,
+              "total_cost_usd": 0.003503,
+              "median_latency_ms": 3810.2
+            },
+            "qa": {
+              "prompts": 40,
+              "correct": 34,
+              "accuracy": 0.85,
+              "total_cost_usd": 0.008708,
+              "median_latency_ms": 7292.8
+            },
+            "code": {
+              "prompts": 40,
+              "correct": 31,
+              "accuracy": 0.775,
+              "total_cost_usd": 0.006018,
+              "median_latency_ms": 5066.0
+            }
+          }
+        },
+        {
+          "strategy_id": "fixed_strongest",
+          "prompts": 120,
+          "correct": 112,
+          "accuracy": 0.9333333333333333,
+          "total_cost_usd": 0.49303,
+          "cost_per_correct_usd": 0.00440205,
+          "median_latency_ms": 5118.8,
+          "p95_latency_ms": 12671.2,
+          "selected_models": {
+            "gemini-4-argon": 120
+          },
+          "by_task": {
+            "math": {
+              "prompts": 40,
+              "correct": 38,
+              "accuracy": 0.95,
+              "total_cost_usd": 0.072924,
+              "median_latency_ms": 4152.8
+            },
+            "qa": {
+              "prompts": 40,
+              "correct": 39,
+              "accuracy": 0.975,
+              "total_cost_usd": 0.30838,
+              "median_latency_ms": 9036.7
+            },
+            "code": {
+              "prompts": 40,
+              "correct": 35,
+              "accuracy": 0.875,
+              "total_cost_usd": 0.111726,
+              "median_latency_ms": 4926.9
+            }
+          }
+        },
+        {
+          "strategy_id": "rule_balanced",
+          "prompts": 120,
+          "correct": 105,
+          "accuracy": 0.875,
+          "total_cost_usd": 0.185887,
+          "cost_per_correct_usd": 0.00177036,
+          "median_latency_ms": 3532.3,
+          "p95_latency_ms": 11555.0,
+          "selected_models": {
+            "mercury-3": 61,
+            "gemini-4-argon": 34,
+            "gemma-4-26b": 25
+          },
+          "by_task": {
+            "math": {
+              "prompts": 40,
+              "correct": 37,
+              "accuracy": 0.925,
+              "total_cost_usd": 0.010804,
+              "median_latency_ms": 1315.6
+            },
+            "qa": {
+              "prompts": 40,
+              "correct": 35,
+              "accuracy": 0.875,
+              "total_cost_usd": 0.094349,
+              "median_latency_ms": 5126.6
+            },
+            "code": {
+              "prompts": 40,
+              "correct": 33,
+              "accuracy": 0.825,
+              "total_cost_usd": 0.080734,
+              "median_latency_ms": 4305.6
+            }
+          }
+        },
+        {
+          "strategy_id": "learned:cost",
+          "prompts": 120,
+          "correct": 105,
+          "accuracy": 0.875,
+          "total_cost_usd": 0.008708,
+          "cost_per_correct_usd": 0.00008293,
+          "median_latency_ms": 8611.0,
+          "p95_latency_ms": 35945.8,
+          "selected_models": {
+            "nemotron-3-ultra-free": 40,
+            "gemma-4-26b": 40,
+            "gpt-oss-120b": 31,
+            "qwen-3.5-9b-local": 9
+          },
+          "by_task": {
+            "math": {
+              "prompts": 40,
+              "correct": 38,
+              "accuracy": 0.95,
+              "total_cost_usd": 0.0,
+              "median_latency_ms": 6372.6
+            },
+            "qa": {
+              "prompts": 40,
+              "correct": 34,
+              "accuracy": 0.85,
+              "total_cost_usd": 0.008708,
+              "median_latency_ms": 7292.8
+            },
+            "code": {
+              "prompts": 40,
+              "correct": 33,
+              "accuracy": 0.825,
+              "total_cost_usd": 0.0,
+              "median_latency_ms": 17255.4
+            }
+          }
+        },
+        {
+          "strategy_id": "model_task_prior:cost",
+          "prompts": 120,
+          "correct": 104,
+          "accuracy": 0.8666666666666667,
+          "total_cost_usd": 0.008708,
+          "cost_per_correct_usd": 0.00008373,
+          "median_latency_ms": 9185.3,
+          "p95_latency_ms": 35945.8,
+          "selected_models": {
+            "gpt-oss-120b": 40,
+            "nemotron-3-ultra-free": 40,
+            "gemma-4-26b": 40
+          },
+          "by_task": {
+            "math": {
+              "prompts": 40,
+              "correct": 37,
+              "accuracy": 0.925,
+              "total_cost_usd": 0.0,
+              "median_latency_ms": 6964.8
+            },
+            "qa": {
+              "prompts": 40,
+              "correct": 34,
+              "accuracy": 0.85,
+              "total_cost_usd": 0.008708,
+              "median_latency_ms": 7292.8
+            },
+            "code": {
+              "prompts": 40,
+              "correct": 33,
+              "accuracy": 0.825,
+              "total_cost_usd": 0.0,
+              "median_latency_ms": 17255.4
+            }
+          }
+        },
+        {
+          "strategy_id": "learned:quality",
+          "prompts": 120,
+          "correct": 111,
+          "accuracy": 0.925,
+          "total_cost_usd": 0.448606,
+          "cost_per_correct_usd": 0.0040415,
+          "median_latency_ms": 4646.0,
+          "p95_latency_ms": 12671.2,
+          "selected_models": {
+            "gemini-4-argon": 77,
+            "gpt-6.1-sol": 38,
+            "gemma-4-26b": 5
+          },
+          "by_task": {
+            "math": {
+              "prompts": 40,
+              "correct": 37,
+              "accuracy": 0.925,
+              "total_cost_usd": 0.039708,
+              "median_latency_ms": 2836.4
+            },
+            "qa": {
+              "prompts": 40,
+              "correct": 39,
+              "accuracy": 0.975,
+              "total_cost_usd": 0.297172,
+              "median_latency_ms": 9036.7
+            },
+            "code": {
+              "prompts": 40,
+              "correct": 35,
+              "accuracy": 0.875,
+              "total_cost_usd": 0.111726,
+              "median_latency_ms": 4926.9
+            }
+          }
+        },
+        {
+          "strategy_id": "model_task_prior:quality",
+          "prompts": 120,
+          "correct": 111,
+          "accuracy": 0.925,
+          "total_cost_usd": 0.463934,
+          "cost_per_correct_usd": 0.00417959,
+          "median_latency_ms": 4930.7,
+          "p95_latency_ms": 12671.2,
+          "selected_models": {
+            "gemini-4-argon": 80,
+            "gpt-6.1-sol": 40
+          },
+          "by_task": {
+            "math": {
+              "prompts": 40,
+              "correct": 37,
+              "accuracy": 0.925,
+              "total_cost_usd": 0.043828,
+              "median_latency_ms": 2699.1
+            },
+            "qa": {
+              "prompts": 40,
+              "correct": 39,
+              "accuracy": 0.975,
+              "total_cost_usd": 0.30838,
+              "median_latency_ms": 9036.7
+            },
+            "code": {
+              "prompts": 40,
+              "correct": 35,
+              "accuracy": 0.875,
+              "total_cost_usd": 0.111726,
+              "median_latency_ms": 4926.9
+            }
+          }
+        },
+        {
+          "strategy_id": "learned:latency",
+          "prompts": 120,
+          "correct": 104,
+          "accuracy": 0.8666666666666667,
+          "total_cost_usd": 0.118151,
+          "cost_per_correct_usd": 0.00113606,
+          "median_latency_ms": 2011.8,
+          "p95_latency_ms": 8467.1,
+          "selected_models": {
+            "mercury-3": 68,
+            "gpt-6.1-sol": 52
+          },
+          "by_task": {
+            "math": {
+              "prompts": 40,
+              "correct": 37,
+              "accuracy": 0.925,
+              "total_cost_usd": 0.004639,
+              "median_latency_ms": 1056.5
+            },
+            "qa": {
+              "prompts": 40,
+              "correct": 33,
+              "accuracy": 0.825,
+              "total_cost_usd": 0.041059,
+              "median_latency_ms": 2655.5
+            },
+            "code": {
+              "prompts": 40,
+              "correct": 34,
+              "accuracy": 0.85,
+              "total_cost_usd": 0.072452,
+              "median_latency_ms": 2653.6
+            }
+          }
+        },
+        {
+          "strategy_id": "model_task_prior:latency",
+          "prompts": 120,
+          "correct": 103,
+          "accuracy": 0.8583333333333333,
+          "total_cost_usd": 0.088104,
+          "cost_per_correct_usd": 0.00085538,
+          "median_latency_ms": 1935.2,
+          "p95_latency_ms": 10140.6,
+          "selected_models": {
+            "mercury-3": 80,
+            "gpt-6.1-sol": 40
+          },
+          "by_task": {
+            "math": {
+              "prompts": 40,
+              "correct": 37,
+              "accuracy": 0.925,
+              "total_cost_usd": 0.004639,
+              "median_latency_ms": 1056.5
+            },
+            "qa": {
+              "prompts": 40,
+              "correct": 32,
+              "accuracy": 0.8,
+              "total_cost_usd": 0.011013,
+              "median_latency_ms": 1945.8
+            },
+            "code": {
+              "prompts": 40,
+              "correct": 34,
+              "accuracy": 0.85,
+              "total_cost_usd": 0.072452,
+              "median_latency_ms": 2653.6
+            }
+          }
+        },
+        {
+          "strategy_id": "learned:balanced",
+          "prompts": 120,
+          "correct": 103,
+          "accuracy": 0.8583333333333333,
+          "total_cost_usd": 0.107064,
+          "cost_per_correct_usd": 0.00103946,
+          "median_latency_ms": 2008.7,
+          "p95_latency_ms": 8467.1,
+          "selected_models": {
+            "mercury-3": 72,
+            "gpt-6.1-sol": 46,
+            "gemma-4-26b": 2
+          },
+          "by_task": {
+            "math": {
+              "prompts": 40,
+              "correct": 37,
+              "accuracy": 0.925,
+              "total_cost_usd": 0.004639,
+              "median_latency_ms": 1056.5
+            },
+            "qa": {
+              "prompts": 40,
+              "correct": 32,
+              "accuracy": 0.8,
+              "total_cost_usd": 0.033394,
+              "median_latency_ms": 2450.2
+            },
+            "code": {
+              "prompts": 40,
+              "correct": 34,
+              "accuracy": 0.85,
+              "total_cost_usd": 0.069031,
+              "median_latency_ms": 2685.9
+            }
+          }
+        },
+        {
+          "strategy_id": "model_task_prior:balanced",
+          "prompts": 120,
+          "correct": 103,
+          "accuracy": 0.8583333333333333,
+          "total_cost_usd": 0.088104,
+          "cost_per_correct_usd": 0.00085538,
+          "median_latency_ms": 1935.2,
+          "p95_latency_ms": 10140.6,
+          "selected_models": {
+            "mercury-3": 80,
+            "gpt-6.1-sol": 40
+          },
+          "by_task": {
+            "math": {
+              "prompts": 40,
+              "correct": 37,
+              "accuracy": 0.925,
+              "total_cost_usd": 0.004639,
+              "median_latency_ms": 1056.5
+            },
+            "qa": {
+              "prompts": 40,
+              "correct": 32,
+              "accuracy": 0.8,
+              "total_cost_usd": 0.011013,
+              "median_latency_ms": 1945.8
+            },
+            "code": {
+              "prompts": 40,
+              "correct": 34,
+              "accuracy": 0.85,
+              "total_cost_usd": 0.072452,
+              "median_latency_ms": 2653.6
+            }
+          }
+        },
+        {
+          "strategy_id": "previous_router:cost",
+          "prompts": 120,
+          "correct": 103,
+          "accuracy": 0.8583333333333333,
+          "total_cost_usd": 0.000324,
+          "cost_per_correct_usd": 3.15e-6,
+          "median_latency_ms": 12702.3,
+          "p95_latency_ms": 88083.2,
+          "selected_models": {
+            "nemotron-3-ultra-free": 78,
+            "gpt-oss-120b": 40,
+            "gemma-4-26b": 2
+          },
+          "by_task": {
+            "math": {
+              "prompts": 40,
+              "correct": 37,
+              "accuracy": 0.925,
+              "total_cost_usd": 0.0,
+              "median_latency_ms": 6964.8
+            },
+            "qa": {
+              "prompts": 40,
+              "correct": 33,
+              "accuracy": 0.825,
+              "total_cost_usd": 0.000324,
+              "median_latency_ms": 20535.7
+            },
+            "code": {
+              "prompts": 40,
+              "correct": 33,
+              "accuracy": 0.825,
+              "total_cost_usd": 0.0,
+              "median_latency_ms": 17255.4
+            }
+          }
+        },
+        {
+          "strategy_id": "previous_router:quality",
+          "prompts": 120,
+          "correct": 112,
+          "accuracy": 0.9333333333333333,
+          "total_cost_usd": 0.421463,
+          "cost_per_correct_usd": 0.00376306,
+          "median_latency_ms": 5356.2,
+          "p95_latency_ms": 14150.3,
+          "selected_models": {
+            "gemini-4-argon": 79,
+            "gemma-4-26b": 40,
+            "nemotron-3-ultra-free": 1
+          },
+          "by_task": {
+            "math": {
+              "prompts": 40,
+              "correct": 38,
+              "accuracy": 0.95,
+              "total_cost_usd": 0.003503,
+              "median_latency_ms": 3810.2
+            },
+            "qa": {
+              "prompts": 40,
+              "correct": 39,
+              "accuracy": 0.975,
+              "total_cost_usd": 0.30838,
+              "median_latency_ms": 9036.7
+            },
+            "code": {
+              "prompts": 40,
+              "correct": 35,
+              "accuracy": 0.875,
+              "total_cost_usd": 0.10958,
+              "median_latency_ms": 4926.9
+            }
+          }
+        },
+        {
+          "strategy_id": "previous_router:latency",
+          "prompts": 120,
+          "correct": 102,
+          "accuracy": 0.85,
+          "total_cost_usd": 0.115606,
+          "cost_per_correct_usd": 0.00113339,
+          "median_latency_ms": 2085.3,
+          "p95_latency_ms": 9811.4,
+          "selected_models": {
+            "mercury-3": 86,
+            "gemini-4-argon": 34
+          },
+          "by_task": {
+            "math": {
+              "prompts": 40,
+              "correct": 37,
+              "accuracy": 0.925,
+              "total_cost_usd": 0.004639,
+              "median_latency_ms": 1056.5
+            },
+            "qa": {
+              "prompts": 40,
+              "correct": 32,
+              "accuracy": 0.8,
+              "total_cost_usd": 0.011013,
+              "median_latency_ms": 1945.8
+            },
+            "code": {
+              "prompts": 40,
+              "correct": 33,
+              "accuracy": 0.825,
+              "total_cost_usd": 0.099954,
+              "median_latency_ms": 4926.9
+            }
+          }
+        },
+        {
+          "strategy_id": "previous_router:balanced",
+          "prompts": 120,
+          "correct": 102,
+          "accuracy": 0.85,
+          "total_cost_usd": 0.115606,
+          "cost_per_correct_usd": 0.00113339,
+          "median_latency_ms": 2085.3,
+          "p95_latency_ms": 9811.4,
+          "selected_models": {
+            "mercury-3": 86,
+            "gemini-4-argon": 34
+          },
+          "by_task": {
+            "math": {
+              "prompts": 40,
+              "correct": 37,
+              "accuracy": 0.925,
+              "total_cost_usd": 0.004639,
+              "median_latency_ms": 1056.5
+            },
+            "qa": {
+              "prompts": 40,
+              "correct": 32,
+              "accuracy": 0.8,
+              "total_cost_usd": 0.011013,
+              "median_latency_ms": 1945.8
+            },
+            "code": {
+              "prompts": 40,
+              "correct": 33,
+              "accuracy": 0.825,
+              "total_cost_usd": 0.099954,
+              "median_latency_ms": 4926.9
+            }
+          }
+        },
+        {
+          "strategy_id": "fixed_top_flagship",
+          "prompts": 120,
+          "correct": 110,
+          "accuracy": 0.9166666666666666,
+          "total_cost_usd": 0.90575,
+          "cost_per_correct_usd": 0.00823409,
+          "median_latency_ms": 11718.6,
+          "p95_latency_ms": 46998.1,
+          "selected_models": {
+            "gemini-4-carbon": 120
+          },
+          "by_task": {
+            "math": {
+              "prompts": 40,
+              "correct": 38,
+              "accuracy": 0.95,
+              "total_cost_usd": 0.115634,
+              "median_latency_ms": 8619.6
+            },
+            "qa": {
+              "prompts": 40,
+              "correct": 37,
+              "accuracy": 0.925,
+              "total_cost_usd": 0.48513,
+              "median_latency_ms": 14467.8
+            },
+            "code": {
+              "prompts": 40,
+              "correct": 35,
+              "accuracy": 0.875,
+              "total_cost_usd": 0.304986,
+              "median_latency_ms": 12870.8
+            }
+          }
+        }
+      ],
+      "oracle": [
+        {
+          "strategy_id": "oracle:cost",
+          "prompts": 120,
+          "correct": 116,
+          "accuracy": 0.9666666666666667,
+          "total_cost_usd": 0.011899,
+          "cost_per_correct_usd": 0.00010258,
+          "median_latency_ms": 5373.1,
+          "p95_latency_ms": 22595.7,
+          "selected_models": {
+            "qwen-3.5-9b-local": 50,
+            "qwen-3.8-27b": 17,
+            "nemotron-3-ultra-free": 17,
+            "llama-3.3-70b": 11,
+            "gpt-oss-120b": 10,
+            "gemma-4-26b": 7,
+            "mercury-3": 5,
+            "gemini-4-argon": 3
+          },
+          "by_task": {
+            "math": {
+              "prompts": 40,
+              "correct": 38,
+              "accuracy": 0.95,
+              "total_cost_usd": 0.000068,
+              "median_latency_ms": 3464.8
+            },
+            "qa": {
+              "prompts": 40,
+              "correct": 39,
+              "accuracy": 0.975,
+              "total_cost_usd": 0.002601,
+              "median_latency_ms": 12105.6
+            },
+            "code": {
+              "prompts": 40,
+              "correct": 39,
+              "accuracy": 0.975,
+              "total_cost_usd": 0.009231,
+              "median_latency_ms": 5373.1
+            }
+          }
+        },
+        {
+          "strategy_id": "oracle:quality",
+          "prompts": 120,
+          "correct": 116,
+          "accuracy": 0.9666666666666667,
+          "total_cost_usd": 0.032497,
+          "cost_per_correct_usd": 0.00028014,
+          "median_latency_ms": 1929.2,
+          "p95_latency_ms": 8688.6,
+          "selected_models": {
+            "mercury-3": 80,
+            "gemma-4-26b": 15,
+            "qwen-3.5-9b-local": 14,
+            "gemini-4-argon": 3,
+            "gpt-6.1-sol": 3,
+            "llama-3.3-70b": 2,
+            "deepseek-v4-flash": 2,
+            "nemotron-3-ultra-free": 1
+          },
+          "by_task": {
+            "math": {
+              "prompts": 40,
+              "correct": 38,
+              "accuracy": 0.95,
+              "total_cost_usd": 0.003339,
+              "median_latency_ms": 1082.7
+            },
+            "qa": {
+              "prompts": 40,
+              "correct": 39,
+              "accuracy": 0.975,
+              "total_cost_usd": 0.015686,
+              "median_latency_ms": 2007.5
+            },
+            "code": {
+              "prompts": 40,
+              "correct": 39,
+              "accuracy": 0.975,
+              "total_cost_usd": 0.013472,
+              "median_latency_ms": 3187.9
+            }
+          }
+        },
+        {
+          "strategy_id": "oracle:latency",
+          "prompts": 120,
+          "correct": 116,
+          "accuracy": 0.9666666666666667,
+          "total_cost_usd": 0.081406,
+          "cost_per_correct_usd": 0.00070178,
+          "median_latency_ms": 1640.4,
+          "p95_latency_ms": 6729.2,
+          "selected_models": {
+            "mercury-3": 90,
+            "gpt-6.1-sol": 16,
+            "gemini-4-argon": 5,
+            "gemma-4-26b": 4,
+            "deepseek-v4-flash": 3,
+            "qwen-3.5-9b-local": 1,
+            "llama-3.3-70b": 1
+          },
+          "by_task": {
+            "math": {
+              "prompts": 40,
+              "correct": 38,
+              "accuracy": 0.95,
+              "total_cost_usd": 0.006811,
+              "median_latency_ms": 1056.5
+            },
+            "qa": {
+              "prompts": 40,
+              "correct": 39,
+              "accuracy": 0.975,
+              "total_cost_usd": 0.047281,
+              "median_latency_ms": 1945.8
+            },
+            "code": {
+              "prompts": 40,
+              "correct": 39,
+              "accuracy": 0.975,
+              "total_cost_usd": 0.027314,
+              "median_latency_ms": 1953.1
+            }
+          }
+        },
+        {
+          "strategy_id": "oracle:balanced",
+          "prompts": 120,
+          "correct": 116,
+          "accuracy": 0.9666666666666667,
+          "total_cost_usd": 0.036462,
+          "cost_per_correct_usd": 0.00031433,
+          "median_latency_ms": 1742.9,
+          "p95_latency_ms": 8158.0,
+          "selected_models": {
+            "mercury-3": 87,
+            "gemma-4-26b": 11,
+            "qwen-3.5-9b-local": 9,
+            "gpt-6.1-sol": 5,
+            "deepseek-v4-flash": 4,
+            "gemini-4-argon": 3,
+            "llama-3.3-70b": 1
+          },
+          "by_task": {
+            "math": {
+              "prompts": 40,
+              "correct": 38,
+              "accuracy": 0.95,
+              "total_cost_usd": 0.003727,
+              "median_latency_ms": 1056.5
+            },
+            "qa": {
+              "prompts": 40,
+              "correct": 39,
+              "accuracy": 0.975,
+              "total_cost_usd": 0.015762,
+              "median_latency_ms": 1945.8
+            },
+            "code": {
+              "prompts": 40,
+              "correct": 39,
+              "accuracy": 0.975,
+              "total_cost_usd": 0.016974,
+              "median_latency_ms": 2366.0
+            }
+          }
+        }
+      ],
+      "uncertainty": [
+        {
+          "strategy_id": "fixed_cheapest",
+          "accuracy": {
+            "low": 0.7916666667,
+            "high": 0.9166666667
+          },
+          "total_cost_usd": {
+            "low": 0.0156882564,
+            "high": 0.0211502253
+          },
+          "median_latency_ms": {
+            "low": 4669.098,
+            "high": 5832.977
+          }
+        },
+        {
+          "strategy_id": "fixed_strongest",
+          "accuracy": {
+            "low": 0.8833333333,
+            "high": 0.975
+          },
+          "total_cost_usd": {
+            "low": 0.412853,
+            "high": 0.58226815
+          },
+          "median_latency_ms": {
+            "low": 4712.538,
+            "high": 5860.772
+          }
+        },
+        {
+          "strategy_id": "rule_balanced",
+          "accuracy": {
+            "low": 0.8166666667,
+            "high": 0.9333333333
+          },
+          "total_cost_usd": {
+            "low": 0.1268162933,
+            "high": 0.2525062152
+          },
+          "median_latency_ms": {
+            "low": 2460.681,
+            "high": 4305.599
+          }
+        },
+        {
+          "strategy_id": "learned:cost",
+          "accuracy": {
+            "low": 0.8166666667,
+            "high": 0.9333333333
+          },
+          "total_cost_usd": {
+            "low": 0.0061283872,
+            "high": 0.0114693875
+          },
+          "median_latency_ms": {
+            "low": 7381.69,
+            "high": 10335.564
+          }
+        },
+        {
+          "strategy_id": "model_task_prior:cost",
+          "accuracy": {
+            "low": 0.808125,
+            "high": 0.925
+          },
+          "total_cost_usd": {
+            "low": 0.0061283872,
+            "high": 0.0114693875
+          },
+          "median_latency_ms": {
+            "low": 8065.673,
+            "high": 11025.254
+          }
+        },
+        {
+          "strategy_id": "learned:quality",
+          "accuracy": {
+            "low": 0.875,
+            "high": 0.9666666667
+          },
+          "total_cost_usd": {
+            "low": 0.3660993117,
+            "high": 0.5416403281
+          },
+          "median_latency_ms": {
+            "low": 4215.714,
+            "high": 5479.232
+          }
+        },
+        {
+          "strategy_id": "model_task_prior:quality",
+          "accuracy": {
+            "low": 0.875,
+            "high": 0.9666666667
+          },
+          "total_cost_usd": {
+            "low": 0.3804263,
+            "high": 0.55588795
+          },
+          "median_latency_ms": {
+            "low": 4337.047,
+            "high": 5719.942
+          }
+        },
+        {
+          "strategy_id": "learned:latency",
+          "accuracy": {
+            "low": 0.8083333333,
+            "high": 0.925
+          },
+          "total_cost_usd": {
+            "low": 0.0907269962,
+            "high": 0.1471376093
+          },
+          "median_latency_ms": {
+            "low": 1769.03,
+            "high": 2392.113
+          }
+        },
+        {
+          "strategy_id": "model_task_prior:latency",
+          "accuracy": {
+            "low": 0.7916666667,
+            "high": 0.9166666667
+          },
+          "total_cost_usd": {
+            "low": 0.0677548873,
+            "high": 0.1105141145
+          },
+          "median_latency_ms": {
+            "low": 1588.206,
+            "high": 2196.781
+          }
+        },
+        {
+          "strategy_id": "learned:balanced",
+          "accuracy": {
+            "low": 0.7916666667,
+            "high": 0.9166666667
+          },
+          "total_cost_usd": {
+            "low": 0.0809764022,
+            "high": 0.1357252411
+          },
+          "median_latency_ms": {
+            "low": 1769.03,
+            "high": 2392.113
+          }
+        },
+        {
+          "strategy_id": "model_task_prior:balanced",
+          "accuracy": {
+            "low": 0.7916666667,
+            "high": 0.9166666667
+          },
+          "total_cost_usd": {
+            "low": 0.0677548873,
+            "high": 0.1105141145
+          },
+          "median_latency_ms": {
+            "low": 1588.206,
+            "high": 2196.781
+          }
+        },
+        {
+          "strategy_id": "previous_router:cost",
+          "accuracy": {
+            "low": 0.7916666667,
+            "high": 0.9166666667
+          },
+          "total_cost_usd": {
+            "low": 0.0,
+            "high": 0.00082263
+          },
+          "median_latency_ms": {
+            "low": 10996.85,
+            "high": 16380.347
+          }
+        },
+        {
+          "strategy_id": "previous_router:quality",
+          "accuracy": {
+            "low": 0.8833333333,
+            "high": 0.975
+          },
+          "total_cost_usd": {
+            "low": 0.3317976466,
+            "high": 0.5181157198
+          },
+          "median_latency_ms": {
+            "low": 4692.223,
+            "high": 6027.7581125
+          }
+        },
+        {
+          "strategy_id": "previous_router:latency",
+          "accuracy": {
+            "low": 0.7833333333,
+            "high": 0.9083333333
+          },
+          "total_cost_usd": {
+            "low": 0.0851053838,
+            "high": 0.1495323957
+          },
+          "median_latency_ms": {
+            "low": 1577.842,
+            "high": 3432.3735
+          }
+        },
+        {
+          "strategy_id": "previous_router:balanced",
+          "accuracy": {
+            "low": 0.7833333333,
+            "high": 0.9083333333
+          },
+          "total_cost_usd": {
+            "low": 0.0851053838,
+            "high": 0.1495323957
+          },
+          "median_latency_ms": {
+            "low": 1577.842,
+            "high": 3432.3735
+          }
+        },
+        {
+          "strategy_id": "fixed_top_flagship",
+          "accuracy": {
+            "low": 0.8666666667,
+            "high": 0.9583333333
+          },
+          "total_cost_usd": {
+            "low": 0.7688932,
+            "high": 1.05830215
+          },
+          "median_latency_ms": {
+            "low": 10338.203,
+            "high": 13651.67
+          }
+        },
+        {
+          "strategy_id": "oracle:cost",
+          "accuracy": {
+            "low": 0.9333333333,
+            "high": 0.9916666667
+          },
+          "total_cost_usd": {
+            "low": 0.0032367646,
+            "high": 0.0240126356
+          },
+          "median_latency_ms": {
+            "low": 4787.476,
+            "high": 5986.015
+          }
+        },
+        {
+          "strategy_id": "oracle:quality",
+          "accuracy": {
+            "low": 0.9333333333,
+            "high": 0.9916666667
+          },
+          "total_cost_usd": {
+            "low": 0.0221175473,
+            "high": 0.0456353135
+          },
+          "median_latency_ms": {
+            "low": 1465.52,
+            "high": 2595.105
+          }
+        },
+        {
+          "strategy_id": "oracle:latency",
+          "accuracy": {
+            "low": 0.9333333333,
+            "high": 0.9916666667
+          },
+          "total_cost_usd": {
+            "low": 0.0498653598,
+            "high": 0.1234194837
+          },
+          "median_latency_ms": {
+            "low": 1306.259,
+            "high": 1929.212
+          }
+        },
+        {
+          "strategy_id": "oracle:balanced",
+          "accuracy": {
+            "low": 0.9333333333,
+            "high": 0.9916666667
+          },
+          "total_cost_usd": {
+            "low": 0.02564065,
+            "high": 0.0499251407
+          },
+          "median_latency_ms": {
+            "low": 1306.259,
+            "high": 1965.195
+          }
+        }
+      ],
+      "comparisons": [
+        {
+          "strategy_id": "learned:quality",
+          "baseline_id": "previous_router:quality",
+          "question": "Does the best-quality setting get more right with the flagships in the pool?",
+          "prompts": 120,
+          "correct": 111,
+          "baseline_correct": 112,
+          "only_strategy_correct": 0,
+          "only_baseline_correct": 1,
+          "accuracy_difference": -0.008333333333333333,
+          "accuracy_difference_ci": {
+            "low": -0.025,
+            "high": 0.0
+          },
+          "mcnemar_p": 1.0,
+          "holm_p": 1.0,
+          "cost_difference_usd": 0.02714322,
+          "cost_difference_ci": {
+            "low": 0.0081735737,
+            "high": 0.0442433282
+          },
+          "cost_ratio": 1.064402,
+          "cost_ratio_ci": {
+            "low": 1.0176020557,
+            "high": 1.1223696049
+          },
+          "median_latency_difference_ms": -710.2,
+          "median_latency_difference_ci": {
+            "low": -1129.795525,
+            "high": -177.8331625
+          }
+        },
+        {
+          "strategy_id": "learned:quality",
+          "baseline_id": "fixed_top_flagship",
+          "question": "Is the best-quality setting as accurate as always using the strongest flagship, for less?",
+          "prompts": 120,
+          "correct": 111,
+          "baseline_correct": 110,
+          "only_strategy_correct": 3,
+          "only_baseline_correct": 2,
+          "accuracy_difference": 0.008333333333333333,
+          "accuracy_difference_ci": {
+            "low": -0.025,
+            "high": 0.0416666667
+          },
+          "mcnemar_p": 1.0,
+          "holm_p": 1.0,
+          "cost_difference_usd": -0.45714387,
+          "cost_difference_ci": {
+            "low": -0.5480304476,
+            "high": -0.374702382
+          },
+          "cost_ratio": 0.495287,
+          "cost_ratio_ci": {
+            "low": 0.444008576,
+            "high": 0.5506700163
+          },
+          "median_latency_difference_ms": -7072.6,
+          "median_latency_difference_ci": {
+            "low": -8672.4217,
+            "high": -5748.2988875
+          }
+        },
+        {
+          "strategy_id": "learned:cost",
+          "baseline_id": "previous_router:cost",
+          "question": "Does adding the flagships change the lowest-cost setting?",
+          "prompts": 120,
+          "correct": 105,
+          "baseline_correct": 103,
+          "only_strategy_correct": 5,
+          "only_baseline_correct": 3,
+          "accuracy_difference": 0.016666666666666666,
+          "accuracy_difference_ci": {
+            "low": -0.025,
+            "high": 0.0666666667
+          },
+          "mcnemar_p": 0.7265625,
+          "holm_p": 1.0,
+          "cost_difference_usd": 0.00838335,
+          "cost_difference_ci": {
+            "low": 0.0058250122,
+            "high": 0.0111807351
+          },
+          "cost_ratio": 26.858708,
+          "cost_ratio_ci": {
+            "low": 9.7535566231,
+            "high": 67.2022218444
+          },
+          "median_latency_difference_ms": -4091.2,
+          "median_latency_difference_ci": {
+            "low": -7583.196,
+            "high": -2365.97085
+          }
+        },
+        {
+          "strategy_id": "learned:latency",
+          "baseline_id": "previous_router:latency",
+          "question": "Does adding the flagships change the fastest setting?",
+          "prompts": 120,
+          "correct": 104,
+          "baseline_correct": 102,
+          "only_strategy_correct": 3,
+          "only_baseline_correct": 1,
+          "accuracy_difference": 0.016666666666666666,
+          "accuracy_difference_ci": {
+            "low": -0.0166666667,
+            "high": 0.05
+          },
+          "mcnemar_p": 0.625,
+          "holm_p": 1.0,
+          "cost_difference_usd": 0.00254461,
+          "cost_difference_ci": {
+            "low": -0.0278561152,
+            "high": 0.0329036112
+          },
+          "cost_ratio": 1.022011,
+          "cost_ratio_ci": {
+            "low": 0.7926208288,
+            "high": 1.3463773665
+          },
+          "median_latency_difference_ms": -73.5,
+          "median_latency_difference_ci": {
+            "low": -1268.8226625,
+            "high": 256.9317625
+          }
+        },
+        {
+          "strategy_id": "learned:balanced",
+          "baseline_id": "previous_router:balanced",
+          "question": "Does the balanced setting do better with the flagships in the pool?",
+          "prompts": 120,
+          "correct": 103,
+          "baseline_correct": 102,
+          "only_strategy_correct": 2,
+          "only_baseline_correct": 1,
+          "accuracy_difference": 0.008333333333333333,
+          "accuracy_difference_ci": {
+            "low": -0.0166666667,
+            "high": 0.0333333333
+          },
+          "mcnemar_p": 1.0,
+          "holm_p": 1.0,
+          "cost_difference_usd": -0.00854163,
+          "cost_difference_ci": {
+            "low": -0.0374027708,
+            "high": 0.0203112553
+          },
+          "cost_ratio": 0.926114,
+          "cost_ratio_ci": {
+            "low": 0.7194156777,
+            "high": 1.210750917
+          },
+          "median_latency_difference_ms": -76.6,
+          "median_latency_difference_ci": {
+            "low": -1302.8879125,
+            "high": 227.6730125
+          }
+        },
+        {
+          "strategy_id": "learned:quality",
+          "baseline_id": "model_task_prior:quality",
+          "question": "With the flagships, do the prompt features add accuracy beyond per-task averages?",
+          "prompts": 120,
+          "correct": 111,
+          "baseline_correct": 111,
+          "only_strategy_correct": 0,
+          "only_baseline_correct": 0,
+          "accuracy_difference": 0.0,
+          "accuracy_difference_ci": {
+            "low": 0.0,
+            "high": 0.0
+          },
+          "mcnemar_p": 1.0,
+          "holm_p": 1.0,
+          "cost_difference_usd": -0.01532787,
+          "cost_difference_ci": {
+            "low": -0.0302883466,
+            "high": -0.0039971251
+          },
+          "cost_ratio": 0.966961,
+          "cost_ratio_ci": {
+            "low": 0.9331108706,
+            "high": 0.9916169001
+          },
+          "median_latency_difference_ms": -284.7,
+          "median_latency_difference_ci": {
+            "low": -586.237,
+            "high": 0.0
+          }
+        }
+      ],
+      "routing_errors": [
+        {
+          "strategy_id": "learned:cost",
+          "overall": {
+            "prompts": 120,
+            "correct": 105,
+            "wrong": 15,
+            "unavoidable": 4,
+            "under_routed": 10,
+            "over_routed": 33,
+            "over_routed_dominated": 7,
+            "over_routing_extra_cost_usd": 0.00653847,
+            "total_cost_usd": 0.00870755,
+            "oracle_correct": 116,
+            "oracle_cost_usd": 0.0118994,
+            "regret_correct": 11
+          },
+          "by_task": {
+            "math": {
+              "prompts": 40,
+              "correct": 38,
+              "wrong": 2,
+              "unavoidable": 2,
+              "under_routed": 0,
+              "over_routed": 0,
+              "over_routed_dominated": 0,
+              "over_routing_extra_cost_usd": 0.0,
+              "total_cost_usd": 0.0,
+              "oracle_correct": 38,
+              "oracle_cost_usd": 0.00006751,
+              "regret_correct": 0
+            },
+            "qa": {
+              "prompts": 40,
+              "correct": 34,
+              "wrong": 6,
+              "unavoidable": 1,
+              "under_routed": 5,
+              "over_routed": 33,
+              "over_routed_dominated": 7,
+              "over_routing_extra_cost_usd": 0.00653847,
+              "total_cost_usd": 0.00870755,
+              "oracle_correct": 39,
+              "oracle_cost_usd": 0.00260057,
+              "regret_correct": 5
+            },
+            "code": {
+              "prompts": 40,
+              "correct": 33,
+              "wrong": 7,
+              "unavoidable": 1,
+              "under_routed": 5,
+              "over_routed": 0,
+              "over_routed_dominated": 0,
+              "over_routing_extra_cost_usd": 0.0,
+              "total_cost_usd": 0.0,
+              "oracle_correct": 39,
+              "oracle_cost_usd": 0.00923132,
+              "regret_correct": 6
+            }
+          },
+          "examples": [
+            {
+              "kind": "under",
+              "sample_id": "mmlu_pro-test-11073",
+              "benchmark": "mmlu_pro",
+              "task_group": "qa",
+              "prompt_excerpt": "Anscombe criticizes Butler on the grounds that:",
+              "chosen_model_id": "gemma-4-26b",
+              "chosen_correct": false,
+              "chosen_cost_usd": 0.0001230205,
+              "chosen_latency_ms": 5109.188,
+              "predicted_success": 0.8561,
+              "alternative_model_id": "gpt-6.1-sol",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.001694,
+              "alternative_latency_ms": 3980.404,
+              "explanation": "The router predicted 86% success for Gemma 4 26B A4B, which answered wrong. GPT-6.1 Sol, which the router expected to cost more, answered right for $0.00169 in 4.0 s."
+            },
+            {
+              "kind": "under",
+              "sample_id": "mbpp_plus-430",
+              "benchmark": "mbpp_plus",
+              "task_group": "code",
+              "prompt_excerpt": "\"\"\" Write a function to find the directrix of a parabola. assert parabola_directrix(5,3,2)==-198 \"\"\"",
+              "chosen_model_id": "nemotron-3-ultra-free",
+              "chosen_correct": false,
+              "chosen_cost_usd": 0.0,
+              "chosen_latency_ms": 88083.173,
+              "predicted_success": 0.8504,
+              "alternative_model_id": "gpt-6.1-sol",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.005394,
+              "alternative_latency_ms": 12218.248,
+              "explanation": "The router predicted 85% success for Nemotron 3 Ultra 550B (free), which answered wrong. GPT-6.1 Sol, which the router expected to cost more, answered right for $0.00539 in 12.2 s."
+            },
+            {
+              "kind": "over",
+              "sample_id": "mmlu_pro-test-11680",
+              "benchmark": "mmlu_pro",
+              "task_group": "qa",
+              "prompt_excerpt": "(i) An eight-pole, 60 Hz SCIM is deliberately loaded to a point where pull-out or stalling will occur. The rotor resistance per phase is 0.3 ohm, and the motor stalls at 650 rpm. Calculate: (a) The breakdown slip,s_b (b…",
+              "chosen_model_id": "gemma-4-26b",
+              "chosen_correct": true,
+              "chosen_cost_usd": 0.000467568,
+              "chosen_latency_ms": 16535.211,
+              "predicted_success": 0.74,
+              "alternative_model_id": "gpt-oss-120b",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.0,
+              "alternative_latency_ms": 99641.426,
+              "explanation": "Gemma 4 26B A4B answered right for $0.00047 in 16.5 s, but gpt-oss-120b, which the router expected to cost less, was also right for $0 (free) in 99.6 s."
+            },
+            {
+              "kind": "over",
+              "sample_id": "mmlu_pro-test-08945",
+              "benchmark": "mmlu_pro",
+              "task_group": "qa",
+              "prompt_excerpt": "Use the Runge-Kutta method with $h=0.1$ to find approximate values for the solution of the initial value problem $y' + 2y = x^3e^{-2x}$ with y(0)=1 at $x=0.2$.",
+              "chosen_model_id": "gemma-4-26b",
+              "chosen_correct": true,
+              "chosen_cost_usd": 0.000449038,
+              "chosen_latency_ms": 18143.495,
+              "predicted_success": 0.8343,
+              "alternative_model_id": "gpt-oss-120b",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.0,
+              "alternative_latency_ms": 80413.035,
+              "explanation": "Gemma 4 26B A4B answered right for $0.00045 in 18.1 s, but gpt-oss-120b, which the router expected to cost less, was also right for $0 (free) in 80.4 s."
+            },
+            {
+              "kind": "good",
+              "sample_id": "mmlu_pro-test-08945",
+              "benchmark": "mmlu_pro",
+              "task_group": "qa",
+              "prompt_excerpt": "Use the Runge-Kutta method with $h=0.1$ to find approximate values for the solution of the initial value problem $y' + 2y = x^3e^{-2x}$ with y(0)=1 at $x=0.2$.",
+              "chosen_model_id": "gemma-4-26b",
+              "chosen_correct": true,
+              "chosen_cost_usd": 0.000449038,
+              "chosen_latency_ms": 18143.495,
+              "predicted_success": 0.8343,
+              "alternative_model_id": "gemini-4-argon",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.02591,
+              "alternative_latency_ms": 24331.03,
+              "explanation": "Gemma 4 26B A4B answered right for $0.00045 in 18.1 s. Always using Gemini 4 Argon would have cost $0.02591 and taken 24.3 s, and it was also right."
+            },
+            {
+              "kind": "good",
+              "sample_id": "mmlu_pro-test-11759",
+              "benchmark": "mmlu_pro",
+              "task_group": "qa",
+              "prompt_excerpt": "A short-circuit test on a 15-kva, 2400/240-volt, 60- cycle transformer yields the following result: 6.25 amperes, 131 volts, and 214 watts. Determine the regulation of the transformer for a load of 0.8 lagging power fac…",
+              "chosen_model_id": "gemma-4-26b",
+              "chosen_correct": true,
+              "chosen_cost_usd": 0.000304572,
+              "chosen_latency_ms": 12899.828,
+              "predicted_success": 0.8168,
+              "alternative_model_id": "gemini-4-argon",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.020472,
+              "alternative_latency_ms": 22297.185,
+              "explanation": "Gemma 4 26B A4B answered right for $0.00030 in 12.9 s. Always using Gemini 4 Argon would have cost $0.02047 and taken 22.3 s, and it was also right."
+            }
+          ]
+        },
+        {
+          "strategy_id": "learned:quality",
+          "overall": {
+            "prompts": 120,
+            "correct": 111,
+            "wrong": 9,
+            "unavoidable": 4,
+            "under_routed": 2,
+            "over_routed": 110,
+            "over_routed_dominated": 104,
+            "over_routing_extra_cost_usd": 0.40979326,
+            "total_cost_usd": 0.44860613,
+            "oracle_correct": 116,
+            "oracle_cost_usd": 0.03249666,
+            "regret_correct": 5
+          },
+          "by_task": {
+            "math": {
+              "prompts": 40,
+              "correct": 37,
+              "wrong": 3,
+              "unavoidable": 2,
+              "under_routed": 1,
+              "over_routed": 37,
+              "over_routed_dominated": 34,
+              "over_routing_extra_cost_usd": 0.03605634,
+              "total_cost_usd": 0.03970813,
+              "oracle_correct": 38,
+              "oracle_cost_usd": 0.00333917,
+              "regret_correct": 1
+            },
+            "qa": {
+              "prompts": 40,
+              "correct": 39,
+              "wrong": 1,
+              "unavoidable": 1,
+              "under_routed": 0,
+              "over_routed": 39,
+              "over_routed_dominated": 38,
+              "over_routing_extra_cost_usd": 0.29219892,
+              "total_cost_usd": 0.297172,
+              "oracle_correct": 39,
+              "oracle_cost_usd": 0.01568598,
+              "regret_correct": 0
+            },
+            "code": {
+              "prompts": 40,
+              "correct": 35,
+              "wrong": 5,
+              "unavoidable": 1,
+              "under_routed": 1,
+              "over_routed": 34,
+              "over_routed_dominated": 32,
+              "over_routing_extra_cost_usd": 0.081538,
+              "total_cost_usd": 0.111726,
+              "oracle_correct": 39,
+              "oracle_cost_usd": 0.01347151,
+              "regret_correct": 4
+            }
+          },
+          "examples": [
+            {
+              "kind": "under",
+              "sample_id": "gsm8k-test-0830",
+              "benchmark": "gsm8k",
+              "task_group": "math",
+              "prompt_excerpt": "Britany records 18 4-minute TikTok videos each week. She spends 2 hours a week writing amateur songs to sing on TikTok, and 15 minutes six days a week doing her makeup before filming herself for TikTok. How much time do…",
+              "chosen_model_id": "gpt-6.1-sol",
+              "chosen_correct": false,
+              "chosen_cost_usd": 0.00229,
+              "chosen_latency_ms": 5867.582,
+              "predicted_success": 0.9579,
+              "alternative_model_id": "gemini-4-argon",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.002648,
+              "alternative_latency_ms": 4029.432,
+              "explanation": "The router predicted 96% success for GPT-6.1 Sol, which answered wrong. Gemini 4 Argon, which the router expected to cost more, answered right for $0.00265 in 4.0 s."
+            },
+            {
+              "kind": "under",
+              "sample_id": "mbpp_plus-244",
+              "benchmark": "mbpp_plus",
+              "task_group": "code",
+              "prompt_excerpt": "\"\"\" Write a python function to find the next perfect square greater than a given number. assert next_Perfect_Square(35) == 36 \"\"\"",
+              "chosen_model_id": "gemini-4-argon",
+              "chosen_correct": false,
+              "chosen_cost_usd": 0.00174,
+              "chosen_latency_ms": 4204.116,
+              "predicted_success": 0.9021,
+              "alternative_model_id": "gemini-4-carbon",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.00741,
+              "alternative_latency_ms": 13006.141,
+              "explanation": "The router predicted 90% success for Gemini 4 Argon, which answered wrong. Gemini 4 Carbon, which the router expected to cost more, answered right for $0.00741 in 13.0 s."
+            },
+            {
+              "kind": "over",
+              "sample_id": "mmlu_pro-test-08945",
+              "benchmark": "mmlu_pro",
+              "task_group": "qa",
+              "prompt_excerpt": "Use the Runge-Kutta method with $h=0.1$ to find approximate values for the solution of the initial value problem $y' + 2y = x^3e^{-2x}$ with y(0)=1 at $x=0.2$.",
+              "chosen_model_id": "gemini-4-argon",
+              "chosen_correct": true,
+              "chosen_cost_usd": 0.02591,
+              "chosen_latency_ms": 24331.03,
+              "predicted_success": 0.9191,
+              "alternative_model_id": "gpt-oss-120b",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.0,
+              "alternative_latency_ms": 80413.035,
+              "explanation": "Gemini 4 Argon answered right for $0.02591 in 24.3 s, but gpt-oss-120b, which the router expected to cost less, was also right for $0 (free) in 80.4 s."
+            },
+            {
+              "kind": "over",
+              "sample_id": "mmlu_pro-test-11759",
+              "benchmark": "mmlu_pro",
+              "task_group": "qa",
+              "prompt_excerpt": "A short-circuit test on a 15-kva, 2400/240-volt, 60- cycle transformer yields the following result: 6.25 amperes, 131 volts, and 214 watts. Determine the regulation of the transformer for a load of 0.8 lagging power fac…",
+              "chosen_model_id": "gemini-4-argon",
+              "chosen_correct": true,
+              "chosen_cost_usd": 0.020472,
+              "chosen_latency_ms": 22297.185,
+              "predicted_success": 0.9095,
+              "alternative_model_id": "gpt-oss-120b",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.0,
+              "alternative_latency_ms": 78288.987,
+              "explanation": "Gemini 4 Argon answered right for $0.02047 in 22.3 s, but gpt-oss-120b, which the router expected to cost less, was also right for $0 (free) in 78.3 s."
+            },
+            {
+              "kind": "good",
+              "sample_id": "mmlu_pro-test-03686",
+              "benchmark": "mmlu_pro",
+              "task_group": "qa",
+              "prompt_excerpt": "Heating of NaNO_3 decomposed it to NaNO_2 and O_2. How much NaNO_3 would you have to decompose to produce 1.50 g of O_2 ?",
+              "chosen_model_id": "gpt-6.1-sol",
+              "chosen_correct": true,
+              "chosen_cost_usd": 0.002632,
+              "chosen_latency_ms": 3836.269,
+              "predicted_success": 0.9063,
+              "alternative_model_id": "gemini-4-argon",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.00822,
+              "alternative_latency_ms": 8181.461,
+              "explanation": "GPT-6.1 Sol answered right for $0.00263 in 3.8 s. Always using Gemini 4 Argon would have cost $0.00822 and taken 8.2 s, and it was also right."
+            },
+            {
+              "kind": "good",
+              "sample_id": "mmlu_pro-test-06950",
+              "benchmark": "mmlu_pro",
+              "task_group": "qa",
+              "prompt_excerpt": "What is credit?",
+              "chosen_model_id": "gpt-6.1-sol",
+              "chosen_correct": true,
+              "chosen_cost_usd": 0.000886,
+              "chosen_latency_ms": 2337.009,
+              "predicted_success": 0.9203,
+              "alternative_model_id": "gemini-4-argon",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.00396,
+              "alternative_latency_ms": 6192.384,
+              "explanation": "GPT-6.1 Sol answered right for $0.00089 in 2.3 s. Always using Gemini 4 Argon would have cost $0.00396 and taken 6.2 s, and it was also right."
+            }
+          ]
+        },
+        {
+          "strategy_id": "learned:latency",
+          "overall": {
+            "prompts": 120,
+            "correct": 104,
+            "wrong": 16,
+            "unavoidable": 4,
+            "under_routed": 9,
+            "over_routed": 102,
+            "over_routed_dominated": 31,
+            "over_routing_extra_cost_usd": 0.08621269,
+            "total_cost_usd": 0.11815057,
+            "oracle_correct": 116,
+            "oracle_cost_usd": 0.081406,
+            "regret_correct": 12
+          },
+          "by_task": {
+            "math": {
+              "prompts": 40,
+              "correct": 37,
+              "wrong": 3,
+              "unavoidable": 2,
+              "under_routed": 1,
+              "over_routed": 37,
+              "over_routed_dominated": 1,
+              "over_routing_extra_cost_usd": 0.00441797,
+              "total_cost_usd": 0.00463929,
+              "oracle_correct": 38,
+              "oracle_cost_usd": 0.00681062,
+              "regret_correct": 1
+            },
+            "qa": {
+              "prompts": 40,
+              "correct": 33,
+              "wrong": 7,
+              "unavoidable": 1,
+              "under_routed": 6,
+              "over_routed": 33,
+              "over_routed_dominated": 9,
+              "over_routing_extra_cost_usd": 0.03548072,
+              "total_cost_usd": 0.04105928,
+              "oracle_correct": 39,
+              "oracle_cost_usd": 0.04728118,
+              "regret_correct": 6
+            },
+            "code": {
+              "prompts": 40,
+              "correct": 34,
+              "wrong": 6,
+              "unavoidable": 1,
+              "under_routed": 2,
+              "over_routed": 32,
+              "over_routed_dominated": 21,
+              "over_routing_extra_cost_usd": 0.046314,
+              "total_cost_usd": 0.072452,
+              "oracle_correct": 39,
+              "oracle_cost_usd": 0.02731421,
+              "regret_correct": 5
+            }
+          },
+          "examples": [
+            {
+              "kind": "under",
+              "sample_id": "gsm8k-test-0293",
+              "benchmark": "gsm8k",
+              "task_group": "math",
+              "prompt_excerpt": "Three friends: Mike, Jim, and Tony decided to play a game. After 3 rounds Mike has 21 points, Jim 3 points less than Mike, and Tony 2 times more than Mike. In the fourth round, every player gets an extra point if they h…",
+              "chosen_model_id": "mercury-3",
+              "chosen_correct": false,
+              "chosen_cost_usd": 0.0,
+              "chosen_latency_ms": 5968.015,
+              "predicted_success": 0.9129,
+              "alternative_model_id": "deepseek-v4-flash",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.00018732,
+              "alternative_latency_ms": 13245.048,
+              "explanation": "The router predicted 91% success for Mercury 3, which answered wrong. DeepSeek V4 Flash, which the router expected to cost more, answered right for $0.00019 in 13.2 s."
+            },
+            {
+              "kind": "under",
+              "sample_id": "mbpp_plus-622",
+              "benchmark": "mbpp_plus",
+              "task_group": "code",
+              "prompt_excerpt": "\"\"\" Write a function to find the median of two sorted lists of same size. assert get_median([1, 12, 15, 26, 38], [2, 13, 17, 30, 45], 5) == 16.0 \"\"\"",
+              "chosen_model_id": "gpt-6.1-sol",
+              "chosen_correct": false,
+              "chosen_cost_usd": 0.004224,
+              "chosen_latency_ms": 4716.469,
+              "predicted_success": 0.8801,
+              "alternative_model_id": "gemini-4-argon",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.004622,
+              "alternative_latency_ms": 6729.173,
+              "explanation": "The router predicted 88% success for GPT-6.1 Sol, which answered wrong. Gemini 4 Argon, which the router expected to cost more, answered right for $0.00462 in 6.7 s."
+            },
+            {
+              "kind": "over",
+              "sample_id": "mmlu_pro-test-11680",
+              "benchmark": "mmlu_pro",
+              "task_group": "qa",
+              "prompt_excerpt": "(i) An eight-pole, 60 Hz SCIM is deliberately loaded to a point where pull-out or stalling will occur. The rotor resistance per phase is 0.3 ohm, and the motor stalls at 650 rpm. Calculate: (a) The breakdown slip,s_b (b…",
+              "chosen_model_id": "gpt-6.1-sol",
+              "chosen_correct": true,
+              "chosen_cost_usd": 0.007714,
+              "chosen_latency_ms": 8467.124,
+              "predicted_success": 0.8143,
+              "alternative_model_id": "gpt-oss-120b",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.0,
+              "alternative_latency_ms": 99641.426,
+              "explanation": "GPT-6.1 Sol answered right for $0.00771 in 8.5 s, but gpt-oss-120b, which the router expected to cost less, was also right for $0 (free) in 99.6 s."
+            },
+            {
+              "kind": "over",
+              "sample_id": "mmlu_pro-test-01391",
+              "benchmark": "mmlu_pro",
+              "task_group": "qa",
+              "prompt_excerpt": "The owner of a large unimproved tract of land leased it to a tenant for five years at a monthly rental of $1,500. The rental agreement provided that the land was to be used as farmland. Shortly after the tenant took pos…",
+              "chosen_model_id": "gpt-6.1-sol",
+              "chosen_correct": true,
+              "chosen_cost_usd": 0.00331,
+              "chosen_latency_ms": 4216.499,
+              "predicted_success": 0.8136,
+              "alternative_model_id": "llama-3.3-70b",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.0,
+              "alternative_latency_ms": 26202.741,
+              "explanation": "GPT-6.1 Sol answered right for $0.00331 in 4.2 s, but Llama 3.3 70B Instruct, which the router expected to cost less, was also right for $0 (free) in 26.2 s."
+            },
+            {
+              "kind": "good",
+              "sample_id": "mmlu_pro-test-08945",
+              "benchmark": "mmlu_pro",
+              "task_group": "qa",
+              "prompt_excerpt": "Use the Runge-Kutta method with $h=0.1$ to find approximate values for the solution of the initial value problem $y' + 2y = x^3e^{-2x}$ with y(0)=1 at $x=0.2$.",
+              "chosen_model_id": "mercury-3",
+              "chosen_correct": true,
+              "chosen_cost_usd": 0.00062601,
+              "chosen_latency_ms": 2959.224,
+              "predicted_success": 0.8324,
+              "alternative_model_id": "gemini-4-argon",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.02591,
+              "alternative_latency_ms": 24331.03,
+              "explanation": "Mercury 3 answered right for $0.00063 in 3.0 s. Always using Gemini 4 Argon would have cost $0.02591 and taken 24.3 s, and it was also right."
+            },
+            {
+              "kind": "good",
+              "sample_id": "mmlu_pro-test-11760",
+              "benchmark": "mmlu_pro",
+              "task_group": "qa",
+              "prompt_excerpt": "A 200-kva, [(13,200) / (2,200)]-volt, 60-cps, single-phase transformer has the following test data: Volts Amp Watts Frequency Volts Open circuit 2,200 3.1 1550 60 cps 12,800 Short circuit 210 90.9 2500 60 cps Determine…",
+              "chosen_model_id": "mercury-3",
+              "chosen_correct": true,
+              "chosen_cost_usd": 0.00078706,
+              "chosen_latency_ms": 5751.973,
+              "predicted_success": 0.7975,
+              "alternative_model_id": "gemini-4-argon",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.017008,
+              "alternative_latency_ms": 15928.668,
+              "explanation": "Mercury 3 answered right for $0.00079 in 5.8 s. Always using Gemini 4 Argon would have cost $0.01701 and taken 15.9 s, and it was also right."
+            }
+          ]
+        },
+        {
+          "strategy_id": "learned:balanced",
+          "overall": {
+            "prompts": 120,
+            "correct": 103,
+            "wrong": 17,
+            "unavoidable": 4,
+            "under_routed": 10,
+            "over_routed": 101,
+            "over_routed_dominated": 28,
+            "over_routing_extra_cost_usd": 0.07512645,
+            "total_cost_usd": 0.10706433,
+            "oracle_correct": 116,
+            "oracle_cost_usd": 0.0364624,
+            "regret_correct": 13
+          },
+          "by_task": {
+            "math": {
+              "prompts": 40,
+              "correct": 37,
+              "wrong": 3,
+              "unavoidable": 2,
+              "under_routed": 1,
+              "over_routed": 37,
+              "over_routed_dominated": 1,
+              "over_routing_extra_cost_usd": 0.00441797,
+              "total_cost_usd": 0.00463929,
+              "oracle_correct": 38,
+              "oracle_cost_usd": 0.00372668,
+              "regret_correct": 1
+            },
+            "qa": {
+              "prompts": 40,
+              "correct": 32,
+              "wrong": 8,
+              "unavoidable": 1,
+              "under_routed": 7,
+              "over_routed": 32,
+              "over_routed_dominated": 6,
+              "over_routing_extra_cost_usd": 0.0278154,
+              "total_cost_usd": 0.03339396,
+              "oracle_correct": 39,
+              "oracle_cost_usd": 0.01576219,
+              "regret_correct": 7
+            },
+            "code": {
+              "prompts": 40,
+              "correct": 34,
+              "wrong": 6,
+              "unavoidable": 1,
+              "under_routed": 2,
+              "over_routed": 32,
+              "over_routed_dominated": 21,
+              "over_routing_extra_cost_usd": 0.04289308,
+              "total_cost_usd": 0.06903108,
+              "oracle_correct": 39,
+              "oracle_cost_usd": 0.01697352,
+              "regret_correct": 5
+            }
+          },
+          "examples": [
+            {
+              "kind": "under",
+              "sample_id": "gsm8k-test-0293",
+              "benchmark": "gsm8k",
+              "task_group": "math",
+              "prompt_excerpt": "Three friends: Mike, Jim, and Tony decided to play a game. After 3 rounds Mike has 21 points, Jim 3 points less than Mike, and Tony 2 times more than Mike. In the fourth round, every player gets an extra point if they h…",
+              "chosen_model_id": "mercury-3",
+              "chosen_correct": false,
+              "chosen_cost_usd": 0.0,
+              "chosen_latency_ms": 5968.015,
+              "predicted_success": 0.9129,
+              "alternative_model_id": "deepseek-v4-flash",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.00018732,
+              "alternative_latency_ms": 13245.048,
+              "explanation": "The router predicted 91% success for Mercury 3, which answered wrong. DeepSeek V4 Flash, which the router expected to cost more, answered right for $0.00019 in 13.2 s."
+            },
+            {
+              "kind": "under",
+              "sample_id": "mbpp_plus-622",
+              "benchmark": "mbpp_plus",
+              "task_group": "code",
+              "prompt_excerpt": "\"\"\" Write a function to find the median of two sorted lists of same size. assert get_median([1, 12, 15, 26, 38], [2, 13, 17, 30, 45], 5) == 16.0 \"\"\"",
+              "chosen_model_id": "gpt-6.1-sol",
+              "chosen_correct": false,
+              "chosen_cost_usd": 0.004224,
+              "chosen_latency_ms": 4716.469,
+              "predicted_success": 0.8801,
+              "alternative_model_id": "gemini-4-argon",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.004622,
+              "alternative_latency_ms": 6729.173,
+              "explanation": "The router predicted 88% success for GPT-6.1 Sol, which answered wrong. Gemini 4 Argon, which the router expected to cost more, answered right for $0.00462 in 6.7 s."
+            },
+            {
+              "kind": "over",
+              "sample_id": "mmlu_pro-test-11680",
+              "benchmark": "mmlu_pro",
+              "task_group": "qa",
+              "prompt_excerpt": "(i) An eight-pole, 60 Hz SCIM is deliberately loaded to a point where pull-out or stalling will occur. The rotor resistance per phase is 0.3 ohm, and the motor stalls at 650 rpm. Calculate: (a) The breakdown slip,s_b (b…",
+              "chosen_model_id": "gpt-6.1-sol",
+              "chosen_correct": true,
+              "chosen_cost_usd": 0.007714,
+              "chosen_latency_ms": 8467.124,
+              "predicted_success": 0.8143,
+              "alternative_model_id": "gpt-oss-120b",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.0,
+              "alternative_latency_ms": 99641.426,
+              "explanation": "GPT-6.1 Sol answered right for $0.00771 in 8.5 s, but gpt-oss-120b, which the router expected to cost less, was also right for $0 (free) in 99.6 s."
+            },
+            {
+              "kind": "over",
+              "sample_id": "mmlu_pro-test-01391",
+              "benchmark": "mmlu_pro",
+              "task_group": "qa",
+              "prompt_excerpt": "The owner of a large unimproved tract of land leased it to a tenant for five years at a monthly rental of $1,500. The rental agreement provided that the land was to be used as farmland. Shortly after the tenant took pos…",
+              "chosen_model_id": "gpt-6.1-sol",
+              "chosen_correct": true,
+              "chosen_cost_usd": 0.00331,
+              "chosen_latency_ms": 4216.499,
+              "predicted_success": 0.8136,
+              "alternative_model_id": "llama-3.3-70b",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.0,
+              "alternative_latency_ms": 26202.741,
+              "explanation": "GPT-6.1 Sol answered right for $0.00331 in 4.2 s, but Llama 3.3 70B Instruct, which the router expected to cost less, was also right for $0 (free) in 26.2 s."
+            },
+            {
+              "kind": "good",
+              "sample_id": "mmlu_pro-test-08945",
+              "benchmark": "mmlu_pro",
+              "task_group": "qa",
+              "prompt_excerpt": "Use the Runge-Kutta method with $h=0.1$ to find approximate values for the solution of the initial value problem $y' + 2y = x^3e^{-2x}$ with y(0)=1 at $x=0.2$.",
+              "chosen_model_id": "mercury-3",
+              "chosen_correct": true,
+              "chosen_cost_usd": 0.00062601,
+              "chosen_latency_ms": 2959.224,
+              "predicted_success": 0.8324,
+              "alternative_model_id": "gemini-4-argon",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.02591,
+              "alternative_latency_ms": 24331.03,
+              "explanation": "Mercury 3 answered right for $0.00063 in 3.0 s. Always using Gemini 4 Argon would have cost $0.02591 and taken 24.3 s, and it was also right."
+            },
+            {
+              "kind": "good",
+              "sample_id": "mmlu_pro-test-11760",
+              "benchmark": "mmlu_pro",
+              "task_group": "qa",
+              "prompt_excerpt": "A 200-kva, [(13,200) / (2,200)]-volt, 60-cps, single-phase transformer has the following test data: Volts Amp Watts Frequency Volts Open circuit 2,200 3.1 1550 60 cps 12,800 Short circuit 210 90.9 2500 60 cps Determine…",
+              "chosen_model_id": "mercury-3",
+              "chosen_correct": true,
+              "chosen_cost_usd": 0.00078706,
+              "chosen_latency_ms": 5751.973,
+              "predicted_success": 0.7975,
+              "alternative_model_id": "gemini-4-argon",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.017008,
+              "alternative_latency_ms": 15928.668,
+              "explanation": "Mercury 3 answered right for $0.00079 in 5.8 s. Always using Gemini 4 Argon would have cost $0.01701 and taken 15.9 s, and it was also right."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "evaluation_id": "final",
+      "title": "Fresh prompts",
+      "description": "The 300 fresh prompts, answered by the Checkpoint 3 pool on 2026-11-13 and 14 and by the flagships on 2026-11-14. Both routers apply the live catalog of 2026-11-13, so Mercury 3 (retired) is excluded.",
+      "prompts": 300,
+      "prompts_by_task": {
+        "math": 100,
+        "qa": 100,
+        "code": 100
+      },
+      "models": [
+        "deepseek-v4-flash",
+        "gemini-4-argon",
+        "gemini-4-carbon",
+        "gemma-4-26b",
+        "gpt-6.1-sol",
+        "gpt-oss-120b",
+        "kimi-k3.1-pro",
+        "llama-3.3-70b",
+        "mercury-3",
+        "nemotron-3-ultra-free",
+        "qwen-3.5-9b-local",
+        "qwen-3.8-27b"
+      ],
+      "catalog_applied": true,
+      "classifier": {
+        "log_loss": 0.3271503436246114,
+        "brier": 0.09491865383582922,
+        "roc_auc": 0.7173253365403551,
+        "accuracy_at_0_5": 0.886969696969697,
+        "rows": 3300
+      },
+      "reference_model_task_prior": {
+        "log_loss": 0.3307972488427374,
+        "brier": 0.09613898472609035,
+        "roc_auc": 0.7108958746843432,
+        "accuracy_at_0_5": 0.886969696969697,
+        "rows": 3300
+      },
+      "matrix": [
+        {
+          "model_id": "gemini-4-argon",
+          "display_name": "Gemini 4 Argon",
+          "access": "paid",
+          "prompts": 300,
+          "correct": 284,
+          "prompts_by_task": {
+            "math": 100,
+            "qa": 100,
+            "code": 100
+          },
+          "correct_by_task": {
+            "math": 98,
+            "qa": 92,
+            "code": 94
+          },
+          "failed_calls": 0,
+          "median_latency_ms": 8103.1,
+          "cost_usd": 1.164334
+        },
+        {
+          "model_id": "gemini-4-carbon",
+          "display_name": "Gemini 4 Carbon",
+          "access": "paid",
+          "prompts": 300,
+          "correct": 284,
+          "prompts_by_task": {
+            "math": 100,
+            "qa": 100,
+            "code": 100
+          },
+          "correct_by_task": {
+            "math": 97,
+            "qa": 91,
+            "code": 96
+          },
+          "failed_calls": 6,
+          "median_latency_ms": 11442.3,
+          "cost_usd": 2.158486
+        },
+        {
+          "model_id": "gpt-6.1-sol",
+          "display_name": "GPT-6.1 Sol",
+          "access": "paid",
+          "prompts": 300,
+          "correct": 284,
+          "prompts_by_task": {
+            "math": 100,
+            "qa": 100,
+            "code": 100
+          },
+          "correct_by_task": {
+            "math": 97,
+            "qa": 92,
+            "code": 95
+          },
+          "failed_calls": 0,
+          "median_latency_ms": 2567.8,
+          "cost_usd": 0.496544
+        },
+        {
+          "model_id": "kimi-k3.1-pro",
+          "display_name": "Kimi K3.1 Pro",
+          "access": "paid",
+          "prompts": 300,
+          "correct": 278,
+          "prompts_by_task": {
+            "math": 100,
+            "qa": 100,
+            "code": 100
+          },
+          "correct_by_task": {
+            "math": 97,
+            "qa": 85,
+            "code": 96
+          },
+          "failed_calls": 11,
+          "median_latency_ms": 12574.9,
+          "cost_usd": 2.32727
+        },
+        {
+          "model_id": "gemma-4-26b",
+          "display_name": "Gemma 4 26B A4B",
+          "access": "paid",
+          "prompts": 300,
+          "correct": 268,
+          "prompts_by_task": {
+            "math": 100,
+            "qa": 100,
+            "code": 100
+          },
+          "correct_by_task": {
+            "math": 96,
+            "qa": 83,
+            "code": 89
+          },
+          "failed_calls": 0,
+          "median_latency_ms": 2031.8,
+          "cost_usd": 0.035229
+        },
+        {
+          "model_id": "nemotron-3-ultra-free",
+          "display_name": "Nemotron 3 Ultra 550B (free)",
+          "access": "free",
+          "prompts": 300,
+          "correct": 266,
+          "prompts_by_task": {
+            "math": 100,
+            "qa": 100,
+            "code": 100
+          },
+          "correct_by_task": {
+            "math": 95,
+            "qa": 85,
+            "code": 86
+          },
+          "failed_calls": 15,
+          "median_latency_ms": 7402.2,
+          "cost_usd": 0.0
+        },
+        {
+          "model_id": "deepseek-v4-flash",
+          "display_name": "DeepSeek V4 Flash",
+          "access": "paid",
+          "prompts": 300,
+          "correct": 262,
+          "prompts_by_task": {
+            "math": 100,
+            "qa": 100,
+            "code": 100
+          },
+          "correct_by_task": {
+            "math": 95,
+            "qa": 79,
+            "code": 88
+          },
+          "failed_calls": 16,
+          "median_latency_ms": 2948.1,
+          "cost_usd": 0.071764
+        },
+        {
+          "model_id": "gpt-oss-120b",
+          "display_name": "gpt-oss-120b",
+          "access": "free",
+          "prompts": 300,
+          "correct": 259,
+          "prompts_by_task": {
+            "math": 100,
+            "qa": 100,
+            "code": 100
+          },
+          "correct_by_task": {
+            "math": 96,
+            "qa": 82,
+            "code": 81
+          },
+          "failed_calls": 0,
+          "median_latency_ms": 3842.8,
+          "cost_usd": 0.0
+        },
+        {
+          "model_id": "qwen-3.8-27b",
+          "display_name": "Qwen 3.8 27B",
+          "access": "free",
+          "prompts": 300,
+          "correct": 253,
+          "prompts_by_task": {
+            "math": 100,
+            "qa": 100,
+            "code": 100
+          },
+          "correct_by_task": {
+            "math": 96,
+            "qa": 73,
+            "code": 84
+          },
+          "failed_calls": 36,
+          "median_latency_ms": 6524.8,
+          "cost_usd": 0.0
+        },
+        {
+          "model_id": "llama-3.3-70b",
+          "display_name": "Llama 3.3 70B Instruct",
+          "access": "free",
+          "prompts": 300,
+          "correct": 247,
+          "prompts_by_task": {
+            "math": 100,
+            "qa": 100,
+            "code": 100
+          },
+          "correct_by_task": {
+            "math": 95,
+            "qa": 76,
+            "code": 76
+          },
+          "failed_calls": 0,
+          "median_latency_ms": 10535.6,
+          "cost_usd": 0.0
+        },
+        {
+          "model_id": "qwen-3.5-9b-local",
+          "display_name": "Qwen 3.5 9B (local)",
+          "access": "local",
+          "prompts": 300,
+          "correct": 242,
+          "prompts_by_task": {
+            "math": 100,
+            "qa": 100,
+            "code": 100
+          },
+          "correct_by_task": {
+            "math": 96,
+            "qa": 75,
+            "code": 71
+          },
+          "failed_calls": 0,
+          "median_latency_ms": 6906.5,
+          "cost_usd": 0.0
+        },
+        {
+          "model_id": "mercury-3",
+          "display_name": "Mercury 3",
+          "access": "paid",
+          "prompts": 300,
+          "correct": 0,
+          "prompts_by_task": {
+            "math": 100,
+            "qa": 100,
+            "code": 100
+          },
+          "correct_by_task": {
+            "math": 0,
+            "qa": 0,
+            "code": 0
+          },
+          "failed_calls": 300,
+          "median_latency_ms": null,
+          "cost_usd": 0.0
+        }
+      ],
+      "strategies": [
+        {
+          "strategy_id": "fixed_cheapest",
+          "prompts": 300,
+          "correct": 268,
+          "accuracy": 0.8933333333333333,
+          "total_cost_usd": 0.035229,
+          "cost_per_correct_usd": 0.00013145,
+          "median_latency_ms": 2031.8,
+          "p95_latency_ms": 6559.0,
+          "selected_models": {
+            "gemma-4-26b": 300
+          },
+          "by_task": {
+            "math": {
+              "prompts": 100,
+              "correct": 96,
+              "accuracy": 0.96,
+              "total_cost_usd": 0.006745,
+              "median_latency_ms": 1435.0
+            },
+            "qa": {
+              "prompts": 100,
+              "correct": 83,
+              "accuracy": 0.83,
+              "total_cost_usd": 0.017567,
+              "median_latency_ms": 3930.2
+            },
+            "code": {
+              "prompts": 100,
+              "correct": 89,
+              "accuracy": 0.89,
+              "total_cost_usd": 0.010917,
+              "median_latency_ms": 1810.2
+            }
+          }
+        },
+        {
+          "strategy_id": "fixed_strongest",
+          "prompts": 300,
+          "correct": 284,
+          "accuracy": 0.9466666666666667,
+          "total_cost_usd": 1.164334,
+          "cost_per_correct_usd": 0.00409977,
+          "median_latency_ms": 8103.1,
+          "p95_latency_ms": 16370.6,
+          "selected_models": {
+            "gemini-4-argon": 300
+          },
+          "by_task": {
+            "math": {
+              "prompts": 100,
+              "correct": 98,
+              "accuracy": 0.98,
+              "total_cost_usd": 0.20193,
+              "median_latency_ms": 6519.2
+            },
+            "qa": {
+              "prompts": 100,
+              "correct": 92,
+              "accuracy": 0.92,
+              "total_cost_usd": 0.664066,
+              "median_latency_ms": 11086.4
+            },
+            "code": {
+              "prompts": 100,
+              "correct": 94,
+              "accuracy": 0.94,
+              "total_cost_usd": 0.298338,
+              "median_latency_ms": 7692.7
+            }
+          }
+        },
+        {
+          "strategy_id": "rule_balanced",
+          "prompts": 300,
+          "correct": 276,
+          "accuracy": 0.92,
+          "total_cost_usd": 0.393058,
+          "cost_per_correct_usd": 0.00142412,
+          "median_latency_ms": 2772.2,
+          "p95_latency_ms": 13316.1,
+          "selected_models": {
+            "gemma-4-26b": 228,
+            "gemini-4-argon": 72
+          },
+          "by_task": {
+            "math": {
+              "prompts": 100,
+              "correct": 97,
+              "accuracy": 0.97,
+              "total_cost_usd": 0.034933,
+              "median_latency_ms": 1471.9
+            },
+            "qa": {
+              "prompts": 100,
+              "correct": 85,
+              "accuracy": 0.85,
+              "total_cost_usd": 0.155786,
+              "median_latency_ms": 4024.9
+            },
+            "code": {
+              "prompts": 100,
+              "correct": 94,
+              "accuracy": 0.94,
+              "total_cost_usd": 0.202339,
+              "median_latency_ms": 5826.8
+            }
+          }
+        },
+        {
+          "strategy_id": "rule_balanced_no_catalog",
+          "prompts": 300,
+          "correct": 134,
+          "accuracy": 0.44666666666666666,
+          "total_cost_usd": 0.376951,
+          "cost_per_correct_usd": 0.00281307,
+          "median_latency_ms": 453.0,
+          "p95_latency_ms": 13034.5,
+          "selected_models": {
+            "mercury-3": 151,
+            "gemma-4-26b": 77,
+            "gemini-4-argon": 72
+          },
+          "by_task": {
+            "math": {
+              "prompts": 100,
+              "correct": 36,
+              "accuracy": 0.36,
+              "total_cost_usd": 0.030544,
+              "median_latency_ms": 159.9
+            },
+            "qa": {
+              "prompts": 100,
+              "correct": 45,
+              "accuracy": 0.45,
+              "total_cost_usd": 0.147799,
+              "median_latency_ms": 2786.8
+            },
+            "code": {
+              "prompts": 100,
+              "correct": 53,
+              "accuracy": 0.53,
+              "total_cost_usd": 0.198609,
+              "median_latency_ms": 5826.8
+            }
+          }
+        },
+        {
+          "strategy_id": "learned:cost",
+          "prompts": 300,
+          "correct": 265,
+          "accuracy": 0.8833333333333333,
+          "total_cost_usd": 0.017567,
+          "cost_per_correct_usd": 0.00006629,
+          "median_latency_ms": 4098.0,
+          "p95_latency_ms": 22817.2,
+          "selected_models": {
+            "nemotron-3-ultra-free": 100,
+            "gemma-4-26b": 100,
+            "gpt-oss-120b": 88,
+            "qwen-3.5-9b-local": 12
+          },
+          "by_task": {
+            "math": {
+              "prompts": 100,
+              "correct": 96,
+              "accuracy": 0.96,
+              "total_cost_usd": 0.0,
+              "median_latency_ms": 2294.6
+            },
+            "qa": {
+              "prompts": 100,
+              "correct": 83,
+              "accuracy": 0.83,
+              "total_cost_usd": 0.017567,
+              "median_latency_ms": 3930.2
+            },
+            "code": {
+              "prompts": 100,
+              "correct": 86,
+              "accuracy": 0.86,
+              "total_cost_usd": 0.0,
+              "median_latency_ms": 10209.5
+            }
+          }
+        },
+        {
+          "strategy_id": "learned_no_catalog:cost",
+          "prompts": 300,
+          "correct": 265,
+          "accuracy": 0.8833333333333333,
+          "total_cost_usd": 0.017567,
+          "cost_per_correct_usd": 0.00006629,
+          "median_latency_ms": 4098.0,
+          "p95_latency_ms": 22817.2,
+          "selected_models": {
+            "nemotron-3-ultra-free": 100,
+            "gemma-4-26b": 100,
+            "gpt-oss-120b": 88,
+            "qwen-3.5-9b-local": 12
+          },
+          "by_task": {
+            "math": {
+              "prompts": 100,
+              "correct": 96,
+              "accuracy": 0.96,
+              "total_cost_usd": 0.0,
+              "median_latency_ms": 2294.6
+            },
+            "qa": {
+              "prompts": 100,
+              "correct": 83,
+              "accuracy": 0.83,
+              "total_cost_usd": 0.017567,
+              "median_latency_ms": 3930.2
+            },
+            "code": {
+              "prompts": 100,
+              "correct": 86,
+              "accuracy": 0.86,
+              "total_cost_usd": 0.0,
+              "median_latency_ms": 10209.5
+            }
+          }
+        },
+        {
+          "strategy_id": "model_task_prior:cost",
+          "prompts": 300,
+          "correct": 265,
+          "accuracy": 0.8833333333333333,
+          "total_cost_usd": 0.017567,
+          "cost_per_correct_usd": 0.00006629,
+          "median_latency_ms": 3930.2,
+          "p95_latency_ms": 22817.2,
+          "selected_models": {
+            "gpt-oss-120b": 100,
+            "nemotron-3-ultra-free": 100,
+            "gemma-4-26b": 100
+          },
+          "by_task": {
+            "math": {
+              "prompts": 100,
+              "correct": 96,
+              "accuracy": 0.96,
+              "total_cost_usd": 0.0,
+              "median_latency_ms": 2145.3
+            },
+            "qa": {
+              "prompts": 100,
+              "correct": 83,
+              "accuracy": 0.83,
+              "total_cost_usd": 0.017567,
+              "median_latency_ms": 3930.2
+            },
+            "code": {
+              "prompts": 100,
+              "correct": 86,
+              "accuracy": 0.86,
+              "total_cost_usd": 0.0,
+              "median_latency_ms": 10209.5
+            }
+          }
+        },
+        {
+          "strategy_id": "learned:quality",
+          "prompts": 300,
+          "correct": 283,
+          "accuracy": 0.9433333333333334,
+          "total_cost_usd": 1.02779,
+          "cost_per_correct_usd": 0.00363177,
+          "median_latency_ms": 7130.9,
+          "p95_latency_ms": 15816.9,
+          "selected_models": {
+            "gemini-4-argon": 193,
+            "gpt-6.1-sol": 103,
+            "gemma-4-26b": 4
+          },
+          "by_task": {
+            "math": {
+              "prompts": 100,
+              "correct": 97,
+              "accuracy": 0.97,
+              "total_cost_usd": 0.09328,
+              "median_latency_ms": 2371.1
+            },
+            "qa": {
+              "prompts": 100,
+              "correct": 92,
+              "accuracy": 0.92,
+              "total_cost_usd": 0.636172,
+              "median_latency_ms": 10868.6
+            },
+            "code": {
+              "prompts": 100,
+              "correct": 94,
+              "accuracy": 0.94,
+              "total_cost_usd": 0.298338,
+              "median_latency_ms": 7692.7
+            }
+          }
+        },
+        {
+          "strategy_id": "learned_no_catalog:quality",
+          "prompts": 300,
+          "correct": 283,
+          "accuracy": 0.9433333333333334,
+          "total_cost_usd": 1.028621,
+          "cost_per_correct_usd": 0.0036347,
+          "median_latency_ms": 7130.9,
+          "p95_latency_ms": 15816.9,
+          "selected_models": {
+            "gemini-4-argon": 193,
+            "gpt-6.1-sol": 104,
+            "gemma-4-26b": 3
+          },
+          "by_task": {
+            "math": {
+              "prompts": 100,
+              "correct": 97,
+              "accuracy": 0.97,
+              "total_cost_usd": 0.094111,
+              "median_latency_ms": 2371.1
+            },
+            "qa": {
+              "prompts": 100,
+              "correct": 92,
+              "accuracy": 0.92,
+              "total_cost_usd": 0.636172,
+              "median_latency_ms": 10868.6
+            },
+            "code": {
+              "prompts": 100,
+              "correct": 94,
+              "accuracy": 0.94,
+              "total_cost_usd": 0.298338,
+              "median_latency_ms": 7692.7
+            }
+          }
+        },
+        {
+          "strategy_id": "model_task_prior:quality",
+          "prompts": 300,
+          "correct": 283,
+          "accuracy": 0.9433333333333334,
+          "total_cost_usd": 1.059268,
+          "cost_per_correct_usd": 0.003743,
+          "median_latency_ms": 7280.1,
+          "p95_latency_ms": 16156.8,
+          "selected_models": {
+            "gemini-4-argon": 200,
+            "gpt-6.1-sol": 100
+          },
+          "by_task": {
+            "math": {
+              "prompts": 100,
+              "correct": 97,
+              "accuracy": 0.97,
+              "total_cost_usd": 0.096864,
+              "median_latency_ms": 2391.1
+            },
+            "qa": {
+              "prompts": 100,
+              "correct": 92,
+              "accuracy": 0.92,
+              "total_cost_usd": 0.664066,
+              "median_latency_ms": 11086.4
+            },
+            "code": {
+              "prompts": 100,
+              "correct": 94,
+              "accuracy": 0.94,
+              "total_cost_usd": 0.298338,
+              "median_latency_ms": 7692.7
+            }
+          }
+        },
+        {
+          "strategy_id": "learned:latency",
+          "prompts": 300,
+          "correct": 284,
+          "accuracy": 0.9466666666666667,
+          "total_cost_usd": 0.499426,
+          "cost_per_correct_usd": 0.00175854,
+          "median_latency_ms": 2567.8,
+          "p95_latency_ms": 6526.2,
+          "selected_models": {
+            "gpt-6.1-sol": 299,
+            "gemini-4-argon": 1
+          },
+          "by_task": {
+            "math": {
+              "prompts": 100,
+              "correct": 97,
+              "accuracy": 0.97,
+              "total_cost_usd": 0.096864,
+              "median_latency_ms": 2391.1
+            },
+            "qa": {
+              "prompts": 100,
+              "correct": 92,
+              "accuracy": 0.92,
+              "total_cost_usd": 0.221236,
+              "median_latency_ms": 3063.8
+            },
+            "code": {
+              "prompts": 100,
+              "correct": 95,
+              "accuracy": 0.95,
+              "total_cost_usd": 0.181326,
+              "median_latency_ms": 2414.6
+            }
+          }
+        },
+        {
+          "strategy_id": "learned_no_catalog:latency",
+          "prompts": 300,
+          "correct": 115,
+          "accuracy": 0.38333333333333336,
+          "total_cost_usd": 0.222722,
+          "cost_per_correct_usd": 0.00193671,
+          "median_latency_ms": 177.0,
+          "p95_latency_ms": 5263.1,
+          "selected_models": {
+            "mercury-3": 178,
+            "gpt-6.1-sol": 121,
+            "gemini-4-argon": 1
+          },
+          "by_task": {
+            "math": {
+              "prompts": 100,
+              "correct": 0,
+              "accuracy": 0.0,
+              "total_cost_usd": 0.0,
+              "median_latency_ms": 129.0
+            },
+            "qa": {
+              "prompts": 100,
+              "correct": 20,
+              "accuracy": 0.2,
+              "total_cost_usd": 0.041396,
+              "median_latency_ms": 146.6
+            },
+            "code": {
+              "prompts": 100,
+              "correct": 95,
+              "accuracy": 0.95,
+              "total_cost_usd": 0.181326,
+              "median_latency_ms": 2414.6
+            }
+          }
+        },
+        {
+          "strategy_id": "model_task_prior:latency",
+          "prompts": 300,
+          "correct": 284,
+          "accuracy": 0.9466666666666667,
+          "total_cost_usd": 0.496544,
+          "cost_per_correct_usd": 0.00174839,
+          "median_latency_ms": 2567.8,
+          "p95_latency_ms": 6525.9,
+          "selected_models": {
+            "gpt-6.1-sol": 300
+          },
+          "by_task": {
+            "math": {
+              "prompts": 100,
+              "correct": 97,
+              "accuracy": 0.97,
+              "total_cost_usd": 0.096864,
+              "median_latency_ms": 2391.1
+            },
+            "qa": {
+              "prompts": 100,
+              "correct": 92,
+              "accuracy": 0.92,
+              "total_cost_usd": 0.221236,
+              "median_latency_ms": 3063.8
+            },
+            "code": {
+              "prompts": 100,
+              "correct": 95,
+              "accuracy": 0.95,
+              "total_cost_usd": 0.178444,
+              "median_latency_ms": 2414.6
+            }
+          }
+        },
+        {
+          "strategy_id": "learned:balanced",
+          "prompts": 300,
+          "correct": 283,
+          "accuracy": 0.9433333333333334,
+          "total_cost_usd": 0.395503,
+          "cost_per_correct_usd": 0.00139754,
+          "median_latency_ms": 2169.6,
+          "p95_latency_ms": 6525.9,
+          "selected_models": {
+            "gpt-6.1-sol": 193,
+            "gemma-4-26b": 107
+          },
+          "by_task": {
+            "math": {
+              "prompts": 100,
+              "correct": 96,
+              "accuracy": 0.96,
+              "total_cost_usd": 0.006745,
+              "median_latency_ms": 1435.0
+            },
+            "qa": {
+              "prompts": 100,
+              "correct": 92,
+              "accuracy": 0.92,
+              "total_cost_usd": 0.221236,
+              "median_latency_ms": 3063.8
+            },
+            "code": {
+              "prompts": 100,
+              "correct": 95,
+              "accuracy": 0.95,
+              "total_cost_usd": 0.167522,
+              "median_latency_ms": 2362.5
+            }
+          }
+        },
+        {
+          "strategy_id": "learned_no_catalog:balanced",
+          "prompts": 300,
+          "correct": 105,
+          "accuracy": 0.35,
+          "total_cost_usd": 0.197348,
+          "cost_per_correct_usd": 0.0018795,
+          "median_latency_ms": 163.6,
+          "p95_latency_ms": 5190.8,
+          "selected_models": {
+            "mercury-3": 188,
+            "gpt-6.1-sol": 107,
+            "gemma-4-26b": 5
+          },
+          "by_task": {
+            "math": {
+              "prompts": 100,
+              "correct": 0,
+              "accuracy": 0.0,
+              "total_cost_usd": 0.0,
+              "median_latency_ms": 129.0
+            },
+            "qa": {
+              "prompts": 100,
+              "correct": 10,
+              "accuracy": 0.1,
+              "total_cost_usd": 0.026352,
+              "median_latency_ms": 142.0
+            },
+            "code": {
+              "prompts": 100,
+              "correct": 95,
+              "accuracy": 0.95,
+              "total_cost_usd": 0.170996,
+              "median_latency_ms": 2406.4
+            }
+          }
+        },
+        {
+          "strategy_id": "model_task_prior:balanced",
+          "prompts": 300,
+          "correct": 283,
+          "accuracy": 0.9433333333333334,
+          "total_cost_usd": 0.406425,
+          "cost_per_correct_usd": 0.00143613,
+          "median_latency_ms": 2199.8,
+          "p95_latency_ms": 6525.9,
+          "selected_models": {
+            "gpt-6.1-sol": 200,
+            "gemma-4-26b": 100
+          },
+          "by_task": {
+            "math": {
+              "prompts": 100,
+              "correct": 96,
+              "accuracy": 0.96,
+              "total_cost_usd": 0.006745,
+              "median_latency_ms": 1435.0
+            },
+            "qa": {
+              "prompts": 100,
+              "correct": 92,
+              "accuracy": 0.92,
+              "total_cost_usd": 0.221236,
+              "median_latency_ms": 3063.8
+            },
+            "code": {
+              "prompts": 100,
+              "correct": 95,
+              "accuracy": 0.95,
+              "total_cost_usd": 0.178444,
+              "median_latency_ms": 2414.6
+            }
+          }
+        },
+        {
+          "strategy_id": "previous_router:cost",
+          "prompts": 300,
+          "correct": 265,
+          "accuracy": 0.8833333333333333,
+          "total_cost_usd": 0.003359,
+          "cost_per_correct_usd": 0.00001267,
+          "median_latency_ms": 5744.7,
+          "p95_latency_ms": 47453.6,
+          "selected_models": {
+            "nemotron-3-ultra-free": 178,
+            "gpt-oss-120b": 100,
+            "gemma-4-26b": 22
+          },
+          "by_task": {
+            "math": {
+              "prompts": 100,
+              "correct": 96,
+              "accuracy": 0.96,
+              "total_cost_usd": 0.0,
+              "median_latency_ms": 2145.3
+            },
+            "qa": {
+              "prompts": 100,
+              "correct": 83,
+              "accuracy": 0.83,
+              "total_cost_usd": 0.003359,
+              "median_latency_ms": 8640.0
+            },
+            "code": {
+              "prompts": 100,
+              "correct": 86,
+              "accuracy": 0.86,
+              "total_cost_usd": 0.0,
+              "median_latency_ms": 10209.5
+            }
+          }
+        },
+        {
+          "strategy_id": "previous_router:quality",
+          "prompts": 300,
+          "correct": 282,
+          "accuracy": 0.94,
+          "total_cost_usd": 0.963925,
+          "cost_per_correct_usd": 0.00341817,
+          "median_latency_ms": 7221.0,
+          "p95_latency_ms": 16156.8,
+          "selected_models": {
+            "gemini-4-argon": 197,
+            "gemma-4-26b": 100,
+            "nemotron-3-ultra-free": 3
+          },
+          "by_task": {
+            "math": {
+              "prompts": 100,
+              "correct": 96,
+              "accuracy": 0.96,
+              "total_cost_usd": 0.006745,
+              "median_latency_ms": 1435.0
+            },
+            "qa": {
+              "prompts": 100,
+              "correct": 92,
+              "accuracy": 0.92,
+              "total_cost_usd": 0.664066,
+              "median_latency_ms": 11086.4
+            },
+            "code": {
+              "prompts": 100,
+              "correct": 94,
+              "accuracy": 0.94,
+              "total_cost_usd": 0.293114,
+              "median_latency_ms": 7625.8
+            }
+          }
+        },
+        {
+          "strategy_id": "previous_router:latency",
+          "prompts": 300,
+          "correct": 276,
+          "accuracy": 0.92,
+          "total_cost_usd": 0.433234,
+          "cost_per_correct_usd": 0.00156969,
+          "median_latency_ms": 3841.4,
+          "p95_latency_ms": 13152.4,
+          "selected_models": {
+            "gemma-4-26b": 187,
+            "gemini-4-argon": 113
+          },
+          "by_task": {
+            "math": {
+              "prompts": 100,
+              "correct": 96,
+              "accuracy": 0.96,
+              "total_cost_usd": 0.006745,
+              "median_latency_ms": 1435.0
+            },
+            "qa": {
+              "prompts": 100,
+              "correct": 86,
+              "accuracy": 0.86,
+              "total_cost_usd": 0.149,
+              "median_latency_ms": 4346.2
+            },
+            "code": {
+              "prompts": 100,
+              "correct": 94,
+              "accuracy": 0.94,
+              "total_cost_usd": 0.277489,
+              "median_latency_ms": 7447.1
+            }
+          }
+        },
+        {
+          "strategy_id": "previous_router:balanced",
+          "prompts": 300,
+          "correct": 276,
+          "accuracy": 0.92,
+          "total_cost_usd": 0.433234,
+          "cost_per_correct_usd": 0.00156969,
+          "median_latency_ms": 3841.4,
+          "p95_latency_ms": 13152.4,
+          "selected_models": {
+            "gemma-4-26b": 187,
+            "gemini-4-argon": 113
+          },
+          "by_task": {
+            "math": {
+              "prompts": 100,
+              "correct": 96,
+              "accuracy": 0.96,
+              "total_cost_usd": 0.006745,
+              "median_latency_ms": 1435.0
+            },
+            "qa": {
+              "prompts": 100,
+              "correct": 86,
+              "accuracy": 0.86,
+              "total_cost_usd": 0.149,
+              "median_latency_ms": 4346.2
+            },
+            "code": {
+              "prompts": 100,
+              "correct": 94,
+              "accuracy": 0.94,
+              "total_cost_usd": 0.277489,
+              "median_latency_ms": 7447.1
+            }
+          }
+        },
+        {
+          "strategy_id": "fixed_top_flagship",
+          "prompts": 300,
+          "correct": 284,
+          "accuracy": 0.9466666666666667,
+          "total_cost_usd": 2.158486,
+          "cost_per_correct_usd": 0.0076003,
+          "median_latency_ms": 11515.4,
+          "p95_latency_ms": 41098.3,
+          "selected_models": {
+            "gemini-4-carbon": 300
+          },
+          "by_task": {
+            "math": {
+              "prompts": 100,
+              "correct": 97,
+              "accuracy": 0.97,
+              "total_cost_usd": 0.28575,
+              "median_latency_ms": 7715.4
+            },
+            "qa": {
+              "prompts": 100,
+              "correct": 91,
+              "accuracy": 0.91,
+              "total_cost_usd": 1.070638,
+              "median_latency_ms": 14399.6
+            },
+            "code": {
+              "prompts": 100,
+              "correct": 96,
+              "accuracy": 0.96,
+              "total_cost_usd": 0.802098,
+              "median_latency_ms": 11964.1
+            }
+          }
+        }
+      ],
+      "oracle": [
+        {
+          "strategy_id": "oracle:cost",
+          "prompts": 300,
+          "correct": 289,
+          "accuracy": 0.9633333333333334,
+          "total_cost_usd": 0.058544,
+          "cost_per_correct_usd": 0.00020257,
+          "median_latency_ms": 2723.9,
+          "p95_latency_ms": 11120.4,
+          "selected_models": {
+            "gpt-oss-120b": 146,
+            "qwen-3.8-27b": 51,
+            "qwen-3.5-9b-local": 35,
+            "gemma-4-26b": 25,
+            "llama-3.3-70b": 19,
+            "nemotron-3-ultra-free": 17,
+            "gpt-6.1-sol": 5,
+            "gemini-4-argon": 2
+          },
+          "by_task": {
+            "math": {
+              "prompts": 100,
+              "correct": 98,
+              "accuracy": 0.98,
+              "total_cost_usd": 0.014274,
+              "median_latency_ms": 2006.1
+            },
+            "qa": {
+              "prompts": 100,
+              "correct": 95,
+              "accuracy": 0.95,
+              "total_cost_usd": 0.036681,
+              "median_latency_ms": 3382.7
+            },
+            "code": {
+              "prompts": 100,
+              "correct": 96,
+              "accuracy": 0.96,
+              "total_cost_usd": 0.007589,
+              "median_latency_ms": 4045.2
+            }
+          }
+        },
+        {
+          "strategy_id": "oracle:quality",
+          "prompts": 300,
+          "correct": 289,
+          "accuracy": 0.9633333333333334,
+          "total_cost_usd": 0.08801,
+          "cost_per_correct_usd": 0.00030453,
+          "median_latency_ms": 1796.5,
+          "p95_latency_ms": 6526.2,
+          "selected_models": {
+            "gemma-4-26b": 157,
+            "gpt-oss-120b": 62,
+            "deepseek-v4-flash": 56,
+            "gpt-6.1-sol": 9,
+            "qwen-3.8-27b": 8,
+            "qwen-3.5-9b-local": 4,
+            "gemini-4-argon": 2,
+            "nemotron-3-ultra-free": 1,
+            "llama-3.3-70b": 1
+          },
+          "by_task": {
+            "math": {
+              "prompts": 100,
+              "correct": 98,
+              "accuracy": 0.98,
+              "total_cost_usd": 0.018904,
+              "median_latency_ms": 1353.0
+            },
+            "qa": {
+              "prompts": 100,
+              "correct": 95,
+              "accuracy": 0.95,
+              "total_cost_usd": 0.049038,
+              "median_latency_ms": 2723.9
+            },
+            "code": {
+              "prompts": 100,
+              "correct": 96,
+              "accuracy": 0.96,
+              "total_cost_usd": 0.020068,
+              "median_latency_ms": 1810.2
+            }
+          }
+        },
+        {
+          "strategy_id": "oracle:latency",
+          "prompts": 300,
+          "correct": 289,
+          "accuracy": 0.9633333333333334,
+          "total_cost_usd": 0.156781,
+          "cost_per_correct_usd": 0.0005425,
+          "median_latency_ms": 1676.4,
+          "p95_latency_ms": 5162.5,
+          "selected_models": {
+            "gemma-4-26b": 148,
+            "deepseek-v4-flash": 74,
+            "gpt-6.1-sol": 44,
+            "gpt-oss-120b": 27,
+            "gemini-4-argon": 3,
+            "qwen-3.8-27b": 2,
+            "qwen-3.5-9b-local": 1,
+            "llama-3.3-70b": 1
+          },
+          "by_task": {
+            "math": {
+              "prompts": 100,
+              "correct": 98,
+              "accuracy": 0.98,
+              "total_cost_usd": 0.021461,
+              "median_latency_ms": 1240.3
+            },
+            "qa": {
+              "prompts": 100,
+              "correct": 95,
+              "accuracy": 0.95,
+              "total_cost_usd": 0.098455,
+              "median_latency_ms": 2495.6
+            },
+            "code": {
+              "prompts": 100,
+              "correct": 96,
+              "accuracy": 0.96,
+              "total_cost_usd": 0.036865,
+              "median_latency_ms": 1748.4
+            }
+          }
+        },
+        {
+          "strategy_id": "oracle:balanced",
+          "prompts": 300,
+          "correct": 289,
+          "accuracy": 0.9633333333333334,
+          "total_cost_usd": 0.089764,
+          "cost_per_correct_usd": 0.0003106,
+          "median_latency_ms": 1719.1,
+          "p95_latency_ms": 6526.2,
+          "selected_models": {
+            "gemma-4-26b": 164,
+            "deepseek-v4-flash": 69,
+            "gpt-oss-120b": 46,
+            "gpt-6.1-sol": 9,
+            "qwen-3.8-27b": 5,
+            "qwen-3.5-9b-local": 3,
+            "gemini-4-argon": 2,
+            "nemotron-3-ultra-free": 1,
+            "llama-3.3-70b": 1
+          },
+          "by_task": {
+            "math": {
+              "prompts": 100,
+              "correct": 98,
+              "accuracy": 0.98,
+              "total_cost_usd": 0.019866,
+              "median_latency_ms": 1278.2
+            },
+            "qa": {
+              "prompts": 100,
+              "correct": 95,
+              "accuracy": 0.95,
+              "total_cost_usd": 0.049829,
+              "median_latency_ms": 2712.9
+            },
+            "code": {
+              "prompts": 100,
+              "correct": 96,
+              "accuracy": 0.96,
+              "total_cost_usd": 0.020068,
+              "median_latency_ms": 1810.2
+            }
+          }
+        }
+      ],
+      "uncertainty": [
+        {
+          "strategy_id": "fixed_cheapest",
+          "accuracy": {
+            "low": 0.8566666667,
+            "high": 0.9266666667
+          },
+          "total_cost_usd": {
+            "low": 0.0323533969,
+            "high": 0.0385992013
+          },
+          "median_latency_ms": {
+            "low": 1799.519,
+            "high": 2218.715
+          }
+        },
+        {
+          "strategy_id": "fixed_strongest",
+          "accuracy": {
+            "low": 0.92,
+            "high": 0.97
+          },
+          "total_cost_usd": {
+            "low": 1.0430208,
+            "high": 1.30531845
+          },
+          "median_latency_ms": {
+            "low": 7726.597,
+            "high": 8458.6375
+          }
+        },
+        {
+          "strategy_id": "rule_balanced",
+          "accuracy": {
+            "low": 0.8866666667,
+            "high": 0.95
+          },
+          "total_cost_usd": {
+            "low": 0.2826768555,
+            "high": 0.5266898879
+          },
+          "median_latency_ms": {
+            "low": 2257.239,
+            "high": 3217.1858875
+          }
+        },
+        {
+          "strategy_id": "rule_balanced_no_catalog",
+          "accuracy": {
+            "low": 0.39,
+            "high": 0.5033333333
+          },
+          "total_cost_usd": {
+            "low": 0.2656777498,
+            "high": 0.5115661597
+          },
+          "median_latency_ms": {
+            "low": 177.3235,
+            "high": 1331.779
+          }
+        },
+        {
+          "strategy_id": "learned:cost",
+          "accuracy": {
+            "low": 0.8466666667,
+            "high": 0.91675
+          },
+          "total_cost_usd": {
+            "low": 0.0141032248,
+            "high": 0.0215750158
+          },
+          "median_latency_ms": {
+            "low": 3606.961,
+            "high": 4521.6265
+          }
+        },
+        {
+          "strategy_id": "learned_no_catalog:cost",
+          "accuracy": {
+            "low": 0.8466666667,
+            "high": 0.91675
+          },
+          "total_cost_usd": {
+            "low": 0.0141032248,
+            "high": 0.0215750158
+          },
+          "median_latency_ms": {
+            "low": 3606.961,
+            "high": 4521.6265
+          }
+        },
+        {
+          "strategy_id": "model_task_prior:cost",
+          "accuracy": {
+            "low": 0.8466666667,
+            "high": 0.91675
+          },
+          "total_cost_usd": {
+            "low": 0.0141032248,
+            "high": 0.0215750158
+          },
+          "median_latency_ms": {
+            "low": 3516.2305,
+            "high": 4462.5215
+          }
+        },
+        {
+          "strategy_id": "learned:quality",
+          "accuracy": {
+            "low": 0.9166666667,
+            "high": 0.9666666667
+          },
+          "total_cost_usd": {
+            "low": 0.9040179805,
+            "high": 1.1709406289
+          },
+          "median_latency_ms": {
+            "low": 6369.702,
+            "high": 7718.521
+          }
+        },
+        {
+          "strategy_id": "learned_no_catalog:quality",
+          "accuracy": {
+            "low": 0.9166666667,
+            "high": 0.9666666667
+          },
+          "total_cost_usd": {
+            "low": 0.9051521086,
+            "high": 1.1715805612
+          },
+          "median_latency_ms": {
+            "low": 6369.702,
+            "high": 7718.521
+          }
+        },
+        {
+          "strategy_id": "model_task_prior:quality",
+          "accuracy": {
+            "low": 0.9166666667,
+            "high": 0.9666666667
+          },
+          "total_cost_usd": {
+            "low": 0.93509995,
+            "high": 1.2031612
+          },
+          "median_latency_ms": {
+            "low": 6850.6615,
+            "high": 7895.894
+          }
+        },
+        {
+          "strategy_id": "learned:latency",
+          "accuracy": {
+            "low": 0.92,
+            "high": 0.97
+          },
+          "total_cost_usd": {
+            "low": 0.44484925,
+            "high": 0.5666462
+          },
+          "median_latency_ms": {
+            "low": 2482.9375,
+            "high": 2736.3265
+          }
+        },
+        {
+          "strategy_id": "learned_no_catalog:latency",
+          "accuracy": {
+            "low": 0.33,
+            "high": 0.44
+          },
+          "total_cost_usd": {
+            "low": 0.18399625,
+            "high": 0.26402695
+          },
+          "median_latency_ms": {
+            "low": 155.7755,
+            "high": 231.907
+          }
+        },
+        {
+          "strategy_id": "model_task_prior:latency",
+          "accuracy": {
+            "low": 0.92,
+            "high": 0.97
+          },
+          "total_cost_usd": {
+            "low": 0.4422336,
+            "high": 0.56343505
+          },
+          "median_latency_ms": {
+            "low": 2482.9375,
+            "high": 2736.3265
+          }
+        },
+        {
+          "strategy_id": "learned:balanced",
+          "accuracy": {
+            "low": 0.9166666667,
+            "high": 0.9666666667
+          },
+          "total_cost_usd": {
+            "low": 0.3362351097,
+            "high": 0.4671148801
+          },
+          "median_latency_ms": {
+            "low": 2020.338,
+            "high": 2348.936125
+          }
+        },
+        {
+          "strategy_id": "learned_no_catalog:balanced",
+          "accuracy": {
+            "low": 0.2966666667,
+            "high": 0.4033333333
+          },
+          "total_cost_usd": {
+            "low": 0.1602773461,
+            "high": 0.2370064754
+          },
+          "median_latency_ms": {
+            "low": 153.1,
+            "high": 181.6925
+          }
+        },
+        {
+          "strategy_id": "model_task_prior:balanced",
+          "accuracy": {
+            "low": 0.9166666667,
+            "high": 0.9666666667
+          },
+          "total_cost_usd": {
+            "low": 0.346186352,
+            "high": 0.4782554729
+          },
+          "median_latency_ms": {
+            "low": 2061.839,
+            "high": 2385.881025
+          }
+        },
+        {
+          "strategy_id": "previous_router:cost",
+          "accuracy": {
+            "low": 0.8466666667,
+            "high": 0.92
+          },
+          "total_cost_usd": {
+            "low": 0.0020317086,
+            "high": 0.0047882169
+          },
+          "median_latency_ms": {
+            "low": 4905.656,
+            "high": 6596.1565
+          }
+        },
+        {
+          "strategy_id": "previous_router:quality",
+          "accuracy": {
+            "low": 0.9133333333,
+            "high": 0.9666666667
+          },
+          "total_cost_usd": {
+            "low": 0.8305401673,
+            "high": 1.1129169512
+          },
+          "median_latency_ms": {
+            "low": 6623.85,
+            "high": 7813.177
+          }
+        },
+        {
+          "strategy_id": "previous_router:latency",
+          "accuracy": {
+            "low": 0.8866666667,
+            "high": 0.95
+          },
+          "total_cost_usd": {
+            "low": 0.3622880398,
+            "high": 0.507231191
+          },
+          "median_latency_ms": {
+            "low": 3190.079,
+            "high": 4526.672
+          }
+        },
+        {
+          "strategy_id": "previous_router:balanced",
+          "accuracy": {
+            "low": 0.8866666667,
+            "high": 0.95
+          },
+          "total_cost_usd": {
+            "low": 0.3622880398,
+            "high": 0.507231191
+          },
+          "median_latency_ms": {
+            "low": 3190.079,
+            "high": 4526.672
+          }
+        },
+        {
+          "strategy_id": "fixed_top_flagship",
+          "accuracy": {
+            "low": 0.92,
+            "high": 0.97
+          },
+          "total_cost_usd": {
+            "low": 1.9294236,
+            "high": 2.4017352
+          },
+          "median_latency_ms": {
+            "low": 10719.89,
+            "high": 11975.23
+          }
+        },
+        {
+          "strategy_id": "oracle:cost",
+          "accuracy": {
+            "low": 0.94,
+            "high": 0.9833333333
+          },
+          "total_cost_usd": {
+            "low": 0.0114212156,
+            "high": 0.1244050894
+          },
+          "median_latency_ms": {
+            "low": 2517.788,
+            "high": 3114.945
+          }
+        },
+        {
+          "strategy_id": "oracle:quality",
+          "accuracy": {
+            "low": 0.94,
+            "high": 0.9833333333
+          },
+          "total_cost_usd": {
+            "low": 0.0402585433,
+            "high": 0.1543171458
+          },
+          "median_latency_ms": {
+            "low": 1638.284,
+            "high": 1958.648
+          }
+        },
+        {
+          "strategy_id": "oracle:latency",
+          "accuracy": {
+            "low": 0.94,
+            "high": 0.9833333333
+          },
+          "total_cost_usd": {
+            "low": 0.101299165,
+            "high": 0.2274595105
+          },
+          "median_latency_ms": {
+            "low": 1558.2765,
+            "high": 1811.486
+          }
+        },
+        {
+          "strategy_id": "oracle:balanced",
+          "accuracy": {
+            "low": 0.94,
+            "high": 0.9833333333
+          },
+          "total_cost_usd": {
+            "low": 0.0420702482,
+            "high": 0.1561007049
+          },
+          "median_latency_ms": {
+            "low": 1585.896,
+            "high": 1852.505
+          }
+        }
+      ],
+      "comparisons": [
+        {
+          "strategy_id": "learned:quality",
+          "baseline_id": "previous_router:quality",
+          "question": "Does the best-quality setting get more right with the flagships in the pool?",
+          "prompts": 300,
+          "correct": 283,
+          "baseline_correct": 282,
+          "only_strategy_correct": 1,
+          "only_baseline_correct": 0,
+          "accuracy_difference": 0.0033333333333333335,
+          "accuracy_difference_ci": {
+            "low": 0.0,
+            "high": 0.01
+          },
+          "mcnemar_p": 1.0,
+          "holm_p": 1.0,
+          "cost_difference_usd": 0.06386514,
+          "cost_difference_ci": {
+            "low": 0.02886905,
+            "high": 0.0919361547
+          },
+          "cost_ratio": 1.066255,
+          "cost_ratio_ci": {
+            "low": 1.0281805208,
+            "high": 1.1037747421
+          },
+          "median_latency_difference_ms": -90.1,
+          "median_latency_difference_ci": {
+            "low": -529.8877875,
+            "high": 0.0
+          }
+        },
+        {
+          "strategy_id": "learned:quality",
+          "baseline_id": "fixed_top_flagship",
+          "question": "Is the best-quality setting as accurate as always using the strongest flagship, for less?",
+          "prompts": 300,
+          "correct": 283,
+          "baseline_correct": 284,
+          "only_strategy_correct": 1,
+          "only_baseline_correct": 2,
+          "accuracy_difference": -0.0033333333333333335,
+          "accuracy_difference_ci": {
+            "low": -0.0166666667,
+            "high": 0.0066666667
+          },
+          "mcnemar_p": 1.0,
+          "holm_p": 1.0,
+          "cost_difference_usd": -1.13069563,
+          "cost_difference_ci": {
+            "low": -1.3061661163,
+            "high": -0.9693554007
+          },
+          "cost_ratio": 0.476163,
+          "cost_ratio_ci": {
+            "low": 0.4335931359,
+            "high": 0.5212148956
+          },
+          "median_latency_difference_ms": -4384.5,
+          "median_latency_difference_ci": {
+            "low": -5067.4478125,
+            "high": -3647.67885
+          }
+        },
+        {
+          "strategy_id": "learned:cost",
+          "baseline_id": "previous_router:cost",
+          "question": "Does adding the flagships change the lowest-cost setting?",
+          "prompts": 300,
+          "correct": 265,
+          "baseline_correct": 265,
+          "only_strategy_correct": 4,
+          "only_baseline_correct": 4,
+          "accuracy_difference": 0.0,
+          "accuracy_difference_ci": {
+            "low": -0.0166666667,
+            "high": 0.02
+          },
+          "mcnemar_p": 1.0,
+          "holm_p": 1.0,
+          "cost_difference_usd": 0.01420815,
+          "cost_difference_ci": {
+            "low": 0.0107680973,
+            "high": 0.0181108566
+          },
+          "cost_ratio": 5.230382,
+          "cost_ratio_ci": {
+            "low": 3.6206352555,
+            "high": 8.637351602
+          },
+          "median_latency_difference_ms": -1646.7,
+          "median_latency_difference_ci": {
+            "low": -2468.4199,
+            "high": -1026.1417625
+          }
+        },
+        {
+          "strategy_id": "learned:latency",
+          "baseline_id": "previous_router:latency",
+          "question": "Does adding the flagships change the fastest setting?",
+          "prompts": 300,
+          "correct": 284,
+          "baseline_correct": 276,
+          "only_strategy_correct": 10,
+          "only_baseline_correct": 2,
+          "accuracy_difference": 0.02666666666666667,
+          "accuracy_difference_ci": {
+            "low": 0.0066666667,
+            "high": 0.05
+          },
+          "mcnemar_p": 0.03857421875,
+          "holm_p": 0.2314453125,
+          "cost_difference_usd": 0.06619171,
+          "cost_difference_ci": {
+            "low": -0.017175992,
+            "high": 0.1561667903
+          },
+          "cost_ratio": 1.152785,
+          "cost_ratio_ci": {
+            "low": 0.965511324,
+            "high": 1.4123000529
+          },
+          "median_latency_difference_ms": -1273.6,
+          "median_latency_difference_ci": {
+            "low": -1908.637225,
+            "high": -618.1245
+          }
+        },
+        {
+          "strategy_id": "learned:balanced",
+          "baseline_id": "previous_router:balanced",
+          "question": "Does the balanced setting do better with the flagships in the pool?",
+          "prompts": 300,
+          "correct": 283,
+          "baseline_correct": 276,
+          "only_strategy_correct": 9,
+          "only_baseline_correct": 2,
+          "accuracy_difference": 0.023333333333333334,
+          "accuracy_difference_ci": {
+            "low": 0.0033333333,
+            "high": 0.0466666667
+          },
+          "mcnemar_p": 0.0654296875,
+          "holm_p": 0.3271484375,
+          "cost_difference_usd": -0.03773153,
+          "cost_difference_ci": {
+            "low": -0.119220839,
+            "high": 0.0514452344
+          },
+          "cost_ratio": 0.912907,
+          "cost_ratio_ci": {
+            "low": 0.7532988501,
+            "high": 1.1316739029
+          },
+          "median_latency_difference_ms": -1671.8,
+          "median_latency_difference_ci": {
+            "low": -2261.3631625,
+            "high": -1059.693775
+          }
+        },
+        {
+          "strategy_id": "learned:quality",
+          "baseline_id": "model_task_prior:quality",
+          "question": "With the flagships, do the prompt features add accuracy beyond per-task averages?",
+          "prompts": 300,
+          "correct": 283,
+          "baseline_correct": 283,
+          "only_strategy_correct": 0,
+          "only_baseline_correct": 0,
+          "accuracy_difference": 0.0,
+          "accuracy_difference_ci": {
+            "low": 0.0,
+            "high": 0.0
+          },
+          "mcnemar_p": 1.0,
+          "holm_p": 1.0,
+          "cost_difference_usd": -0.03147763,
+          "cost_difference_ci": {
+            "low": -0.0616628656,
+            "high": -0.0103202325
+          },
+          "cost_ratio": 0.970284,
+          "cost_ratio_ci": {
+            "low": 0.9420639217,
+            "high": 0.9904399022
+          },
+          "median_latency_difference_ms": -149.2,
+          "median_latency_difference_ci": {
+            "low": -561.8885875,
+            "high": -7.542
+          }
+        }
+      ],
+      "routing_errors": [
+        {
+          "strategy_id": "learned:cost",
+          "overall": {
+            "prompts": 300,
+            "correct": 265,
+            "wrong": 35,
+            "unavoidable": 11,
+            "under_routed": 23,
+            "over_routed": 83,
+            "over_routed_dominated": 46,
+            "over_routing_extra_cost_usd": 0.0134242,
+            "total_cost_usd": 0.01756675,
+            "oracle_correct": 289,
+            "oracle_cost_usd": 0.05854397,
+            "regret_correct": 24
+          },
+          "by_task": {
+            "math": {
+              "prompts": 100,
+              "correct": 96,
+              "wrong": 4,
+              "unavoidable": 2,
+              "under_routed": 2,
+              "over_routed": 0,
+              "over_routed_dominated": 0,
+              "over_routing_extra_cost_usd": 0.0,
+              "total_cost_usd": 0.0,
+              "oracle_correct": 98,
+              "oracle_cost_usd": 0.014274,
+              "regret_correct": 2
+            },
+            "qa": {
+              "prompts": 100,
+              "correct": 83,
+              "wrong": 17,
+              "unavoidable": 5,
+              "under_routed": 11,
+              "over_routed": 83,
+              "over_routed_dominated": 46,
+              "over_routing_extra_cost_usd": 0.0134242,
+              "total_cost_usd": 0.01756675,
+              "oracle_correct": 95,
+              "oracle_cost_usd": 0.03668103,
+              "regret_correct": 12
+            },
+            "code": {
+              "prompts": 100,
+              "correct": 86,
+              "wrong": 14,
+              "unavoidable": 4,
+              "under_routed": 10,
+              "over_routed": 0,
+              "over_routed_dominated": 0,
+              "over_routing_extra_cost_usd": 0.0,
+              "total_cost_usd": 0.0,
+              "oracle_correct": 96,
+              "oracle_cost_usd": 0.00758894,
+              "regret_correct": 10
+            }
+          },
+          "examples": [
+            {
+              "kind": "under",
+              "sample_id": "gsm8k-test-1019",
+              "benchmark": "gsm8k",
+              "task_group": "math",
+              "prompt_excerpt": "On a busy Saturday morning, a hotel was completely booked with 100 guests. 24 guests elected an early checkout and 15 elected for a late checkout. In the afternoon twice as many people checked in as those who opted for…",
+              "chosen_model_id": "gpt-oss-120b",
+              "chosen_correct": false,
+              "chosen_cost_usd": 0.0,
+              "chosen_latency_ms": 3687.092,
+              "predicted_success": 0.9392,
+              "alternative_model_id": "gpt-6.1-sol",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.001418,
+              "alternative_latency_ms": 4187.549,
+              "explanation": "The router predicted 94% success for gpt-oss-120b, which answered wrong. GPT-6.1 Sol, which the router expected to cost more, answered right for $0.00142 in 4.2 s."
+            },
+            {
+              "kind": "under",
+              "sample_id": "gsm8k-test-1161",
+              "benchmark": "gsm8k",
+              "task_group": "math",
+              "prompt_excerpt": "Abraham owns 80 square meters of unused land. He sold half of the land for $50, and after a month, he sold another 1/4 of his land for $30. He then sold the remaining land for $3 per square meter. How much money will he…",
+              "chosen_model_id": "gpt-oss-120b",
+              "chosen_correct": false,
+              "chosen_cost_usd": 0.0,
+              "chosen_latency_ms": 3821.654,
+              "predicted_success": 0.9322,
+              "alternative_model_id": "gemini-4-argon",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.014274,
+              "alternative_latency_ms": 20647.232,
+              "explanation": "The router predicted 93% success for gpt-oss-120b, which answered wrong. Gemini 4 Argon, which the router expected to cost more, answered right for $0.01427 in 20.6 s."
+            },
+            {
+              "kind": "over",
+              "sample_id": "mmlu_pro-test-11669",
+              "benchmark": "mmlu_pro",
+              "task_group": "qa",
+              "prompt_excerpt": "A container contains compressed air at 620kPa, 27°C. If atmospheric conditions are 103kPaand 27°C calculate the work potential per kg of air.",
+              "chosen_model_id": "gemma-4-26b",
+              "chosen_correct": true,
+              "chosen_cost_usd": 0.0008948925,
+              "chosen_latency_ms": 20436.303,
+              "predicted_success": 0.8341,
+              "alternative_model_id": "nemotron-3-ultra-free",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.0,
+              "alternative_latency_ms": 18659.17,
+              "explanation": "Gemma 4 26B A4B answered right for $0.00089 in 20.4 s, but Nemotron 3 Ultra 550B (free), which the router expected to cost less, was also right for $0 (free) in 18.7 s."
+            },
+            {
+              "kind": "over",
+              "sample_id": "mmlu_pro-test-04364",
+              "benchmark": "mmlu_pro",
+              "task_group": "qa",
+              "prompt_excerpt": "Assume that all gases are perfect and that data refer to 298 K unless otherwise stated. Find an expression for the fugacity coefficient of a gas that obeys the equation of state $p V_{\\mathrm{m}}=R T\\left(1+B / V_{\\math…",
+              "chosen_model_id": "gemma-4-26b",
+              "chosen_correct": true,
+              "chosen_cost_usd": 0.000494955,
+              "chosen_latency_ms": 11894.493,
+              "predicted_success": 0.7775,
+              "alternative_model_id": "gpt-oss-120b",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.0,
+              "alternative_latency_ms": 18465.905,
+              "explanation": "Gemma 4 26B A4B answered right for $0.00049 in 11.9 s, but gpt-oss-120b, which the router expected to cost less, was also right for $0 (free) in 18.5 s."
+            },
+            {
+              "kind": "good",
+              "sample_id": "mmlu_pro-test-08726",
+              "benchmark": "mmlu_pro",
+              "task_group": "qa",
+              "prompt_excerpt": "Compute the are of that part of the helicoid z = arctan(y/x) which lies in the first octant between the cylinder $x^2+y^2 = 1^2$ and $x^2+y^2 = 2^2$.",
+              "chosen_model_id": "gemma-4-26b",
+              "chosen_correct": true,
+              "chosen_cost_usd": 0.000290295,
+              "chosen_latency_ms": 5162.452,
+              "predicted_success": 0.8362,
+              "alternative_model_id": "gemini-4-argon",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.017024,
+              "alternative_latency_ms": 19195.163,
+              "explanation": "Gemma 4 26B A4B answered right for $0.00029 in 5.2 s. Always using Gemini 4 Argon would have cost $0.01702 and taken 19.2 s, and it was also right."
+            },
+            {
+              "kind": "good",
+              "sample_id": "mmlu_pro-test-04364",
+              "benchmark": "mmlu_pro",
+              "task_group": "qa",
+              "prompt_excerpt": "Assume that all gases are perfect and that data refer to 298 K unless otherwise stated. Find an expression for the fugacity coefficient of a gas that obeys the equation of state $p V_{\\mathrm{m}}=R T\\left(1+B / V_{\\math…",
+              "chosen_model_id": "gemma-4-26b",
+              "chosen_correct": true,
+              "chosen_cost_usd": 0.000494955,
+              "chosen_latency_ms": 11894.493,
+              "predicted_success": 0.7775,
+              "alternative_model_id": "gemini-4-argon",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.015868,
+              "alternative_latency_ms": 19208.334,
+              "explanation": "Gemma 4 26B A4B answered right for $0.00049 in 11.9 s. Always using Gemini 4 Argon would have cost $0.01587 and taken 19.2 s, and it was also right."
+            }
+          ]
+        },
+        {
+          "strategy_id": "learned:quality",
+          "overall": {
+            "prompts": 300,
+            "correct": 283,
+            "wrong": 17,
+            "unavoidable": 11,
+            "under_routed": 3,
+            "over_routed": 283,
+            "over_routed_dominated": 275,
+            "over_routing_extra_cost_usd": 0.89197637,
+            "total_cost_usd": 1.02779037,
+            "oracle_correct": 289,
+            "oracle_cost_usd": 0.08801045,
+            "regret_correct": 6
+          },
+          "by_task": {
+            "math": {
+              "prompts": 100,
+              "correct": 97,
+              "wrong": 3,
+              "unavoidable": 2,
+              "under_routed": 1,
+              "over_routed": 97,
+              "over_routed_dominated": 92,
+              "over_routing_extra_cost_usd": 0.08943437,
+              "total_cost_usd": 0.09328037,
+              "oracle_correct": 98,
+              "oracle_cost_usd": 0.01890395,
+              "regret_correct": 1
+            },
+            "qa": {
+              "prompts": 100,
+              "correct": 92,
+              "wrong": 8,
+              "unavoidable": 5,
+              "under_routed": 0,
+              "over_routed": 92,
+              "over_routed_dominated": 90,
+              "over_routing_extra_cost_usd": 0.52775,
+              "total_cost_usd": 0.636172,
+              "oracle_correct": 95,
+              "oracle_cost_usd": 0.0490381,
+              "regret_correct": 3
+            },
+            "code": {
+              "prompts": 100,
+              "correct": 94,
+              "wrong": 6,
+              "unavoidable": 4,
+              "under_routed": 2,
+              "over_routed": 94,
+              "over_routed_dominated": 93,
+              "over_routing_extra_cost_usd": 0.274792,
+              "total_cost_usd": 0.298338,
+              "oracle_correct": 96,
+              "oracle_cost_usd": 0.02006839,
+              "regret_correct": 2
+            }
+          },
+          "examples": [
+            {
+              "kind": "under",
+              "sample_id": "gsm8k-test-1161",
+              "benchmark": "gsm8k",
+              "task_group": "math",
+              "prompt_excerpt": "Abraham owns 80 square meters of unused land. He sold half of the land for $50, and after a month, he sold another 1/4 of his land for $30. He then sold the remaining land for $3 per square meter. How much money will he…",
+              "chosen_model_id": "gpt-6.1-sol",
+              "chosen_correct": false,
+              "chosen_cost_usd": 0.001488,
+              "chosen_latency_ms": 3415.785,
+              "predicted_success": 0.9505,
+              "alternative_model_id": "gemini-4-argon",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.014274,
+              "alternative_latency_ms": 20647.232,
+              "explanation": "The router predicted 95% success for GPT-6.1 Sol, which answered wrong. Gemini 4 Argon, which the router expected to cost more, answered right for $0.01427 in 20.6 s."
+            },
+            {
+              "kind": "under",
+              "sample_id": "humaneval_plus-076",
+              "benchmark": "humaneval_plus",
+              "task_group": "code",
+              "prompt_excerpt": "def is_simple_power(x, n): \"\"\"Your task is to write a function that returns true if a number x is a simple power of n and false in other cases. x is a simple power of n if n**int=x For example: is_simple_power(1, 4) =>…",
+              "chosen_model_id": "gemini-4-argon",
+              "chosen_correct": false,
+              "chosen_cost_usd": 0.0049,
+              "chosen_latency_ms": 10851.873,
+              "predicted_success": 0.9361,
+              "alternative_model_id": "gemini-4-carbon",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.0173,
+              "alternative_latency_ms": 22056.77,
+              "explanation": "The router predicted 94% success for Gemini 4 Argon, which answered wrong. Gemini 4 Carbon, which the router expected to cost more, answered right for $0.01730 in 22.1 s."
+            },
+            {
+              "kind": "over",
+              "sample_id": "mmlu_pro-test-08726",
+              "benchmark": "mmlu_pro",
+              "task_group": "qa",
+              "prompt_excerpt": "Compute the are of that part of the helicoid z = arctan(y/x) which lies in the first octant between the cylinder $x^2+y^2 = 1^2$ and $x^2+y^2 = 2^2$.",
+              "chosen_model_id": "gemini-4-argon",
+              "chosen_correct": true,
+              "chosen_cost_usd": 0.017024,
+              "chosen_latency_ms": 19195.163,
+              "predicted_success": 0.9201,
+              "alternative_model_id": "gpt-oss-120b",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.0,
+              "alternative_latency_ms": 13550.133,
+              "explanation": "Gemini 4 Argon answered right for $0.01702 in 19.2 s, but gpt-oss-120b, which the router expected to cost less, was also right for $0 (free) in 13.6 s."
+            },
+            {
+              "kind": "over",
+              "sample_id": "mmlu_pro-test-04364",
+              "benchmark": "mmlu_pro",
+              "task_group": "qa",
+              "prompt_excerpt": "Assume that all gases are perfect and that data refer to 298 K unless otherwise stated. Find an expression for the fugacity coefficient of a gas that obeys the equation of state $p V_{\\mathrm{m}}=R T\\left(1+B / V_{\\math…",
+              "chosen_model_id": "gemini-4-argon",
+              "chosen_correct": true,
+              "chosen_cost_usd": 0.015868,
+              "chosen_latency_ms": 19208.334,
+              "predicted_success": 0.8874,
+              "alternative_model_id": "gpt-oss-120b",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.0,
+              "alternative_latency_ms": 18465.905,
+              "explanation": "Gemini 4 Argon answered right for $0.01587 in 19.2 s, but gpt-oss-120b, which the router expected to cost less, was also right for $0 (free) in 18.5 s."
+            },
+            {
+              "kind": "good",
+              "sample_id": "gsm8k-test-0598",
+              "benchmark": "gsm8k",
+              "task_group": "math",
+              "prompt_excerpt": "Colby wants to buy some gumballs that cost a nickel each. If he has 8 quarters, 6 dimes, 14 nickels, and 15 pennies, how many can he buy?",
+              "chosen_model_id": "gemma-4-26b",
+              "chosen_correct": true,
+              "chosen_cost_usd": 0.0000777675,
+              "chosen_latency_ms": 1710.38,
+              "predicted_success": 0.9573,
+              "alternative_model_id": "gemini-4-argon",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.00388,
+              "alternative_latency_ms": 5987.713,
+              "explanation": "Gemma 4 26B A4B answered right for $0.00008 in 1.7 s. Always using Gemini 4 Argon would have cost $0.00388 and taken 6.0 s, and it was also right."
+            },
+            {
+              "kind": "good",
+              "sample_id": "gsm8k-test-0230",
+              "benchmark": "gsm8k",
+              "task_group": "math",
+              "prompt_excerpt": "Mark buys a fleet of 12 cars for his company. Each car sells for $20,000. He pays 10% tax on the cars and then another $1000 for registration on each of them. How much does he pay for everything?",
+              "chosen_model_id": "gpt-6.1-sol",
+              "chosen_correct": true,
+              "chosen_cost_usd": 0.000928,
+              "chosen_latency_ms": 3023.293,
+              "predicted_success": 0.9663,
+              "alternative_model_id": "gemini-4-argon",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.004384,
+              "alternative_latency_ms": 8838.409,
+              "explanation": "GPT-6.1 Sol answered right for $0.00093 in 3.0 s. Always using Gemini 4 Argon would have cost $0.00438 and taken 8.8 s, and it was also right."
+            }
+          ]
+        },
+        {
+          "strategy_id": "learned:latency",
+          "overall": {
+            "prompts": 300,
+            "correct": 284,
+            "wrong": 16,
+            "unavoidable": 11,
+            "under_routed": 4,
+            "over_routed": 278,
+            "over_routed_dominated": 224,
+            "over_routing_extra_cost_usd": 0.419824,
+            "total_cost_usd": 0.499426,
+            "oracle_correct": 289,
+            "oracle_cost_usd": 0.15678135,
+            "regret_correct": 5
+          },
+          "by_task": {
+            "math": {
+              "prompts": 100,
+              "correct": 97,
+              "wrong": 3,
+              "unavoidable": 2,
+              "under_routed": 1,
+              "over_routed": 97,
+              "over_routed_dominated": 95,
+              "over_routing_extra_cost_usd": 0.093018,
+              "total_cost_usd": 0.096864,
+              "oracle_correct": 98,
+              "oracle_cost_usd": 0.02146093,
+              "regret_correct": 1
+            },
+            "qa": {
+              "prompts": 100,
+              "correct": 92,
+              "wrong": 8,
+              "unavoidable": 5,
+              "under_routed": 2,
+              "over_routed": 88,
+              "over_routed_dominated": 55,
+              "over_routing_extra_cost_usd": 0.169098,
+              "total_cost_usd": 0.221236,
+              "oracle_correct": 95,
+              "oracle_cost_usd": 0.09845549,
+              "regret_correct": 3
+            },
+            "code": {
+              "prompts": 100,
+              "correct": 95,
+              "wrong": 5,
+              "unavoidable": 4,
+              "under_routed": 1,
+              "over_routed": 93,
+              "over_routed_dominated": 74,
+              "over_routing_extra_cost_usd": 0.157708,
+              "total_cost_usd": 0.181326,
+              "oracle_correct": 96,
+              "oracle_cost_usd": 0.03686494,
+              "regret_correct": 1
+            }
+          },
+          "examples": [
+            {
+              "kind": "under",
+              "sample_id": "gsm8k-test-1161",
+              "benchmark": "gsm8k",
+              "task_group": "math",
+              "prompt_excerpt": "Abraham owns 80 square meters of unused land. He sold half of the land for $50, and after a month, he sold another 1/4 of his land for $30. He then sold the remaining land for $3 per square meter. How much money will he…",
+              "chosen_model_id": "gpt-6.1-sol",
+              "chosen_correct": false,
+              "chosen_cost_usd": 0.001488,
+              "chosen_latency_ms": 3415.785,
+              "predicted_success": 0.9505,
+              "alternative_model_id": "gemini-4-argon",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.014274,
+              "alternative_latency_ms": 20647.232,
+              "explanation": "The router predicted 95% success for GPT-6.1 Sol, which answered wrong. Gemini 4 Argon, which the router expected to cost more, answered right for $0.01427 in 20.6 s."
+            },
+            {
+              "kind": "under",
+              "sample_id": "humaneval_plus-113",
+              "benchmark": "humaneval_plus",
+              "task_group": "code",
+              "prompt_excerpt": "def odd_count(lst): \"\"\"Given a list of strings, where each string consists of only digits, return a list. Each element i of the output should be \"the number of odd elements in the string i of the input.\" where all the i…",
+              "chosen_model_id": "gpt-6.1-sol",
+              "chosen_correct": false,
+              "chosen_cost_usd": 0.001138,
+              "chosen_latency_ms": 2655.643,
+              "predicted_success": 0.8963,
+              "alternative_model_id": "gemini-4-argon",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.003228,
+              "alternative_latency_ms": 6408.911,
+              "explanation": "The router predicted 90% success for GPT-6.1 Sol, which answered wrong. Gemini 4 Argon, which the router expected to cost more, answered right for $0.00323 in 6.4 s."
+            },
+            {
+              "kind": "over",
+              "sample_id": "mmlu_pro-test-11785",
+              "benchmark": "mmlu_pro",
+              "task_group": "qa",
+              "prompt_excerpt": "Steam at 15.3 KN/m^2 pressure condenses at a rate of 25 kg/hr on a vertical pipe, 56 mm OD. The temperature drop across the film is 5°C. Calculate a) the coefficient of heat transfer, and b) the required length of the p…",
+              "chosen_model_id": "gpt-6.1-sol",
+              "chosen_correct": true,
+              "chosen_cost_usd": 0.010018,
+              "chosen_latency_ms": 18977.997,
+              "predicted_success": 0.8853,
+              "alternative_model_id": "gpt-oss-120b",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.0,
+              "alternative_latency_ms": 26973.082,
+              "explanation": "GPT-6.1 Sol answered right for $0.01002 in 19.0 s, but gpt-oss-120b, which the router expected to cost less, was also right for $0 (free) in 27.0 s."
+            },
+            {
+              "kind": "over",
+              "sample_id": "mbpp_plus-306",
+              "benchmark": "mbpp_plus",
+              "task_group": "code",
+              "prompt_excerpt": "\"\"\" Write a function to find the maximum sum of increasing subsequence from prefix until ith index and also including a given kth element which is after i, i.e., k > i . assert max_sum_increasing_subseq([1, 101, 2, 3, 1…",
+              "chosen_model_id": "gpt-6.1-sol",
+              "chosen_correct": true,
+              "chosen_cost_usd": 0.007092,
+              "chosen_latency_ms": 11239.959,
+              "predicted_success": 0.8471,
+              "alternative_model_id": "gpt-oss-120b",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.0,
+              "alternative_latency_ms": 18897.07,
+              "explanation": "GPT-6.1 Sol answered right for $0.00709 in 11.2 s, but gpt-oss-120b, which the router expected to cost less, was also right for $0 (free) in 18.9 s."
+            },
+            {
+              "kind": "good",
+              "sample_id": "mmlu_pro-test-08726",
+              "benchmark": "mmlu_pro",
+              "task_group": "qa",
+              "prompt_excerpt": "Compute the are of that part of the helicoid z = arctan(y/x) which lies in the first octant between the cylinder $x^2+y^2 = 1^2$ and $x^2+y^2 = 2^2$.",
+              "chosen_model_id": "gpt-6.1-sol",
+              "chosen_correct": true,
+              "chosen_cost_usd": 0.003938,
+              "chosen_latency_ms": 5680.422,
+              "predicted_success": 0.8872,
+              "alternative_model_id": "gemini-4-argon",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.017024,
+              "alternative_latency_ms": 19195.163,
+              "explanation": "GPT-6.1 Sol answered right for $0.00394 in 5.7 s. Always using Gemini 4 Argon would have cost $0.01702 and taken 19.2 s, and it was also right."
+            },
+            {
+              "kind": "good",
+              "sample_id": "mmlu_pro-test-11669",
+              "benchmark": "mmlu_pro",
+              "task_group": "qa",
+              "prompt_excerpt": "A container contains compressed air at 620kPa, 27°C. If atmospheric conditions are 103kPaand 27°C calculate the work potential per kg of air.",
+              "chosen_model_id": "gpt-6.1-sol",
+              "chosen_correct": true,
+              "chosen_cost_usd": 0.003142,
+              "chosen_latency_ms": 4986.524,
+              "predicted_success": 0.8857,
+              "alternative_model_id": "gemini-4-argon",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.015012,
+              "alternative_latency_ms": 18424.222,
+              "explanation": "GPT-6.1 Sol answered right for $0.00314 in 5.0 s. Always using Gemini 4 Argon would have cost $0.01501 and taken 18.4 s, and it was also right."
+            }
+          ]
+        },
+        {
+          "strategy_id": "learned:balanced",
+          "overall": {
+            "prompts": 300,
+            "correct": 283,
+            "wrong": 17,
+            "unavoidable": 11,
+            "under_routed": 5,
+            "over_routed": 277,
+            "over_routed_dominated": 134,
+            "over_routing_extra_cost_usd": 0.3194721,
+            "total_cost_usd": 0.39550276,
+            "oracle_correct": 289,
+            "oracle_cost_usd": 0.08976387,
+            "regret_correct": 6
+          },
+          "by_task": {
+            "math": {
+              "prompts": 100,
+              "correct": 96,
+              "wrong": 4,
+              "unavoidable": 2,
+              "under_routed": 2,
+              "over_routed": 96,
+              "over_routed_dominated": 11,
+              "over_routing_extra_cost_usd": 0.00647057,
+              "total_cost_usd": 0.00674523,
+              "oracle_correct": 98,
+              "oracle_cost_usd": 0.0198662,
+              "regret_correct": 2
+            },
+            "qa": {
+              "prompts": 100,
+              "correct": 92,
+              "wrong": 8,
+              "unavoidable": 5,
+              "under_routed": 2,
+              "over_routed": 88,
+              "over_routed_dominated": 55,
+              "over_routing_extra_cost_usd": 0.169098,
+              "total_cost_usd": 0.221236,
+              "oracle_correct": 95,
+              "oracle_cost_usd": 0.04982928,
+              "regret_correct": 3
+            },
+            "code": {
+              "prompts": 100,
+              "correct": 95,
+              "wrong": 5,
+              "unavoidable": 4,
+              "under_routed": 1,
+              "over_routed": 93,
+              "over_routed_dominated": 68,
+              "over_routing_extra_cost_usd": 0.14390353,
+              "total_cost_usd": 0.16752153,
+              "oracle_correct": 96,
+              "oracle_cost_usd": 0.02006839,
+              "regret_correct": 1
+            }
+          },
+          "examples": [
+            {
+              "kind": "under",
+              "sample_id": "gsm8k-test-1019",
+              "benchmark": "gsm8k",
+              "task_group": "math",
+              "prompt_excerpt": "On a busy Saturday morning, a hotel was completely booked with 100 guests. 24 guests elected an early checkout and 15 elected for a late checkout. In the afternoon twice as many people checked in as those who opted for…",
+              "chosen_model_id": "gemma-4-26b",
+              "chosen_correct": false,
+              "chosen_cost_usd": 0.0000848775,
+              "chosen_latency_ms": 2184.45,
+              "predicted_success": 0.9395,
+              "alternative_model_id": "gpt-6.1-sol",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.001418,
+              "alternative_latency_ms": 4187.549,
+              "explanation": "The router predicted 94% success for Gemma 4 26B A4B, which answered wrong. GPT-6.1 Sol, which the router expected to cost more, answered right for $0.00142 in 4.2 s."
+            },
+            {
+              "kind": "under",
+              "sample_id": "gsm8k-test-1161",
+              "benchmark": "gsm8k",
+              "task_group": "math",
+              "prompt_excerpt": "Abraham owns 80 square meters of unused land. He sold half of the land for $50, and after a month, he sold another 1/4 of his land for $30. He then sold the remaining land for $3 per square meter. How much money will he…",
+              "chosen_model_id": "gemma-4-26b",
+              "chosen_correct": false,
+              "chosen_cost_usd": 0.00007014,
+              "chosen_latency_ms": 1186.115,
+              "predicted_success": 0.9325,
+              "alternative_model_id": "gemini-4-argon",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.014274,
+              "alternative_latency_ms": 20647.232,
+              "explanation": "The router predicted 93% success for Gemma 4 26B A4B, which answered wrong. Gemini 4 Argon, which the router expected to cost more, answered right for $0.01427 in 20.6 s."
+            },
+            {
+              "kind": "over",
+              "sample_id": "mmlu_pro-test-11785",
+              "benchmark": "mmlu_pro",
+              "task_group": "qa",
+              "prompt_excerpt": "Steam at 15.3 KN/m^2 pressure condenses at a rate of 25 kg/hr on a vertical pipe, 56 mm OD. The temperature drop across the film is 5°C. Calculate a) the coefficient of heat transfer, and b) the required length of the p…",
+              "chosen_model_id": "gpt-6.1-sol",
+              "chosen_correct": true,
+              "chosen_cost_usd": 0.010018,
+              "chosen_latency_ms": 18977.997,
+              "predicted_success": 0.8853,
+              "alternative_model_id": "gpt-oss-120b",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.0,
+              "alternative_latency_ms": 26973.082,
+              "explanation": "GPT-6.1 Sol answered right for $0.01002 in 19.0 s, but gpt-oss-120b, which the router expected to cost less, was also right for $0 (free) in 27.0 s."
+            },
+            {
+              "kind": "over",
+              "sample_id": "mbpp_plus-306",
+              "benchmark": "mbpp_plus",
+              "task_group": "code",
+              "prompt_excerpt": "\"\"\" Write a function to find the maximum sum of increasing subsequence from prefix until ith index and also including a given kth element which is after i, i.e., k > i . assert max_sum_increasing_subseq([1, 101, 2, 3, 1…",
+              "chosen_model_id": "gpt-6.1-sol",
+              "chosen_correct": true,
+              "chosen_cost_usd": 0.007092,
+              "chosen_latency_ms": 11239.959,
+              "predicted_success": 0.8471,
+              "alternative_model_id": "gpt-oss-120b",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.0,
+              "alternative_latency_ms": 18897.07,
+              "explanation": "GPT-6.1 Sol answered right for $0.00709 in 11.2 s, but gpt-oss-120b, which the router expected to cost less, was also right for $0 (free) in 18.9 s."
+            },
+            {
+              "kind": "good",
+              "sample_id": "mmlu_pro-test-08726",
+              "benchmark": "mmlu_pro",
+              "task_group": "qa",
+              "prompt_excerpt": "Compute the are of that part of the helicoid z = arctan(y/x) which lies in the first octant between the cylinder $x^2+y^2 = 1^2$ and $x^2+y^2 = 2^2$.",
+              "chosen_model_id": "gpt-6.1-sol",
+              "chosen_correct": true,
+              "chosen_cost_usd": 0.003938,
+              "chosen_latency_ms": 5680.422,
+              "predicted_success": 0.8872,
+              "alternative_model_id": "gemini-4-argon",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.017024,
+              "alternative_latency_ms": 19195.163,
+              "explanation": "GPT-6.1 Sol answered right for $0.00394 in 5.7 s. Always using Gemini 4 Argon would have cost $0.01702 and taken 19.2 s, and it was also right."
+            },
+            {
+              "kind": "good",
+              "sample_id": "mmlu_pro-test-11669",
+              "benchmark": "mmlu_pro",
+              "task_group": "qa",
+              "prompt_excerpt": "A container contains compressed air at 620kPa, 27°C. If atmospheric conditions are 103kPaand 27°C calculate the work potential per kg of air.",
+              "chosen_model_id": "gpt-6.1-sol",
+              "chosen_correct": true,
+              "chosen_cost_usd": 0.003142,
+              "chosen_latency_ms": 4986.524,
+              "predicted_success": 0.8857,
+              "alternative_model_id": "gemini-4-argon",
+              "alternative_correct": true,
+              "alternative_cost_usd": 0.015012,
+              "alternative_latency_ms": 18424.222,
+              "explanation": "GPT-6.1 Sol answered right for $0.00314 in 5.0 s. Always using Gemini 4 Argon would have cost $0.01501 and taken 18.4 s, and it was also right."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "suite_matrix": [
+    {
+      "model_id": "gemini-4-argon",
+      "display_name": "Gemini 4 Argon",
+      "access": "paid",
+      "prompts": 600,
+      "correct": 563,
+      "prompts_by_task": {
+        "math": 200,
+        "qa": 200,
+        "code": 200
+      },
+      "correct_by_task": {
+        "math": 193,
+        "qa": 185,
+        "code": 185
+      },
+      "failed_calls": 1,
+      "median_latency_ms": 5384.1,
+      "cost_usd": 2.2942
+    },
+    {
+      "model_id": "gemini-4-carbon",
+      "display_name": "Gemini 4 Carbon",
+      "access": "paid",
+      "prompts": 600,
+      "correct": 551,
+      "prompts_by_task": {
+        "math": 200,
+        "qa": 200,
+        "code": 200
+      },
+      "correct_by_task": {
+        "math": 194,
+        "qa": 176,
+        "code": 181
+      },
+      "failed_calls": 12,
+      "median_latency_ms": 11324.5,
+      "cost_usd": 4.434386
+    },
+    {
+      "model_id": "gpt-6.1-sol",
+      "display_name": "GPT-6.1 Sol",
+      "access": "paid",
+      "prompts": 600,
+      "correct": 542,
+      "prompts_by_task": {
+        "math": 200,
+        "qa": 200,
+        "code": 200
+      },
+      "correct_by_task": {
+        "math": 192,
+        "qa": 175,
+        "code": 175
+      },
+      "failed_calls": 0,
+      "median_latency_ms": 2743.6,
+      "cost_usd": 0.950692
+    },
+    {
+      "model_id": "kimi-k3.1-pro",
+      "display_name": "Kimi K3.1 Pro",
+      "access": "paid",
+      "prompts": 600,
+      "correct": 530,
+      "prompts_by_task": {
+        "math": 200,
+        "qa": 200,
+        "code": 200
+      },
+      "correct_by_task": {
+        "math": 194,
+        "qa": 168,
+        "code": 168
+      },
+      "failed_calls": 16,
+      "median_latency_ms": 14086.3,
+      "cost_usd": 4.451421
+    },
+    {
+      "model_id": "gemma-4-26b",
+      "display_name": "Gemma 4 26B A4B",
+      "access": "paid",
+      "prompts": 600,
+      "correct": 517,
+      "prompts_by_task": {
+        "math": 200,
+        "qa": 200,
+        "code": 200
+      },
+      "correct_by_task": {
+        "math": 191,
+        "qa": 162,
+        "code": 164
+      },
+      "failed_calls": 0,
+      "median_latency_ms": 4985.5,
+      "cost_usd": 0.078929
+    },
+    {
+      "model_id": "nemotron-3-ultra-free",
+      "display_name": "Nemotron 3 Ultra 550B (free)",
+      "access": "free",
+      "prompts": 600,
+      "correct": 511,
+      "prompts_by_task": {
+        "math": 200,
+        "qa": 200,
+        "code": 200
+      },
+      "correct_by_task": {
+        "math": 182,
+        "qa": 159,
+        "code": 170
+      },
+      "failed_calls": 5,
+      "median_latency_ms": 12565.3,
+      "cost_usd": 0.0
+    },
+    {
+      "model_id": "deepseek-v4-flash",
+      "display_name": "DeepSeek V4 Flash",
+      "access": "paid",
+      "prompts": 600,
+      "correct": 508,
+      "prompts_by_task": {
+        "math": 200,
+        "qa": 200,
+        "code": 200
+      },
+      "correct_by_task": {
+        "math": 182,
+        "qa": 158,
+        "code": 168
+      },
+      "failed_calls": 41,
+      "median_latency_ms": 5202.2,
+      "cost_usd": 0.11005
+    },
+    {
+      "model_id": "gpt-oss-120b",
+      "display_name": "gpt-oss-120b",
+      "access": "free",
+      "prompts": 600,
+      "correct": 495,
+      "prompts_by_task": {
+        "math": 200,
+        "qa": 200,
+        "code": 200
+      },
+      "correct_by_task": {
+        "math": 191,
+        "qa": 154,
+        "code": 150
+      },
+      "failed_calls": 3,
+      "median_latency_ms": 16203.1,
+      "cost_usd": 0.0
+    },
+    {
+      "model_id": "mercury-3",
+      "display_name": "Mercury 3",
+      "access": "paid",
+      "prompts": 600,
+      "correct": 494,
+      "prompts_by_task": {
+        "math": 200,
+        "qa": 200,
+        "code": 200
+      },
+      "correct_by_task": {
+        "math": 183,
+        "qa": 160,
+        "code": 151
+      },
+      "failed_calls": 71,
+      "median_latency_ms": 1294.4,
+      "cost_usd": 0.123102
+    },
+    {
+      "model_id": "llama-3.3-70b",
+      "display_name": "Llama 3.3 70B Instruct",
+      "access": "free",
+      "prompts": 600,
+      "correct": 493,
+      "prompts_by_task": {
+        "math": 200,
+        "qa": 200,
+        "code": 200
+      },
+      "correct_by_task": {
+        "math": 187,
+        "qa": 153,
+        "code": 153
+      },
+      "failed_calls": 0,
+      "median_latency_ms": 16015.8,
+      "cost_usd": 0.0
+    },
+    {
+      "model_id": "qwen-3.5-9b-local",
+      "display_name": "Qwen 3.5 9B (local)",
+      "access": "local",
+      "prompts": 600,
+      "correct": 471,
+      "prompts_by_task": {
+        "math": 200,
+        "qa": 200,
+        "code": 200
+      },
+      "correct_by_task": {
+        "math": 189,
+        "qa": 153,
+        "code": 129
+      },
+      "failed_calls": 0,
+      "median_latency_ms": 6644.5,
+      "cost_usd": 0.0
+    },
+    {
+      "model_id": "qwen-3.8-27b",
+      "display_name": "Qwen 3.8 27B",
+      "access": "free",
+      "prompts": 600,
+      "correct": 461,
+      "prompts_by_task": {
+        "math": 200,
+        "qa": 200,
+        "code": 200
+      },
+      "correct_by_task": {
+        "math": 181,
+        "qa": 144,
+        "code": 136
+      },
+      "failed_calls": 104,
+      "median_latency_ms": 23800.0,
+      "cost_usd": 0.0
+    }
+  ],
+  "spend_usd": {
+    "cp3": 11.515083,
+    "final": 6.629308
+  },
+  "spend_by_model_usd": {
+    "gemini-4-carbon": 6.592872,
+    "gpt-6.1-sol": 1.447236,
+    "grok-4.7": 3.325592,
+    "kimi-k3.1-pro": 6.778691
+  }
+}

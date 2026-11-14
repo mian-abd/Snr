@@ -1001,6 +1001,46 @@
         "title": "EvaluationSet",
         "type": "object"
       },
+      "ExcludedFlagship": {
+        "additionalProperties": false,
+        "description": "A flagship that did not answer every prompt, so neither router can be fit with it.",
+        "properties": {
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "model_id": {
+            "title": "Model Id",
+            "type": "string"
+          },
+          "prompts_scored": {
+            "title": "Prompts Scored",
+            "type": "integer"
+          },
+          "prompts_total": {
+            "title": "Prompts Total",
+            "type": "integer"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "spend_usd": {
+            "title": "Spend Usd",
+            "type": "number"
+          }
+        },
+        "required": [
+          "model_id",
+          "display_name",
+          "prompts_scored",
+          "prompts_total",
+          "spend_usd",
+          "reason"
+        ],
+        "title": "ExcludedFlagship",
+        "type": "object"
+      },
       "FinalEvaluationReport": {
         "additionalProperties": false,
         "description": "Week of Nov 19: the held-out evaluation, oracle and error analysis, and robustness.",
@@ -1069,6 +1109,171 @@
           "spend_usd"
         ],
         "title": "FinalEvaluationReport",
+        "type": "object"
+      },
+      "FlagshipRouter": {
+        "additionalProperties": false,
+        "description": "The second router: the Checkpoint 3 recipe refit with the flagship models in the pool.",
+        "properties": {
+          "artifact_id": {
+            "title": "Artifact Id",
+            "type": "string"
+          },
+          "classifiers": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ClassifierReport"
+            },
+            "title": "Classifiers",
+            "type": "object"
+          },
+          "family": {
+            "title": "Family",
+            "type": "string"
+          },
+          "features": {
+            "title": "Features",
+            "type": "integer"
+          },
+          "params": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            "title": "Params",
+            "type": "object"
+          },
+          "reference_model_task_prior": {
+            "$ref": "#/components/schemas/ClassifierMetrics"
+          },
+          "selection_rule": {
+            "title": "Selection Rule",
+            "type": "string"
+          },
+          "training_rows": {
+            "title": "Training Rows",
+            "type": "integer"
+          },
+          "validation_prompts": {
+            "title": "Validation Prompts",
+            "type": "integer"
+          },
+          "weight_tuning": {
+            "items": {
+              "$ref": "#/components/schemas/WeightTuningResult"
+            },
+            "title": "Weight Tuning",
+            "type": "array"
+          }
+        },
+        "required": [
+          "artifact_id",
+          "family",
+          "params",
+          "selection_rule",
+          "training_rows",
+          "features",
+          "classifiers",
+          "reference_model_task_prior",
+          "validation_prompts",
+          "weight_tuning"
+        ],
+        "title": "FlagshipRouter",
+        "type": "object"
+      },
+      "FlagshipStudyReport": {
+        "additionalProperties": false,
+        "description": "Week of Nov 19 extension: does adding flagship models to the pool pay off?",
+        "properties": {
+          "evaluations": {
+            "items": {
+              "$ref": "#/components/schemas/EvaluationSet"
+            },
+            "title": "Evaluations",
+            "type": "array"
+          },
+          "excluded_flagships": {
+            "items": {
+              "$ref": "#/components/schemas/ExcludedFlagship"
+            },
+            "title": "Excluded Flagships",
+            "type": "array"
+          },
+          "flagship_snapshot_id": {
+            "title": "Flagship Snapshot Id",
+            "type": "string"
+          },
+          "flagships": {
+            "items": {
+              "$ref": "#/components/schemas/PoolModel"
+            },
+            "title": "Flagships",
+            "type": "array"
+          },
+          "protocol": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Protocol",
+            "type": "array"
+          },
+          "question": {
+            "title": "Question",
+            "type": "string"
+          },
+          "router": {
+            "$ref": "#/components/schemas/FlagshipRouter"
+          },
+          "spend_by_model_usd": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Spend By Model Usd",
+            "type": "object"
+          },
+          "spend_usd": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Spend Usd",
+            "type": "object"
+          },
+          "strongest_flagship_id": {
+            "title": "Strongest Flagship Id",
+            "type": "string"
+          },
+          "suite_matrix": {
+            "items": {
+              "$ref": "#/components/schemas/LearnedMatrixRow"
+            },
+            "title": "Suite Matrix",
+            "type": "array"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "question",
+          "flagship_snapshot_id",
+          "flagships",
+          "excluded_flagships",
+          "strongest_flagship_id",
+          "router",
+          "protocol",
+          "evaluations",
+          "suite_matrix",
+          "spend_usd",
+          "spend_by_model_usd"
+        ],
+        "title": "FlagshipStudyReport",
         "type": "object"
       },
       "GenerationResult": {
@@ -1632,6 +1837,14 @@
         "title": "LearnedMatrixRow",
         "type": "object"
       },
+      "LearnedPool": {
+        "enum": [
+          "standard",
+          "flagships"
+        ],
+        "title": "LearnedPool",
+        "type": "string"
+      },
       "LearnedRouteRequest": {
         "additionalProperties": false,
         "properties": {
@@ -1640,6 +1853,10 @@
             "minimum": 1.0,
             "title": "Min Context Tokens",
             "type": "integer"
+          },
+          "pool": {
+            "$ref": "#/components/schemas/LearnedPool",
+            "default": "standard"
           },
           "priority": {
             "$ref": "#/components/schemas/RoutingPriority",
@@ -4306,6 +4523,25 @@
           }
         },
         "summary": "Final Evaluation"
+      }
+    },
+    "/api/v1/learned/flagships": {
+      "get": {
+        "description": "The flagship extension: a second router with the flagship models in the pool.",
+        "operationId": "flagship_study_api_v1_learned_flagships_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlagshipStudyReport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Flagship Study"
       }
     },
     "/api/v1/learned/pool": {

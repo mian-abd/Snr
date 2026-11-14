@@ -1,0 +1,25 @@
+{
+  "cells_sha256": "1b2a606f905f797f29d03efb2ecc07922b0227653ccea4f8f8c5fe1046ba7c46",
+  "note": "Scored outcomes only: no prompts, responses, or request IDs. Same format as cells.jsonl; failed calls count as wrong.",
+  "provider_billed_spend_by_model_usd": {
+    "gemini-4-carbon": 6.592872,
+    "gpt-6.1-sol": 1.447236,
+    "grok-4.7": 3.325592,
+    "kimi-k3.1-pro": 6.778691
+  },
+  "provider_billed_spend_usd": {
+    "cp3": 11.515083,
+    "final": 6.629308
+  },
+  "rows": 3075,
+  "rows_by_model": {
+    "gemini-4-carbon": 900,
+    "gpt-6.1-sol": 900,
+    "grok-4.7": 375,
+    "kimi-k3.1-pro": 900
+  },
+  "rows_by_suite": {
+    "cp3": 2021,
+    "final": 1054
+  }
+}

@@ -4,6 +4,8 @@
     uv run --project backend python -m app.benchmarks.suite_runner --smoke 2 --confirm
     uv run --project backend python -m app.benchmarks.suite_runner --confirm   # all 600
     uv run --project backend python -m app.benchmarks.suite_runner --suite final --confirm
+    uv run --project backend python -m app.benchmarks.suite_runner --pool flagship \
+        --spend-cap 16 --run-id flagship-cp3 --confirm
 
 Each model runs in its own paced worker, so a slow free endpoint never blocks the others.
 Every attempt is appended as soon as it finishes and a run resumes where it stopped. Paid spend
@@ -47,8 +49,11 @@ FINAL_PATH = REPOSITORY_ROOT / "data" / "benchmarks" / "final_heldout.jsonl"
 SUITES = {"cp3": SUITE_PATH, "final": FINAL_PATH}
 DEFAULT_RUN_IDS = {"cp3": "cp3-full", "final": "final-heldout"}
 POOL_PATH = REPOSITORY_ROOT / "data" / "registry" / "cp3-pool-2026-10-27.json"
+FLAGSHIP_POOL_PATH = REPOSITORY_ROOT / "data" / "registry" / "flagship-pool-2026-11-14.json"
+POOLS = {"cp3": POOL_PATH, "flagship": FLAGSHIP_POOL_PATH}
 RUNS_DIR = REPOSITORY_ROOT / "data" / "local" / "cp3"
 SPEND_CAP_USD = Decimal("15.00")
+MAX_SPEND_CAP_USD = Decimal("25.00")  # the owner's ceiling for any one run (2026-11-14)
 OPENROUTER_FREE_DAILY_CEILING = 950  # below the account's 1,000/day so live demos keep headroom
 TIMEOUT_SECONDS = 180
 RETRY_BACKOFF_SECONDS = {GenerationStatus.RATE_LIMITED: 65.0, GenerationStatus.TIMEOUT: 10.0}
@@ -259,7 +264,10 @@ def _select_items(items: list[SuiteItem], smoke: int | None) -> list[SuiteItem]:
 
 
 async def run(args: argparse.Namespace) -> int:
-    snapshot = load_pool(POOL_PATH)
+    snapshot = load_pool(POOLS[args.pool])
+    cap = Decimal(args.spend_cap) if args.spend_cap else SPEND_CAP_USD
+    if not Decimal("0") < cap <= MAX_SPEND_CAP_USD:
+        raise SystemExit(f"--spend-cap must be above $0 and at most ${MAX_SPEND_CAP_USD}")
     suite_path = SUITES[args.suite]
     items = _select_items(load_suite(suite_path), args.smoke)
     keys = _load_keys()
@@ -276,7 +284,7 @@ async def run(args: argparse.Namespace) -> int:
         (worst_case_usd(model, item) for model in models for item in items), Decimal("0")
     )
     print(f"{len(items)} prompts x {len(models)} models; worst-case paid spend ${estimate:.2f}; "
-          f"hard cap ${SPEND_CAP_USD}")
+          f"hard cap ${cap}")
     if not args.confirm:
         print("Re-run with --confirm to make the calls.")
         return 0
@@ -291,7 +299,7 @@ async def run(args: argparse.Namespace) -> int:
         ),
         Decimal("0"),
     )
-    budget = Budget(SPEND_CAP_USD, spent, free_used_today=args.free_used_today)
+    budget = Budget(cap, spent, free_used_today=args.free_used_today)
     adapter = OpenAICompatibleAdapter([endpoint_for(model) for model in models], keys=keys)
     # One manifest per model, so separate invocations can add models to the same run.
     for model in models:
@@ -310,7 +318,7 @@ async def run(args: argparse.Namespace) -> int:
                 "max_tokens": {group.value: MAX_TOKENS[group] for group in TaskGroup},
                 "timeout_seconds": TIMEOUT_SECONDS,
                 "prompts": len(items),
-                "spend_cap_usd": str(SPEND_CAP_USD),
+                "spend_cap_usd": str(cap),
             },
         )
     tallies = await asyncio.gather(
@@ -330,6 +338,10 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Run the Checkpoint 3 suite through the pool")
     parser.add_argument("--suite", choices=sorted(SUITES), default="cp3",
                         help="cp3: the 600-prompt suite; final: the fresh final held-out set")
+    parser.add_argument("--pool", choices=sorted(POOLS), default="cp3",
+                        help="Model pool registry (default: the frozen Checkpoint 3 pool)")
+    parser.add_argument("--spend-cap", help=f"Paid spend cap in USD for this run "
+                        f"(default {SPEND_CAP_USD}, at most {MAX_SPEND_CAP_USD})")
     parser.add_argument("--models", help="Comma-separated pool IDs (default: all with keys)")
     parser.add_argument("--smoke", type=int, help="Only the first N prompts of each benchmark")
     parser.add_argument("--run-id", help="Resume or name a run")

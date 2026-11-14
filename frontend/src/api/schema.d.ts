@@ -243,6 +243,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/learned/flagships": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Flagship Study
+         * @description The flagship extension: a second router with the flagship models in the pool.
+         */
+        get: operations["flagship_study_api_v1_learned_flagships_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/learned/pool": {
         parameters: {
             query?: never;
@@ -821,6 +841,24 @@ export interface components {
             uncertainty: components["schemas"]["StrategyUncertainty"][];
         };
         /**
+         * ExcludedFlagship
+         * @description A flagship that did not answer every prompt, so neither router can be fit with it.
+         */
+        ExcludedFlagship: {
+            /** Display Name */
+            display_name: string;
+            /** Model Id */
+            model_id: string;
+            /** Prompts Scored */
+            prompts_scored: number;
+            /** Prompts Total */
+            prompts_total: number;
+            /** Reason */
+            reason: string;
+            /** Spend Usd */
+            spend_usd: number;
+        };
+        /**
          * FinalEvaluationReport
          * @description Week of Nov 19: the held-out evaluation, oracle and error analysis, and robustness.
          */
@@ -842,6 +880,68 @@ export interface components {
             robustness: components["schemas"]["RobustnessReport"][];
             /** Spend Usd */
             spend_usd: number;
+        };
+        /**
+         * FlagshipRouter
+         * @description The second router: the Checkpoint 3 recipe refit with the flagship models in the pool.
+         */
+        FlagshipRouter: {
+            /** Artifact Id */
+            artifact_id: string;
+            /** Classifiers */
+            classifiers: {
+                [key: string]: components["schemas"]["ClassifierReport"];
+            };
+            /** Family */
+            family: string;
+            /** Features */
+            features: number;
+            /** Params */
+            params: {
+                [key: string]: number;
+            };
+            reference_model_task_prior: components["schemas"]["ClassifierMetrics"];
+            /** Selection Rule */
+            selection_rule: string;
+            /** Training Rows */
+            training_rows: number;
+            /** Validation Prompts */
+            validation_prompts: number;
+            /** Weight Tuning */
+            weight_tuning: components["schemas"]["WeightTuningResult"][];
+        };
+        /**
+         * FlagshipStudyReport
+         * @description Week of Nov 19 extension: does adding flagship models to the pool pay off?
+         */
+        FlagshipStudyReport: {
+            /** Evaluations */
+            evaluations: components["schemas"]["EvaluationSet"][];
+            /** Excluded Flagships */
+            excluded_flagships: components["schemas"]["ExcludedFlagship"][];
+            /** Flagship Snapshot Id */
+            flagship_snapshot_id: string;
+            /** Flagships */
+            flagships: components["schemas"]["PoolModel"][];
+            /** Protocol */
+            protocol: string[];
+            /** Question */
+            question: string;
+            router: components["schemas"]["FlagshipRouter"];
+            /** Spend By Model Usd */
+            spend_by_model_usd: {
+                [key: string]: number;
+            };
+            /** Spend Usd */
+            spend_usd: {
+                [key: string]: number;
+            };
+            /** Strongest Flagship Id */
+            strongest_flagship_id: string;
+            /** Suite Matrix */
+            suite_matrix: components["schemas"]["LearnedMatrixRow"][];
+            /** Title */
+            title: string;
         };
         /** GenerationResult */
         GenerationResult: {
@@ -1020,6 +1120,11 @@ export interface components {
                 [key: string]: number;
             };
         };
+        /**
+         * LearnedPool
+         * @enum {string}
+         */
+        LearnedPool: "standard" | "flagships";
         /** LearnedRouteRequest */
         LearnedRouteRequest: {
             /**
@@ -1027,6 +1132,8 @@ export interface components {
              * @default 1
              */
             min_context_tokens: number;
+            /** @default standard */
+            pool: components["schemas"]["LearnedPool"];
             /** @default balanced */
             priority: components["schemas"]["RoutingPriority"];
             /** Prompt */
@@ -2192,6 +2299,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FinalEvaluationReport"];
+                };
+            };
+        };
+    };
+    flagship_study_api_v1_learned_flagships_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FlagshipStudyReport"];
                 };
             };
         };

@@ -610,8 +610,14 @@ class WhatIfChanges(StrictModel):
         return ", ".join(parts) or None
 
 
+class LearnedPool(StrEnum):
+    STANDARD = "standard"  # the frozen Checkpoint 3 router and its pool
+    FLAGSHIPS = "flagships"  # the second router, refit with the flagship models
+
+
 class LearnedRouteRequest(StrictModel):
     prompt: str = Field(min_length=1, max_length=50_000)
+    pool: LearnedPool = LearnedPool.STANDARD
     priority: RoutingPriority = RoutingPriority.BALANCED
     weights: RoutingWeights | None = None  # overrides the priority's tuned preset
     task_group: TaskGroup | None = None  # inferred from the prompt when absent

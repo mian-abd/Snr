@@ -78,6 +78,17 @@ def load_pool(path: Path) -> PoolSnapshot:
     return snapshot
 
 
+def combine_pools(base: PoolSnapshot, extra: PoolSnapshot) -> PoolSnapshot:
+    """One pool with every model of ``base`` and then ``extra`` (the flagship study's pool)."""
+    models = [*base.models, *extra.models]
+    return PoolSnapshot(
+        snapshot_id=f"{base.snapshot_id}+{extra.snapshot_id}",
+        metadata_as_of=extra.metadata_as_of,
+        models_sha256=models_sha256(models),
+        models=models,
+    )
+
+
 def endpoint_for(model: PoolModel) -> Endpoint:
     return Endpoint(
         model_id=model.id,

@@ -1,0 +1,116 @@
+{
+  "metadata_as_of": "2026-11-14T00:00:00Z",
+  "models": [
+    {
+      "access": "paid",
+      "api_key_env": "OPENROUTER_API_KEY",
+      "base_url": "https://openrouter.ai/api/v1",
+      "completion_price_per_token": "0.00001",
+      "context_length": 1050000,
+      "data_policy": "OpenRouter paid route pinned to OpenAI (standard tier).",
+      "display_name": "GPT-6.1 Sol",
+      "enabled": true,
+      "family": "OpenAI GPT",
+      "id": "gpt-6.1-sol",
+      "max_concurrency": 3,
+      "open_weight": false,
+      "parameters": "undisclosed",
+      "prompt_price_per_token": "0.000002",
+      "provider": "openrouter",
+      "request_options": {
+        "provider": {
+          "allow_fallbacks": false,
+          "order": [
+            "openai"
+          ]
+        }
+      },
+      "requests_per_minute": 60.0,
+      "upstream_model": "openai/gpt-6.1-sol"
+    },
+    {
+      "access": "paid",
+      "api_key_env": "OPENROUTER_API_KEY",
+      "base_url": "https://openrouter.ai/api/v1",
+      "completion_price_per_token": "0.00001",
+      "context_length": 1048576,
+      "data_policy": "OpenRouter paid route pinned to Google AI Studio (standard tier).",
+      "display_name": "Gemini 4 Carbon",
+      "enabled": true,
+      "family": "Google Gemini",
+      "id": "gemini-4-carbon",
+      "max_concurrency": 3,
+      "open_weight": false,
+      "parameters": "undisclosed",
+      "prompt_price_per_token": "0.000002",
+      "provider": "openrouter",
+      "request_options": {
+        "provider": {
+          "allow_fallbacks": false,
+          "order": [
+            "google-ai-studio"
+          ]
+        }
+      },
+      "requests_per_minute": 60.0,
+      "upstream_model": "google/gemini-4-carbon"
+    },
+    {
+      "access": "paid",
+      "api_key_env": "OPENROUTER_API_KEY",
+      "base_url": "https://openrouter.ai/api/v1",
+      "completion_price_per_token": "0.000006",
+      "context_length": 500000,
+      "data_policy": "OpenRouter paid route pinned to xAI (standard tier).",
+      "display_name": "Grok 4.7",
+      "enabled": true,
+      "family": "xAI Grok",
+      "id": "grok-4.7",
+      "max_concurrency": 3,
+      "open_weight": false,
+      "parameters": "undisclosed",
+      "prompt_price_per_token": "0.000002",
+      "provider": "openrouter",
+      "request_options": {
+        "provider": {
+          "allow_fallbacks": false,
+          "order": [
+            "xai"
+          ]
+        }
+      },
+      "requests_per_minute": 60.0,
+      "upstream_model": "x-ai/grok-4.7"
+    },
+    {
+      "access": "paid",
+      "api_key_env": "OPENROUTER_API_KEY",
+      "base_url": "https://openrouter.ai/api/v1",
+      "completion_price_per_token": "0.00001",
+      "context_length": 1048576,
+      "data_policy": "OpenRouter paid route pinned to Moonshot AI (its own MXFP4 deployment).",
+      "display_name": "Kimi K3.1 Pro",
+      "enabled": true,
+      "family": "Moonshot Kimi",
+      "id": "kimi-k3.1-pro",
+      "max_concurrency": 3,
+      "open_weight": true,
+      "parameters": "not recorded",
+      "prompt_price_per_token": "0.000002",
+      "provider": "openrouter",
+      "request_options": {
+        "provider": {
+          "allow_fallbacks": false,
+          "order": [
+            "moonshotai/mxfp4"
+          ]
+        }
+      },
+      "requests_per_minute": 60.0,
+      "upstream_model": "moonshotai/kimi-k3.1-pro"
+    }
+  ],
+  "models_sha256": "677e07def0689a39d8d6fc3a4a936a7237b5dde90ce484d28b30f8e5d403abeb",
+  "schema_version": "1.0",
+  "snapshot_id": "flagship-pool-2026-11-14"
+}

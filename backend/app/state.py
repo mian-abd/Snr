@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -14,17 +15,25 @@ from app.benchmarks.costs import (
 )
 from app.benchmarks.runner import BenchmarkRunner
 from app.config import REPOSITORY_ROOT, Settings
-from app.domain.models import BenchmarkMode, BenchmarkStatus, LiveCatalogStatus, RoutingPool
+from app.domain.models import (
+    BenchmarkMode,
+    BenchmarkStatus,
+    LearnedPool,
+    LiveCatalogStatus,
+    RoutingPool,
+)
 from app.learned.router import ROUTER_MODEL_FILE, ROUTER_POOL_FILE, LearnedRouter, load_router
 from app.providers import GenerationService
 from app.providers.openai_compatible import OpenAICompatibleAdapter
 from app.registry import ModelRegistry
 from app.registry.live_catalog import check_live_catalog, snapshot_status
-from app.registry.pool import endpoint_for, load_pool
+from app.registry.pool import combine_pools, endpoint_for, load_pool
 
 REGISTRY_PATH = REPOSITORY_ROOT / "data" / "registry" / "openrouter-2026-09-30.json"
 PAID_REGISTRY_PATH = REPOSITORY_ROOT / "data" / "registry" / "openrouter-paid-2026-10-23.json"
 CATALOG_TIMEOUT_SECONDS = 12.0  # startup waits at most this long, then uses the snapshot
+FLAGSHIP_ROUTER_FILE = Path("learned") / "flagship-router-model.json"  # relative to data dir
+FLAGSHIP_POOL_FILE = Path("registry") / "flagship-pool-2026-11-14.json"
 PAID_MODEL_IDS = (
     "google/gemma-4-26b-a4b-it",
     "inception/mercury-3",
@@ -45,6 +54,8 @@ class AppServices:
     paid_benchmark_coordinator: BenchmarkCoordinator | None = None
     learned_router: LearnedRouter | None = None
     learned_generation_service: GenerationService | None = None
+    flagship_router: LearnedRouter | None = None
+    flagship_generation_service: GenerationService | None = None
     catalog: LiveCatalogStatus | None = None
     catalog_transport: httpx.AsyncBaseTransport | None = None  # tests inject a mock
 
@@ -57,10 +68,15 @@ class AppServices:
         if not self.settings.live_catalog_check:
             self.catalog = snapshot_status(snapshot)
             return self.catalog
+        # The flagship router's extra models are checked too, so both pools see the same catalog.
+        models = dict(router.models)
+        if self.flagship_router is not None:
+            for model_id, model in self.flagship_router.models.items():
+                models.setdefault(model_id, model)
         try:
             self.catalog = await asyncio.wait_for(
                 check_live_catalog(
-                    router.models.values(), snapshot, transport=self.catalog_transport
+                    models.values(), snapshot, transport=self.catalog_transport
                 ),
                 timeout=CATALOG_TIMEOUT_SECONDS,
             )
@@ -69,6 +85,14 @@ class AppServices:
                 snapshot, error=f"Live catalog check failed ({type(exc).__name__})"
             )
         return self.catalog
+
+    def router_for(self, pool: LearnedPool) -> LearnedRouter | None:
+        return self.flagship_router if pool == LearnedPool.FLAGSHIPS else self.learned_router
+
+    def generation_for(self, pool: LearnedPool) -> GenerationService | None:
+        if pool == LearnedPool.FLAGSHIPS:
+            return self.flagship_generation_service
+        return self.learned_generation_service
 
     def pool_registry(self, pool: RoutingPool) -> ModelRegistry | None:
         return self.routing_registry if pool == RoutingPool.PAID else self.registry
@@ -152,6 +176,34 @@ def build_learned_services(
     return router, GenerationService(adapter)
 
 
+def build_flagship_services(
+    settings: Settings,
+) -> tuple[LearnedRouter | None, GenerationService | None]:
+    """The flagship study's second router and a client for its pool, if it has been fit."""
+    artifact = settings.data_dir / FLAGSHIP_ROUTER_FILE
+    if not artifact.exists():
+        return None, None
+    try:
+        pool = combine_pools(
+            load_pool(settings.data_dir / ROUTER_POOL_FILE),
+            load_pool(settings.data_dir / FLAGSHIP_POOL_FILE),
+        )
+        router = load_router(artifact, pool)
+    except (OSError, ValueError) as exc:
+        # The flagship router is optional: a broken file must not take the standard one down.
+        logging.getLogger(__name__).warning("Flagship router not loaded: %s", exc)
+        return None, None
+    keys = (
+        {"OPENROUTER_API_KEY": settings.openrouter_api_key.get_secret_value()}
+        if settings.openrouter_api_key and settings.credential_configured
+        else {}
+    )
+    adapter = OpenAICompatibleAdapter(
+        [endpoint_for(model) for model in router.models.values()], keys=keys
+    )
+    return router, GenerationService(adapter)
+
+
 def build_services(settings: Settings) -> AppServices:
     registry = ModelRegistry(REGISTRY_PATH)
     routing_registry = ModelRegistry(
@@ -160,6 +212,7 @@ def build_services(settings: Settings) -> AppServices:
         require_free=False,
     )
     learned_router, learned_service = build_learned_services(settings)
+    flagship_router, flagship_service = build_flagship_services(settings)
     if not settings.credential_configured:
         return AppServices(
             settings=settings,
@@ -169,6 +222,8 @@ def build_services(settings: Settings) -> AppServices:
             routing_registry=routing_registry,
             learned_router=learned_router,
             learned_generation_service=learned_service,
+            flagship_router=flagship_router,
+            flagship_generation_service=flagship_service,
         )
     assert settings.openrouter_api_key is not None
     from app.providers.litellm_openrouter import LiteLLMOpenRouterAdapter
@@ -220,4 +275,6 @@ def build_services(settings: Settings) -> AppServices:
         paid_benchmark_coordinator=BenchmarkCoordinator(paid_runner),
         learned_router=learned_router,
         learned_generation_service=learned_service,
+        flagship_router=flagship_router,
+        flagship_generation_service=flagship_service,
     )
