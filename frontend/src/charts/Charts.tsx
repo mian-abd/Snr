@@ -1,48 +1,6 @@
 import { useState } from 'react'
 import styles from './charts.module.css'
 
-/* ---------- Routing flow: one prompt fanning out to the models a preset picks ---------- */
-
-export type FlowTarget = { id: string; name: string; share: number; detail?: string }
-
-export function FlowDiagram({ targets, label }: { targets: FlowTarget[]; label: string }) {
-  const width = 560
-  const rowHeight = 46
-  const shown = targets.slice(0, 6)
-  const height = Math.max(200, shown.length * rowHeight + 40)
-  const hub = { x: 190, y: height / 2 }
-  const source = { x: 26, y: height / 2 }
-  const top = (height - shown.length * rowHeight) / 2 + rowHeight / 2
-  return (
-    <div className={styles.frame}>
-      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`${label}: ${shown.map((item) => `${item.name} ${Math.round(item.share * 100)}%`).join(', ')}`}>
-        <path className={styles.flowPath} d={`M ${source.x + 8} ${source.y} L ${hub.x - 22} ${hub.y}`} strokeWidth={3} />
-        {shown.map((target, index) => {
-          const y = top + index * rowHeight
-          const x = 330
-          const stroke = 1.5 + target.share * 16
-          return (
-            <g key={target.id}>
-              <path className={styles.flowPath} d={`M ${hub.x + 22} ${hub.y} C ${hub.x + 80} ${hub.y}, ${x - 80} ${y}, ${x - 10} ${y}`} strokeWidth={stroke} style={{ opacity: 0.25 + target.share * 0.65 }} />
-              <circle className={styles.flowDot} cx={x - 4} cy={y} r={4} />
-              <text className={styles.flowName} x={x + 8} y={y - 2}>{target.name}</text>
-              <text className={styles.flowShare} x={x + 8} y={y + 14}>{`${Math.round(target.share * 100)}% of prompts${target.detail ? ` · ${target.detail}` : ''}`}</text>
-            </g>
-          )
-        })}
-        <circle className={styles.flowDot} cx={source.x} cy={source.y} r={7} />
-        <text className={styles.flowMuted} x={source.x - 12} y={source.y + 28}>Prompt</text>
-        <rect className={styles.flowHub} x={hub.x - 24} y={hub.y - 24} width={48} height={48} rx={14} />
-        <text className={styles.flowHubText} x={hub.x} y={hub.y + 4} textAnchor="middle">AR</text>
-        <text className={styles.flowMuted} x={hub.x} y={hub.y + 42} textAnchor="middle">Router</text>
-        {targets.length > shown.length && (
-          <text className={styles.flowMuted} x={330 + 8} y={height - 8}>{`+${targets.length - shown.length} more`}</text>
-        )}
-      </svg>
-    </div>
-  )
-}
-
 /* ---------- Horizontal bars ---------- */
 
 export type BarDatum = { id: string; label: string; value: number; display: string; color?: string; title?: string }
@@ -184,6 +142,28 @@ export function Legend({ items }: { items: Array<{ name: string; color: string; 
             : <i className={`${styles.swatch} ${item.shape === 'square' ? styles.swatchSquare : ''}`} style={{ background: item.color }} />}
           {item.name}
         </span>
+      ))}
+    </div>
+  )
+}
+
+/* ---------- Share bars: where each strategy sent its prompts ---------- */
+
+export type ShareRow = { id: string; label: string; meta?: string; segments: Array<{ id: string; name: string; share: number }> }
+
+export function ShareBars({ rows, colors, label }: { rows: ShareRow[]; colors: Map<string, string>; label: string }) {
+  return (
+    <div className={styles.shares} role="list" aria-label={label}>
+      {rows.map((row) => (
+        <div key={row.id} className={styles.shareRow} role="listitem" aria-label={`${row.label}: ${row.segments.map((segment) => `${segment.name} ${Math.round(segment.share * 100)}%`).join(', ')}`}>
+          <span>{row.label}</span>
+          <span className={styles.shareTrack}>
+            {row.segments.filter((segment) => segment.share > 0).map((segment) => (
+              <span key={segment.id} className={styles.shareSeg} style={{ flex: `${segment.share} 0 0`, background: colors.get(segment.id) ?? 'var(--maker-other)' }} title={`${segment.name}: ${Math.round(segment.share * 100)}%`} />
+            ))}
+          </span>
+          {row.meta && <span className={styles.shareMeta}>{row.meta}</span>}
+        </div>
       ))}
     </div>
   )

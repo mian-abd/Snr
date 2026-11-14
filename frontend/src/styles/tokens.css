@@ -1,137 +1,195 @@
-/* Design tokens. Light is the base; dark is selected (its own steps, not a flip) and applies
-   from the OS setting unless the viewer picked a theme, and always when they picked dark. */
+/* Design tokens: an editorial, data-first look. White pages, ink text, serif display type,
+   hairline borders, and color reserved for data (one hue per model maker) and status.
+   Light is the base; dark is selected (its own steps, not a flip) from the OS setting unless
+   the viewer picked a theme, and always when they picked dark. */
 :root {
   color-scheme: light;
-  --bg: #f6f6f4;
+  --bg: #ffffff;
+  --band: #f4f4f5;
   --surface: #ffffff;
-  --surface-2: #f2f2ef;
-  --surface-3: #e9e9e5;
-  --border: #e4e3de;
-  --border-strong: #cfcec7;
-  --text: #121212;
-  --text-2: #4f4e4a;
-  --text-3: #85847e;
-  --accent: #5b46e5;
-  --accent-hover: #4a35d4;
-  --accent-ink: #ffffff;
-  --accent-soft: rgb(91 70 229 / 9%);
-  --accent-line: rgb(91 70 229 / 35%);
-  --good: #137a2a;
-  --good-soft: rgb(12 163 12 / 10%);
-  --warn: #9a6200;
-  --warn-soft: rgb(250 178 25 / 16%);
-  --bad: #c53333;
-  --bad-soft: rgb(208 59 59 / 10%);
-  /* Chart slots 1-3 of the validated categorical palette, light steps. */
-  --series-1: #2a78d6;
-  --series-2: #eb6834;
-  --series-3: #1baf7a;
-  --chart-surface: #fcfcfb;
-  --shadow-sm: 0 1px 2px rgb(16 16 16 / 4%);
-  --shadow-md: 0 8px 24px -12px rgb(16 16 16 / 18%);
+  --surface-2: #f6f6f7;
+  --surface-3: #ececee;
+  --border: #e4e4e7;
+  --border-strong: #d4d4d8;
+  --text: #0a0a0b;
+  --text-2: #4f4f57;
+  --text-3: #8b8b94;
+  --ink: #0a0a0b;
+  --ink-hover: #2a2a2e;
+  --ink-text: #ffffff;
+  --focus: #2563eb;
+  --good: #15803d;
+  --good-soft: #e8f6ec;
+  --warn: #a16207;
+  --warn-soft: #fdf3dc;
+  --bad: #c62828;
+  --bad-soft: #fdeceb;
+  /* Metric keys: the small squares that tag a chart's measure. */
+  --m-accuracy: #2563eb;
+  --m-cost: #ea580c;
+  --m-speed: #eab308;
+  --m-route: #0a0a0b;
+  /* Model makers (data color only; text never wears these). */
+  --maker-google: #2f9e55;
+  --maker-openai: #18181b;
+  --maker-deepseek: #4d6bfe;
+  --maker-meta: #0a84ff;
+  --maker-nvidia: #76b900;
+  --maker-alibaba: #f26b1d;
+  --maker-xai: #6b6b76;
+  --maker-moonshot: #e0435a;
+  --maker-inception: #a6762b;
+  --maker-other: #9a9aa3;
+  --attractive: rgb(34 197 94 / 9%);
+  --chart-grid: #ececee;
+  --chart-axis: #c9c9cf;
+  --shadow-sm: 0 1px 2px rgb(10 10 11 / 5%);
+  --shadow-md: 0 10px 30px -14px rgb(10 10 11 / 22%);
+  --radius-xs: 4px;
   --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --font-sans: 'Geist Variable', 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
-  --font-mono: 'Geist Mono Variable', 'JetBrains Mono Variable', ui-monospace, Consolas, monospace;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 20px;
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-serif: 'Source Serif 4 Variable', Georgia, Cambria, 'Times New Roman', serif;
+  --font-mono: 'Geist Mono Variable', ui-monospace, Consolas, monospace;
+  --page: 1240px;
 
-  /* Older component names, mapped onto the tokens above. */
+  /* Older component names (the Lab tools), mapped onto the tokens above. */
+  --accent: var(--ink);
+  --accent-hover: var(--ink-hover);
+  --accent-ink: var(--ink-text);
+  --accent-soft: var(--surface-3);
+  --accent-line: var(--border-strong);
   --background: var(--bg);
   --panel: var(--surface);
   --panel-raised: var(--surface-2);
   --text-muted: var(--text-2);
   --text-dim: var(--text-3);
-  --accent-strong: var(--accent-hover);
-  --accent-faint: var(--accent-soft);
+  --accent-strong: var(--ink-hover);
+  --accent-faint: var(--surface-2);
   --success: var(--good);
   --warning: var(--warn);
   --danger: var(--bad);
-  --series-learned: var(--series-1);
-  --series-baseline: var(--series-2);
+  --series-1: var(--m-accuracy);
+  --series-2: var(--m-cost);
+  --series-3: var(--good);
+  --series-learned: var(--ink);
+  --series-baseline: var(--text-3);
+  --chart-surface: var(--surface);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:where(:not([data-theme='light'])) {
     color-scheme: dark;
-    --bg: #0b0c0e;
-    --surface: #131417;
-    --surface-2: #1a1b1f;
-    --surface-3: #23252a;
-    --border: #24262b;
-    --border-strong: #34373e;
-    --text: #f3f3f1;
-    --text-2: #b3b5ba;
-    --text-3: #7c7f87;
-    --accent: #8d7dff;
-    --accent-hover: #a194ff;
-    --accent-ink: #0b0c0e;
-    --accent-soft: rgb(141 125 255 / 14%);
-    --accent-line: rgb(141 125 255 / 40%);
-    --good: #3fcf5f;
-    --good-soft: rgb(12 163 12 / 18%);
-    --warn: #fab219;
-    --warn-soft: rgb(250 178 25 / 14%);
-    --bad: #ef6b6b;
-    --bad-soft: rgb(208 59 59 / 18%);
-    --series-1: #3987e5;
-    --series-2: #d95926;
-    --series-3: #199e70;
-    --chart-surface: #131417;
-    --shadow-sm: 0 1px 2px rgb(0 0 0 / 30%);
-    --shadow-md: 0 12px 32px -16px rgb(0 0 0 / 70%);
+    --bg: #0b0b0c;
+    --band: #131315;
+    --surface: #111113;
+    --surface-2: #18181b;
+    --surface-3: #232327;
+    --border: #26262b;
+    --border-strong: #3a3a41;
+    --text: #f4f4f5;
+    --text-2: #a8a8b1;
+    --text-3: #74747d;
+    --ink: #f4f4f5;
+    --ink-hover: #d4d4d8;
+    --ink-text: #0b0b0c;
+    --focus: #60a5fa;
+    --good: #4ade80;
+    --good-soft: rgb(74 222 128 / 12%);
+    --warn: #facc15;
+    --warn-soft: rgb(250 204 21 / 12%);
+    --bad: #f87171;
+    --bad-soft: rgb(248 113 113 / 13%);
+    --m-accuracy: #60a5fa;
+    --m-cost: #fb923c;
+    --m-speed: #facc15;
+    --m-route: #f4f4f5;
+    --maker-google: #3fb96a;
+    --maker-openai: #e4e4e7;
+    --maker-deepseek: #6d86ff;
+    --maker-meta: #3b9bff;
+    --maker-nvidia: #8ccf1c;
+    --maker-alibaba: #ff8a45;
+    --maker-xai: #9c9ca6;
+    --maker-moonshot: #f0607a;
+    --maker-inception: #c99a4f;
+    --maker-other: #7c7c86;
+    --attractive: rgb(74 222 128 / 8%);
+    --chart-grid: #222226;
+    --chart-axis: #3a3a41;
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 40%);
+    --shadow-md: 0 14px 34px -16px rgb(0 0 0 / 75%);
   }
 }
 
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --bg: #0b0c0e;
-  --surface: #131417;
-  --surface-2: #1a1b1f;
-  --surface-3: #23252a;
-  --border: #24262b;
-  --border-strong: #34373e;
-  --text: #f3f3f1;
-  --text-2: #b3b5ba;
-  --text-3: #7c7f87;
-  --accent: #8d7dff;
-  --accent-hover: #a194ff;
-  --accent-ink: #0b0c0e;
-  --accent-soft: rgb(141 125 255 / 14%);
-  --accent-line: rgb(141 125 255 / 40%);
-  --good: #3fcf5f;
-  --good-soft: rgb(12 163 12 / 18%);
-  --warn: #fab219;
-  --warn-soft: rgb(250 178 25 / 14%);
-  --bad: #ef6b6b;
-  --bad-soft: rgb(208 59 59 / 18%);
-  --series-1: #3987e5;
-  --series-2: #d95926;
-  --series-3: #199e70;
-  --chart-surface: #131417;
-  --shadow-sm: 0 1px 2px rgb(0 0 0 / 30%);
-  --shadow-md: 0 12px 32px -16px rgb(0 0 0 / 70%);
+  --bg: #0b0b0c;
+  --band: #131315;
+  --surface: #111113;
+  --surface-2: #18181b;
+  --surface-3: #232327;
+  --border: #26262b;
+  --border-strong: #3a3a41;
+  --text: #f4f4f5;
+  --text-2: #a8a8b1;
+  --text-3: #74747d;
+  --ink: #f4f4f5;
+  --ink-hover: #d4d4d8;
+  --ink-text: #0b0b0c;
+  --focus: #60a5fa;
+  --good: #4ade80;
+  --good-soft: rgb(74 222 128 / 12%);
+  --warn: #facc15;
+  --warn-soft: rgb(250 204 21 / 12%);
+  --bad: #f87171;
+  --bad-soft: rgb(248 113 113 / 13%);
+  --m-accuracy: #60a5fa;
+  --m-cost: #fb923c;
+  --m-speed: #facc15;
+  --m-route: #f4f4f5;
+  --maker-google: #3fb96a;
+  --maker-openai: #e4e4e7;
+  --maker-deepseek: #6d86ff;
+  --maker-meta: #3b9bff;
+  --maker-nvidia: #8ccf1c;
+  --maker-alibaba: #ff8a45;
+  --maker-xai: #9c9ca6;
+  --maker-moonshot: #f0607a;
+  --maker-inception: #c99a4f;
+  --maker-other: #7c7c86;
+  --attractive: rgb(74 222 128 / 8%);
+  --chart-grid: #222226;
+  --chart-axis: #3a3a41;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 40%);
+  --shadow-md: 0 14px 34px -16px rgb(0 0 0 / 75%);
 }
 
 * { box-sizing: border-box; }
-html { min-width: 320px; background: var(--bg); scroll-behavior: smooth; scroll-padding-top: 5rem; }
+html { min-width: 320px; background: var(--bg); scroll-behavior: smooth; scroll-padding-top: 6rem; }
 body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font: 400 15px/1.55 var(--font-sans);
-  font-feature-settings: 'ss01', 'cv11';
+  font: 400 15px/1.6 var(--font-sans);
+  font-feature-settings: 'cv11', 'ss03';
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
-h1, h2, h3, h4 { margin: 0; color: var(--text); font-weight: 650; letter-spacing: -0.02em; line-height: 1.15; }
+h1, h2, h3 { margin: 0; color: var(--text); font-family: var(--font-serif); font-weight: 400; letter-spacing: -0.012em; line-height: 1.15; font-optical-sizing: auto; }
+h4 { margin: 0; color: var(--text); font-weight: 600; letter-spacing: -0.005em; }
 p { margin: 0; }
 a { color: inherit; }
 button, input, textarea, select { font: inherit; color: inherit; }
-code, kbd { font-family: var(--font-mono); font-size: 0.88em; }
-::selection { background: var(--accent-soft); }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+code, kbd { font-family: var(--font-mono); font-size: 0.86em; }
+.num, td, th { font-variant-numeric: tabular-nums; }
+::selection { background: color-mix(in srgb, var(--focus) 22%, transparent); }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+img { display: block; max-width: 100%; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: 0ms !important; transition-duration: 0ms !important; }

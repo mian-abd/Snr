@@ -114,24 +114,52 @@ const poolModel = (id: string, name: string, prompt: string, completion: string)
   request_options: { provider: { order: ['nextbit/bf16'] } }, data_policy: 'OpenRouter paid route.', enabled: true,
 })
 const pool = { schema_version: '1.0', snapshot_id: 'pool-test', metadata_as_of: '2026-10-27T00:00:00Z', models_sha256: 'c'.repeat(64), models: [poolModel('gemma-4-26b', 'Gemma 4 26B', '7.65E-8', '2.55E-7'), poolModel('mercury-3', 'Mercury 3', '1E-7', '3.5E-7')] }
+const flagshipEvaluation = (id: 'cp3_test' | 'final') => {
+  const base = evaluation(id)
+  return {
+    ...base,
+    models: [...base.models, 'gpt-6.1-sol'],
+    matrix: [...base.matrix, matrixRow('gpt-6.1-sol', 'GPT-6.1 Sol', 'paid', 570)],
+    strategies: [
+      ...base.strategies.filter((item) => item.strategy_id !== 'learned:quality'),
+      strategy('learned:quality', 114, 0.3, 4800, { 'gpt-6.1-sol': 60, 'gemma-4-26b': 60 }),
+      strategy('previous_router:quality', 112, 0.421, 5300, { 'gemini-4-argon': 80, 'gemma-4-26b': 40 }),
+      strategy('fixed_top_flagship', 115, 0.25, 3000, { 'gpt-6.1-sol': 120 }),
+    ],
+    comparisons: [comparison('learned:quality', 'previous_router:quality', 'Does the best-quality setting get more right with the flagships in the pool?', 0.017, 0.5)],
+  }
+}
+const flagshipReport = {
+  title: 'With flagship models', question: 'Does adding 1 flagship models to the pool pay off?', flagship_snapshot_id: 'flagship-pool-test',
+  flagships: [poolModel('gpt-6.1-sol', 'GPT-6.1 Sol', '0.000002', '0.00001')],
+  excluded_flagships: [{ model_id: 'grok-4.7', display_name: 'Grok 4.7', prompts_scored: 372, prompts_total: 900, spend_usd: 2.9, reason: 'Stopped after 372 of 900 prompts.' }],
+  strongest_flagship_id: 'gpt-6.1-sol',
+  router: { artifact_id: 'flagship-router-test', family: 'logistic_regression', params: { logisticregression__C: 0.01 }, selection_rule: 'Lower validation log loss.', training_rows: 5000, features: 30,
+    classifiers: report.classifiers, reference_model_task_prior: metrics(0.45), validation_prompts: 120, weight_tuning: report.weight_tuning },
+  protocol: ['Same recipe.', 'Read once more here.'],
+  evaluations: [flagshipEvaluation('cp3_test'), flagshipEvaluation('final')],
+  suite_matrix: [matrixRow('gpt-6.1-sol', 'GPT-6.1 Sol', 'paid', 570)],
+  spend_usd: { cp3: 0.95, final: 0.5 }, spend_by_model_usd: { 'gpt-6.1-sol': 1.45, 'grok-4.7': 2.9 },
+}
 const whatIf = { before: learnedDecision, after: { ...learnedDecision, selected_model_id: 'gemma-4-26b', reason: 'Gemma wins after the change.' }, changed: true }
 
 type Requested = Array<{ url: string; body?: string }>
 
 /** A server with or without a trained router; every response is local. */
-function stub(requested: Requested, { trained = true, keyed = false, final = finalReport as unknown } = {}) {
+function stub(requested: Requested, { trained = true, keyed = false, final = finalReport as unknown, flagships = null as unknown } = {}) {
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input)
     requested.push({ url, body: init?.body ? String(init.body) : undefined })
     if (url.endsWith('/health')) return json({ ...health, credential_configured: keyed })
     if (url.includes('/learned/')) {
       if (!trained) {
-        return url.endsWith('/learned/report') || url.endsWith('/learned/final')
+        return url.endsWith('/learned/report') || url.endsWith('/learned/final') || url.endsWith('/learned/flagships')
           ? json({ detail: 'No report has been generated yet' }, 404)
           : json({ detail: 'The learned router has not been trained yet' }, 503)
       }
       if (url.endsWith('/learned/report')) return json(report)
       if (url.endsWith('/learned/final')) return json(final)
+      if (url.endsWith('/learned/flagships')) return flagships ? json(flagships) : json({ detail: 'The flagship study has not been run yet' }, 404)
       if (url.includes('/learned/catalog')) return json(catalogStatus)
       if (url.endsWith('/learned/pool')) return json(pool)
       if (url.endsWith('/learned/decisions')) return json(learnedDecision)
@@ -170,10 +198,9 @@ test('opens on the home page and explains each page before any training', async 
 test('summarizes the findings and the routing flow on the home page', async () => {
   stub([])
   renderAt('/')
-  expect(await screen.findByText('What the experiments found')).toBeInTheDocument()
-  expect(screen.getByText(/112 of 120 right for \$0\.42, against 112 for \$0\.49/)).toBeInTheDocument()
-  expect(screen.getByText('110 vs 29')).toBeInTheDocument()
-  expect(screen.getByRole('img', { name: /Models chosen under Best quality: Gemini 4 Argon 67%, Gemma 4 26B 33%/ })).toBeInTheDocument()
+  expect(await screen.findByText(/112 of 120 right for \$0\.42, against 112 for \$0\.49/)).toBeInTheDocument()
+  expect(screen.getByRole('img', { name: /^Right answers on fresh prompts: Gemini 4 Argon/ })).toBeInTheDocument()
+  expect(screen.getByRole('listitem', { name: /Best quality: Gemini 4 Argon 67%, Gemma 4 26B 33%/ })).toBeInTheDocument()
   expect(await screen.findByText('1 model unavailable')).toBeInTheDocument()
 })
 
@@ -206,8 +233,8 @@ test('lists the models with live availability and prices, and opens one', async 
   renderAt('/models')
   const user = userEvent.setup()
   expect(await screen.findByText('Unavailable')).toBeInTheDocument()
-  expect(screen.getByText('$0.0765 / $0.255')).toBeInTheDocument()
-  expect(screen.getByText('$0.0675 / $0.225')).toBeInTheDocument()
+  expect(screen.getByText('$0.0675')).toBeInTheDocument()
+  expect(screen.getByText('$0.225')).toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: /Check again/ }))
   await waitFor(() => expect(requested.some(({ url }) => url.endsWith('/learned/catalog/refresh'))).toBe(true))
   await user.click(screen.getByRole('link', { name: /Gemma 4 26B/ }))
@@ -240,6 +267,26 @@ test('shows the research: leaderboard, significance, errors, robustness, trainin
   expect(screen.getByText(/The held-out fifth of the 600-prompt suite/)).toBeInTheDocument()
   expect(screen.queryByText('What the live catalog check is worth')).toBeNull()
   expect(requested.some(({ url }) => url.includes('/routes') || url.includes('/refresh'))).toBe(false)
+})
+
+test('adds the flagship study to the research, the catalog, and the router', async () => {
+  const requested: Requested = []
+  stub(requested, { flagships: flagshipReport })
+  renderAt('/research')
+  const user = userEvent.setup()
+  expect(await screen.findByRole('heading', { name: 'With flagship models' })).toBeInTheDocument()
+  expect(screen.getByText('Grok 4.7 is not in this comparison.')).toBeInTheDocument()
+  const table = screen.getByRole('table', { name: 'Flagship study strategies' })
+  expect(within(table).getByText('Always GPT-6.1 Sol')).toBeInTheDocument()
+  expect(within(table).getByText('Without flagships · Best quality')).toBeInTheDocument()
+  expect(screen.getByText('Does the best-quality setting get more right with the flagships in the pool?')).toBeInTheDocument()
+  cleanup()
+  renderAt('/models')
+  expect(await screen.findByText(/OpenAI · Paid · Flagship/)).toBeInTheDocument()
+  cleanup()
+  renderAt('/router')
+  await user.click(await screen.findByRole('button', { name: /With flagships/ }))
+  await waitFor(() => expect(requested.some(({ url, body }) => url.endsWith('/learned/decisions') && body?.includes('"pool":"flagships"'))).toBe(true))
 })
 
 test('offers only the task filters an evaluation has prompts for', async () => {

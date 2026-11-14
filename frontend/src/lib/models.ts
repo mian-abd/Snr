@@ -15,7 +15,7 @@ export function changedPrice(view: ModelView) {
 }
 
 export function availability(view: ModelView) {
-  if (!view.inRouter) return { tone: 'neutral' as const, text: 'Not in the router' }
+  if (!view.inRouter && !view.flagship) return { tone: 'neutral' as const, text: 'Not routed' }
   if (!view.status) return { tone: 'neutral' as const, text: 'Not checked' }
   if (!view.status.available) return { tone: 'bad' as const, text: 'Unavailable' }
   return view.status.checked ? { tone: 'good' as const, text: 'Available' } : { tone: 'neutral' as const, text: 'Not checked' }

@@ -5,6 +5,7 @@ import type {
   EligibilityResult,
   ExportTable,
   FinalEvaluationReport,
+  FlagshipStudyReport,
   Health,
   LearnedRouteRequest,
   LearnedRouteResponse,
@@ -120,6 +121,14 @@ export const client = {
   finalReport: async () => {
     try {
       return await api<FinalEvaluationReport>('/api/v1/learned/final')
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 404) return null
+      throw error
+    }
+  },
+  flagshipReport: async () => {
+    try {
+      return await api<FlagshipStudyReport>('/api/v1/learned/flagships')
     } catch (error) {
       if (error instanceof ApiError && error.status === 404) return null
       throw error

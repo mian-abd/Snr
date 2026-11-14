@@ -1,10 +1,10 @@
 import { BarChart3, ChevronRight, Coins, ShieldCheck, Shuffle } from 'lucide-react'
 import { PairedBars, BarList } from '../charts/Charts'
-import { accessLabel, evaluationOf, find, modelViews, priorityLabel, priorityOrder, providerLabel, useCatalog, useFinalReport, useLearnedReport, usePool } from '../lib/data'
+import { accessLabel, evaluationOf, find, modelViews, priorityLabel, priorityOrder, providerLabel, useCatalog, useFinalReport, useFlagshipReport, useLearnedReport, usePool } from '../lib/data'
 import { perMillion, pct, seconds, shortTime, usd } from '../lib/format'
 import { availability, changedPrice, priceOf } from '../lib/models'
 import { Link } from '../lib/Link'
-import { Badge, Card, Empty, ModelAvatar, Notice, Section, Skeleton, Stat } from '../ui'
+import { Badge, Card, Empty, ModelAvatar, Notice, Section, SideNav, Skeleton, Stat } from '../ui'
 import ui from '../ui/ui.module.css'
 import styles from './pages.module.css'
 
@@ -15,13 +15,15 @@ const sections = [
   { id: 'pricing', label: 'Price and availability', icon: Coins },
   { id: 'policy', label: 'Data policy', icon: ShieldCheck },
 ]
+const navItems = sections.map(({ id, label }) => ({ id, label }))
 
 export function ModelPage({ id }: { id: string }) {
   const pool = usePool()
   const catalog = useCatalog()
   const learned = useLearnedReport()
   const final = useFinalReport()
-  const views = modelViews(pool.data, catalog.data, learned.data, final.data)
+  const flagships = useFlagshipReport()
+  const views = modelViews(pool.data, catalog.data, learned.data, final.data, flagships.data)
   const view = views.find((item) => item.id === id)
   const fresh = evaluationOf(final.data, 'final')
 
@@ -34,9 +36,10 @@ export function ModelPage({ id }: { id: string }) {
   const state = availability(view)
   const accuracy = view.fresh?.prompts ? view.fresh.correct / view.fresh.prompts : null
   const hosts = (model.request_options.provider as { order?: string[] } | undefined)?.order ?? []
-  const shares = fresh
+  const routedBy = view.flagship ? flagships.data?.evaluations.find((item) => item.evaluation_id === 'final') : fresh
+  const shares = routedBy
     ? priorityOrder.map((priority) => {
-        const strategy = find(fresh.strategies, `learned:${priority}`)
+        const strategy = find(routedBy.strategies, `learned:${priority}`)
         const total = strategy ? Object.values(strategy.selected_models).reduce((sum, n) => sum + n, 0) : 0
         const n = strategy?.selected_models[model.id] ?? 0
         return { id: priority, label: priorityLabel[priority], value: total ? n / total : 0, display: total ? `${Math.round((n / total) * 100)}%` : '—' }
@@ -59,7 +62,8 @@ export function ModelPage({ id }: { id: string }) {
       </div>
       <p className={styles.body} style={{ maxWidth: '50rem' }}>
         {model.family} model, {model.parameters}{model.open_weight ? ', with open weights' : ''}. Reached through {providerLabel[model.provider] ?? model.provider}{hosts.length ? `, pinned to ${hosts.join(', ')}` : ''}.
-        {!view.inRouter && ' Its free service failed repeated smoke tests (overloaded or timing out), so it has no measured results and the router never picks it.'}
+        {!view.inRouter && !view.flagship && ' Its free service failed repeated smoke tests (overloaded or timing out), so it has no measured results and the router never picks it.'}
+        {view.flagship && ' A flagship model, measured on 2026-11-14 for the flagship study: the frozen router never saw it, so only the second router, fit with the same recipe on all models, can choose it.'}
       </p>
       <div className={styles.grid4} style={{ marginTop: '1.25rem' }}>
         <Stat label="Right on fresh prompts" value={accuracy != null ? pct(accuracy) : '—'} hint={view.fresh ? `${view.fresh.correct} of ${view.fresh.prompts}` : 'Not measured'} />
@@ -71,12 +75,7 @@ export function ModelPage({ id }: { id: string }) {
       </div>
 
       <div className={styles.withNav}>
-        <nav className={styles.sideNav} aria-label="On this page">
-          {sections.map((section) => {
-            const Icon = section.icon
-            return <a key={section.id} href={`#/models/${encodeURIComponent(id)}`} onClick={(event) => { event.preventDefault(); document.getElementById(section.id)?.scrollIntoView({ behavior: 'smooth' }) }}><Icon size={15} />{section.label}</a>
-          })}
-        </nav>
+        <SideNav className={styles.sideNav} items={navItems} />
         <div>
           <Section id="performance" icon={<BarChart3 size={18} />} title="Performance by task" description="Share of prompts answered correctly. Code passes only when every hidden test passes; a failed call counts as wrong.">
             {view.suite || view.fresh ? (
@@ -94,7 +93,7 @@ export function ModelPage({ id }: { id: string }) {
             ) : <Empty title="Not measured">This model has no benchmark results.</Empty>}
           </Section>
 
-          <Section id="usage" icon={<Shuffle size={18} />} title="When the router chooses it" description={`Share of the ${fresh?.prompts ?? 300} fresh prompts the adaptive router sent to this model, for each priority.`}>
+          <Section id="usage" icon={<Shuffle size={18} />} title="When the router chooses it" description={`Share of the ${routedBy?.prompts ?? 300} fresh prompts ${view.flagship ? 'the second router (with the flagships)' : 'the adaptive router'} sent to this model, for each priority.`}>
             {shares.length ? <Card><BarList data={shares} max={1} label="Share of prompts per priority" /></Card> : <Empty title="No routing results yet" />}
           </Section>
 
@@ -104,7 +103,7 @@ export function ModelPage({ id }: { id: string }) {
                 <tbody>
                   <tr><td>Snapshot price (in / out per M tokens)</td><td className={ui.num}>{price.input === 0 && price.output === 0 ? 'Free' : `${perMillion(price.input)} / ${perMillion(price.output)}`}</td></tr>
                   <tr><td>Live price</td><td className={ui.num}>{view.status?.live_prompt_price_per_million != null ? `${perMillion(view.status.live_prompt_price_per_million)} / ${perMillion(view.status.live_completion_price_per_million ?? 0)}` : 'Not reported'}</td></tr>
-                  <tr><td>Status</td><td>{view.status?.note ?? (view.inRouter ? 'Not checked yet' : 'Not in the router')}</td></tr>
+                  <tr><td>Status</td><td>{view.status?.note ?? (view.flagship ? 'Price as listed on 2026-11-14; not part of the live check' : view.inRouter ? 'Not checked yet' : 'Not in the router')}</td></tr>
                   {hosts.length > 0 && <tr><td>Pinned hosts</td><td className={ui.num}>{hosts.join(', ')}</td></tr>}
                   {view.status && view.status.missing_hosts.length > 0 && <tr><td>Hosts no longer serving it</td><td className={ui.num}>{view.status.missing_hosts.join(', ')}</td></tr>}
                   <tr><td>Paid cost of its fresh-prompt answers</td><td className={ui.num}>{view.fresh ? usd(view.fresh.cost_usd) : '—'}</td></tr>

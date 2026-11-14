@@ -1,15 +1,17 @@
 import { AlertTriangle, BarChart3, BookOpen, Download, FlaskConical, Gauge, GraduationCap, ListOrdered, Scale, Search, Sigma, SlidersHorizontal } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { client } from '../api/client'
 import type { EvaluationSet, ExportTable, LearnedStrategyOutcome, PairedComparison, RoutingPriority } from '../api/types'
-import { IntervalRow, Legend, PathChart } from '../charts/Charts'
-import { ScatterChart, type ScatterPoint } from '../charts/ScatterChart'
-import { evaluationLabel, evaluationOf, priorityLabel, priorityOrder, strategyFamily, strategyLabel, useFinalReport, useLearnedReport } from '../lib/data'
+import { IntervalRow, PathChart } from '../charts/Charts'
+import { ScatterLegend, TradeoffScatter, type TradeoffPoint } from '../charts/TradeoffScatter'
+import { evaluationLabel, evaluationOf, priorityLabel, priorityOrder, strategyFamily, strategyLabel, useFinalReport, useFlagshipReport, useLearnedReport } from '../lib/data'
 import { pct, pValue, seconds, signed, span, usd } from '../lib/format'
+import { costLine, timeLine, verdict } from '../lib/comparisons'
 import { highlights } from '../lib/insights'
 import { useRoute } from '../lib/router'
-import { Badge, Card, Empty, Meter, PageHeader, Section, Segmented, Skeleton, Stat } from '../ui'
+import { Badge, Card, ChartCard, Empty, Meter, ModelLogo, PageHeader, Section, Segmented, SideNav, Skeleton, Stat } from '../ui'
 import ui from '../ui/ui.module.css'
+import { FlagshipSection } from './FlagshipSection'
 import styles from './pages.module.css'
 
 const views = [
@@ -23,6 +25,7 @@ const nav = [
   { id: 'leaderboard', label: 'Leaderboard', icon: ListOrdered },
   { id: 'tradeoffs', label: 'Accuracy, cost, speed', icon: BarChart3 },
   { id: 'significance', label: 'Is it real?', icon: Sigma },
+  { id: 'flagships', label: 'With flagship models', icon: Gauge },
   { id: 'errors', label: 'Where it goes wrong', icon: Search },
   { id: 'robustness', label: 'When things change', icon: FlaskConical },
   { id: 'priorities', label: 'Your priorities', icon: SlidersHorizontal },
@@ -54,14 +57,14 @@ function outcome(strategy: LearnedStrategyOutcome, view: string) {
   return strategy.by_task[view] ?? { prompts: 0, correct: 0, accuracy: 0, total_cost_usd: 0, median_latency_ms: null }
 }
 
-function points(strategies: LearnedStrategyOutcome[], view: string, axis: 'cost' | 'latency'): ScatterPoint[] {
+function points(strategies: LearnedStrategyOutcome[], view: string, axis: 'cost' | 'latency'): TradeoffPoint[] {
   const spots = new Map<string, LearnedStrategyOutcome[]>()
   for (const strategy of strategies.filter((item) => pointLabels[item.strategy_id] && (view === 'all' || item.by_task[view]))) {
     const value = outcome(strategy, view)
     const key = `${value.correct}|${value.total_cost_usd.toFixed(6)}|${((value.median_latency_ms ?? 0) / 1000).toFixed(2)}`
     spots.set(key, [...(spots.get(key) ?? []), strategy])
   }
-  const result: ScatterPoint[] = []
+  const result: TradeoffPoint[] = []
   for (const group of spots.values()) {
     const value = outcome(group[0], view)
     const learned = group.filter((item) => item.strategy_id.startsWith('learned:'))
@@ -71,37 +74,11 @@ function points(strategies: LearnedStrategyOutcome[], view: string, axis: 'cost'
     const details = [`${value.correct} of ${value.prompts} right (${pct(value.accuracy)})`, `Cost ${usd(value.total_cost_usd)}`, `Median time ${seconds(value.median_latency_ms)}`]
     const kinds = [...new Set(group.map((item) => item.strategy_id.startsWith('learned:')))].sort()
     kinds.forEach((isLearned, index) => result.push({
-      id: `${group[0].strategy_id}-${isLearned}`, label: index === kinds.length - 1 ? label : '', learned: isLearned,
+      id: `${group[0].strategy_id}-${isLearned}`, label: index === kinds.length - 1 ? label : '', kind: isLearned ? 'router' as const : 'baseline' as const,
       x: axis === 'cost' ? value.total_cost_usd : (value.median_latency_ms ?? 0) / 1000, y: value.accuracy * 100, details,
     }))
   }
   return result
-}
-
-function verdict(item: PairedComparison) {
-  if (item.holm_p < 0.05) {
-    return item.accuracy_difference > 0
-      ? { tone: 'good' as const, text: 'More accurate' }
-      : { tone: 'bad' as const, text: 'Less accurate' }
-  }
-  return { tone: 'neutral' as const, text: 'No detectable difference' }
-}
-
-function costLine(item: PairedComparison) {
-  if (item.cost_ratio == null) return 'The comparison is free, so there is no cost ratio.'
-  const ci = item.cost_ratio_ci
-  if (ci && ci.high < 1) return `${Math.round((1 - item.cost_ratio) * 100)}% cheaper (95% interval ${Math.round((1 - ci.high) * 100)}–${Math.round((1 - ci.low) * 100)}%).`
-  if (ci && ci.low > 1) return `${item.cost_ratio.toFixed(2)}× the cost.`
-  return `Cost ratio ${item.cost_ratio.toFixed(2)}×, not clearly different.`
-}
-
-const signedSeconds = (ms: number) => `${ms > 0 ? '+' : ms < 0 ? '−' : '±'}${Math.abs(ms / 1000).toFixed(1)} s`
-
-function timeLine(item: PairedComparison) {
-  if (!/:(latency|balanced)$/.test(item.strategy_id)) return ''
-  const ci = item.median_latency_difference_ci
-  const verdict = ci.high < 0 ? 'faster' : ci.low > 0 ? 'slower' : 'not clearly different'
-  return ` Median time ${signedSeconds(item.median_latency_difference_ms)} (95% interval ${signedSeconds(ci.low)} to ${signedSeconds(ci.high)}), ${verdict}.`
 }
 
 const familyRank = ['learned', 'fixed', 'rule', 'model_task_prior', 'learned_no_catalog', 'oracle']
@@ -147,7 +124,7 @@ function Leaderboard({ evaluation, view }: { evaluation: EvaluationSet; view: st
                     </td>
                     <td><span className={ui.num}>{usd(value.total_cost_usd)}</span>{interval && !zero(interval.total_cost_usd) && <span className={ui.cellSub}>{span(interval.total_cost_usd, usd)}</span>}</td>
                     <td><span className={ui.num}>{seconds(value.median_latency_ms)}</span>{interval && <span className={ui.cellSub}>{span(interval.median_latency_ms, (x) => seconds(x))}</span>}</td>
-                    <td>{view === 'all' && total ? top.map(([model, n]) => <span key={model} className={ui.cellSub} style={{ marginTop: 0 }}>{names.get(model) ?? model} · {Math.round((n / total) * 100)}%</span>) : <span className={ui.muted}>—</span>}</td>
+                    <td>{view === 'all' && total ? top.map(([model, n]) => <span key={model} className={ui.cellSub} style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: 6 }}><ModelLogo id={model} size={13} local={model.includes('local')} />{names.get(model) ?? model} · {Math.round((n / total) * 100)}%</span>) : <span className={ui.muted}>—</span>}</td>
                   </tr>
                 )
               }),
@@ -162,7 +139,9 @@ function Leaderboard({ evaluation, view }: { evaluation: EvaluationSet; view: st
 export function ResearchPage() {
   const report = useFinalReport()
   const learned = useLearnedReport()
+  const flagship = useFlagshipReport()
   const { query } = useRoute()
+  const navItems = useMemo(() => nav.filter((item) => item.id !== 'flagships' || flagship.data).map(({ id, label }) => ({ id, label })), [flagship.data])
   const [evaluationId, setEvaluationId] = useState<EvaluationSet['evaluation_id']>('final')
   const [view, setView] = useState('all')
   const [preset, setPreset] = useState<RoutingPriority>('quality')
@@ -203,17 +182,12 @@ export function ResearchPage() {
   return (
     <>
       <PageHeader
-        eyebrow={<><BookOpen size={15} />Research</>}
+        eyebrow="Research"
         title="Does routing pay off?"
         description="The adaptive router was frozen, then tested against single models, a hand-written rule router, and a hindsight oracle on prompts it had never seen. Here is everything we measured, with the uncertainty attached."
       />
       <div className={styles.withNav}>
-        <nav className={styles.sideNav} aria-label="Sections">
-          {nav.map((item) => {
-            const Icon = item.icon
-            return <a key={item.id} href={`#/research?section=${item.id}`} onClick={(event) => { event.preventDefault(); document.getElementById(item.id)?.scrollIntoView({ behavior: 'smooth' }) }}><Icon size={15} />{item.label}</a>
-          })}
-        </nav>
+        <SideNav className={styles.sideNav} items={navItems} label="Sections" />
         <div>
           <div className={styles.controls} style={{ paddingTop: '2.75rem' }}>
             <Segmented label="Prompt set" value={evaluation.evaluation_id} onChange={setEvaluationId}
@@ -235,12 +209,17 @@ export function ResearchPage() {
           </Section>
 
           <Section id="tradeoffs" icon={<BarChart3 size={18} />} title="Accuracy against cost and speed" description="Up and to the left is better. The router's four priorities trace a trade-off; the baselines sit at single points.">
-            <div style={{ marginBottom: '0.75rem' }}>
-              <Legend items={[{ name: 'Adaptive router', color: 'var(--series-1)' }, { name: 'Baselines', color: 'var(--series-2)', shape: 'square' }]} />
-            </div>
-            <div className={styles.grid2}>
-              <ScatterChart title="Accuracy against paid cost" subtitle="Total billed for all prompts" points={points(evaluation.strategies, activeView, 'cost')} xLabel="Total paid cost (USD)" formatX={(value) => `$${value < 0.1 && value > 0 ? value.toFixed(3) : value.toFixed(2)}`} yLabel="Right answers" />
-              <ScatterChart title="Accuracy against response time" subtitle="Median per prompt" points={points(evaluation.strategies, activeView, 'latency')} xLabel="Median response time (s)" formatX={(value) => `${Number(value.toFixed(1))} s`} yLabel="Right answers" />
+            <div className={styles.stack}>
+              <ChartCard metric="cost" title="Accuracy against paid cost" subtitle="Share right and total billed for all prompts"
+                tools={<ScatterLegend items={[{ name: 'Adaptive router', shape: 'diamond' }, { name: 'Baselines', shape: 'square' }]} />}>
+                <TradeoffScatter label="Accuracy against paid cost" points={points(evaluation.strategies, activeView, 'cost')} xLabel="Total paid cost (USD)" yLabel="Right answers" height={380}
+                  formatX={(value) => `$${value < 0.1 && value > 0 ? value.toFixed(3) : value.toFixed(2)}`} />
+              </ChartCard>
+              <ChartCard metric="speed" title="Accuracy against response time" subtitle="Share right and median seconds per prompt"
+                tools={<ScatterLegend items={[{ name: 'Adaptive router', shape: 'diamond' }, { name: 'Baselines', shape: 'square' }]} />}>
+                <TradeoffScatter label="Accuracy against response time" points={points(evaluation.strategies, activeView, 'latency')} xLabel="Median response time (s)" yLabel="Right answers" height={380}
+                  formatX={(value) => `${Number(value.toFixed(1))} s`} />
+              </ChartCard>
             </div>
           </Section>
 
@@ -273,6 +252,8 @@ export function ResearchPage() {
             ))}</div>
             <p className={styles.small} style={{ marginTop: '0.6rem' }}>The bar shows the accuracy difference with its 95% interval; the line is zero. "No detectable difference" means the data cannot tell the two apart, not that they are identical.</p>
           </Section>
+
+          {flagship.data && <FlagshipSection report={flagship.data} evaluationId={evaluation.evaluation_id} />}
 
           <Section id="errors" icon={<Search size={18} />} title="Where the router goes wrong" description="Each choice compared with what every model actually did on the same prompt."
             actions={<Segmented label="Priority" value={preset} onChange={setPreset} options={priorityOrder.map((id) => ({ id, label: priorityLabel[id] }))} />}>

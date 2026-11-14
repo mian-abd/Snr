@@ -376,8 +376,11 @@ export type LearnedRoutingDecision = {
   catalog_checked_at_utc: string | null
 }
 
+export type LearnedPool = 'standard' | 'flagships'
+
 export type LearnedRouteRequest = {
   prompt: string
+  pool?: LearnedPool
   priority: RoutingPriority
   weights: RoutingWeights | null
   task_group: TaskGroup | null
@@ -593,6 +596,43 @@ export type FinalEvaluationReport = {
   evaluations: EvaluationSet[]
   robustness: RobustnessReport[]
   spend_usd: number
+}
+
+export type FlagshipRouter = {
+  artifact_id: string
+  family: string
+  params: Record<string, number>
+  selection_rule: string
+  training_rows: number
+  features: number
+  classifiers: Record<string, ClassifierReport>
+  reference_model_task_prior: ClassifierMetrics
+  validation_prompts: number
+  weight_tuning: WeightTuningResult[]
+}
+
+export type ExcludedFlagship = {
+  model_id: string
+  display_name: string
+  prompts_scored: number
+  prompts_total: number
+  spend_usd: number
+  reason: string
+}
+
+export type FlagshipStudyReport = {
+  title: string
+  question: string
+  flagship_snapshot_id: string
+  flagships: PoolModel[]
+  excluded_flagships: ExcludedFlagship[]
+  strongest_flagship_id: string
+  router: FlagshipRouter
+  protocol: string[]
+  evaluations: EvaluationSet[]
+  suite_matrix: LearnedMatrixRow[]
+  spend_usd: Record<string, number>
+  spend_by_model_usd: Record<string, number>
 }
 
 export type ExportTable = 'strategies' | 'comparisons' | 'errors' | 'robustness' | 'sweep' | 'decisions' | 'cells'

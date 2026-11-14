@@ -1,11 +1,11 @@
 import { useMutation } from '@tanstack/react-query'
 import { ArrowRight, Clock3, Coins, FlaskConical, Gauge, Globe2, HardDrive, Play, Scale, ScanSearch, Sparkles, Zap } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { client } from '../api/client'
-import type { LearnedCandidate, LearnedRouteRequest, RoutingPriority, RoutingWeights, TaskGroup, WhatIfChanges } from '../api/types'
-import { accessLabel, priorityHint, priorityLabel, priorityOrder, providerLabel, useHealth, useLearnedReport } from '../lib/data'
+import type { LearnedCandidate, LearnedPool, LearnedRouteRequest, RoutingPriority, RoutingWeights, TaskGroup, WhatIfChanges } from '../api/types'
+import { accessLabel, priorityHint, priorityLabel, priorityOrder, providerLabel, useFlagshipReport, useHealth, useLearnedReport } from '../lib/data'
 import { pct, seconds, usdOrFree } from '../lib/format'
-import { Badge, Button, Card, CardHeader, Empty, Meter, ModelAvatar, Notice, PageHeader, Stat } from '../ui'
+import { Badge, Button, Card, CardHeader, Empty, Meter, ModelAvatar, Notice, PageHeader, Segmented, Stat } from '../ui'
 import ui from '../ui/ui.module.css'
 import styles from './pages.module.css'
 
@@ -66,7 +66,10 @@ function CandidateRow({ item, selected }: { item: LearnedCandidate; selected: bo
 export function RouterPage() {
   const report = useLearnedReport()
   const health = useHealth()
-  const presets: Partial<Record<RoutingPriority, RoutingWeights>> = Object.fromEntries(report.data?.weight_tuning.map((item) => [item.priority, item.weights]) ?? [])
+  const flagships = useFlagshipReport()
+  const [pool, setPool] = useState<LearnedPool>('standard')
+  const tuning = pool === 'flagships' ? flagships.data?.router.weight_tuning : report.data?.weight_tuning
+  const presets: Partial<Record<RoutingPriority, RoutingWeights>> = Object.fromEntries(tuning?.map((item) => [item.priority, item.weights]) ?? [])
   const [prompt, setPrompt] = useState(examples[0].text)
   const [priority, setPriority] = useState<RoutingPriority>('balanced')
   const [task, setTask] = useState<TaskGroup | 'auto'>('auto')
@@ -74,8 +77,23 @@ export function RouterPage() {
   const [minContext, setMinContext] = useState(1)
   const [last, setLast] = useState<'preview' | 'route'>('preview')
   const weights = custom ?? presets[priority] ?? fallback
-  const request = (): LearnedRouteRequest => ({ prompt: prompt.trim(), priority, weights: custom, task_group: task === 'auto' ? null : task, min_context_tokens: minContext })
+  const request = (): LearnedRouteRequest => ({ prompt: prompt.trim(), pool, priority, weights: custom, task_group: task === 'auto' ? null : task, min_context_tokens: minContext })
   const preview = useMutation({ mutationFn: () => client.previewLearnedRoute(request()), onSuccess: () => setLast('preview') })
+  // Show a decision for the example prompt straight away; a preview never calls a provider.
+  const previewed = useRef(false)
+  const { mutate: runPreview } = preview
+  useEffect(() => {
+    if (previewed.current || !report.data) return
+    previewed.current = true
+    runPreview()
+  }, [report.data, runPreview])
+  // Switching pools re-scores the current prompt with the other router.
+  const shownPool = useRef(pool)
+  useEffect(() => {
+    if (shownPool.current === pool) return
+    shownPool.current = pool
+    runPreview()
+  }, [pool, runPreview])
   const route = useMutation({ mutationFn: () => client.learnedRoute(request()), onSuccess: () => setLast('route') })
   const decision = last === 'route' ? route.data?.decision ?? preview.data : preview.data ?? route.data?.decision
   const ranked = decision ? [...decision.candidates].sort((a, b) => (b.score ?? -Infinity) - (a.score ?? -Infinity)) : []
@@ -103,6 +121,17 @@ export function RouterPage() {
           <div className={styles.examples}>
             {examples.map((example) => <button key={example.label} type="button" className={styles.chip} onClick={() => setPrompt(example.text)}>{example.label}</button>)}
           </div>
+
+          {flagships.data && (
+            <>
+              <span className={styles.label}>Models to choose from</span>
+              <Segmented label="Model pool" value={pool} onChange={(next) => { setPool(next); setCustom(null); setWhatModel(null) }} options={[
+                { id: 'standard', label: `Standard · ${report.data?.models.length ?? 9}`, title: 'The frozen router and the models it was built on' },
+                { id: 'flagships', label: `With flagships · ${(report.data?.models.length ?? 9) + flagships.data.flagships.length}`, title: `A second router fit with the same recipe, adding ${flagships.data.flagships.map((model) => model.display_name).join(', ')}` },
+              ]} />
+              {pool === 'flagships' && <p className={styles.small} style={{ marginTop: '0.5rem' }}>The second router, fit with the same recipe after adding {flagships.data.flagships.map((model) => model.display_name).join(', ')}. The live catalog check covers the standard models; flagship prices are as listed on 2026-11-14.</p>}
+            </>
+          )}
 
           <span className={styles.label}>What matters most?</span>
           <div className={styles.priorities}>

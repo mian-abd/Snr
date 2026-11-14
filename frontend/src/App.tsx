@@ -1,19 +1,21 @@
-import { Menu, Moon, Route as RouteIcon, Sun, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Menu, Moon, Sun, Waypoints, X } from 'lucide-react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { useCatalog, useHealth } from './lib/data'
 import { shortTime } from './lib/format'
 import { Link } from './lib/Link'
 import { useRoute } from './lib/router'
 import { useTheme } from './lib/theme'
-import { FaqPage } from './pages/FaqPage'
-import { HomePage } from './pages/HomePage'
-import { LabPage } from './pages/LabPage'
-import { ModelPage } from './pages/ModelPage'
-import { ModelsPage } from './pages/ModelsPage'
-import { ResearchPage } from './pages/ResearchPage'
-import { RouterPage } from './pages/RouterPage'
-import { Notice } from './ui'
+import { Notice, Skeleton } from './ui'
 import styles from './App.module.css'
+
+// Each page loads its own code on first visit.
+const FaqPage = lazy(() => import('./pages/FaqPage').then((m) => ({ default: m.FaqPage })))
+const HomePage = lazy(() => import('./pages/HomePage').then((m) => ({ default: m.HomePage })))
+const LabPage = lazy(() => import('./pages/LabPage').then((m) => ({ default: m.LabPage })))
+const ModelPage = lazy(() => import('./pages/ModelPage').then((m) => ({ default: m.ModelPage })))
+const ModelsPage = lazy(() => import('./pages/ModelsPage').then((m) => ({ default: m.ModelsPage })))
+const ResearchPage = lazy(() => import('./pages/ResearchPage').then((m) => ({ default: m.ResearchPage })))
+const RouterPage = lazy(() => import('./pages/RouterPage').then((m) => ({ default: m.RouterPage })))
 
 const links = [
   { to: '/router', label: 'Router' },
@@ -57,17 +59,25 @@ export default function App() {
   const [menu, setMenu] = useState(false)
   const health = useHealth()
   useEffect(() => setMenu(false), [path])
+  const [scrolled, setScrolled] = useState(false)
+  useEffect(() => {
+    const update = () => setScrolled(window.scrollY > 8)
+    update()
+    window.addEventListener('scroll', update, { passive: true })
+    return () => window.removeEventListener('scroll', update)
+  }, [])
   const current = (to: string) => (path === to || path.startsWith(`${to}/`) ? 'page' : undefined)
 
   return (
     <div className={styles.app}>
-      <header className={styles.header}>
+      <header className={`${styles.header} ${scrolled ? styles.headerScrolled : ''}`}>
         <div className={styles.headerInner}>
-          <Link to="/" className={styles.brand}><span className={styles.mark}><RouteIcon size={15} strokeWidth={2.4} /></span>Adaptive Router</Link>
-          <nav className={styles.nav} aria-label="Main">
-            {links.map((link) => <Link key={link.to} to={link.to} aria-current={current(link.to)}>{link.label}</Link>)}
-          </nav>
-          <span className={styles.spacer} />
+          <Link to="/" className={styles.brand}><Waypoints size={17} strokeWidth={2} />Adaptive Router</Link>
+          <div className={styles.navWrap}>
+            <nav className={styles.nav} aria-label="Main">
+              {links.map((link) => <Link key={link.to} to={link.to} aria-current={current(link.to)}>{link.label}</Link>)}
+            </nav>
+          </div>
           <div className={styles.tools}>
             <CatalogPill />
             <button type="button" className={styles.iconButton} onClick={toggle} aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'} title={theme === 'dark' ? 'Light theme' : 'Dark theme'}>
@@ -87,17 +97,23 @@ export default function App() {
       <main className={styles.main}>
         {health.isError
           ? <div className={styles.error}><Notice tone="bad" role="alert"><strong>The server could not be reached.</strong> Start it with <code>./scripts/demo.ps1</code> and reload this page.</Notice></div>
-          : <Page segments={segments} />}
+          : <Suspense fallback={<div style={{ paddingTop: '3rem' }}><Skeleton height={420} /></div>}><Page segments={segments} /></Suspense>}
       </main>
       <footer className={styles.footer}>
         <div className={styles.footerInner}>
           <div>
-            <strong>Adaptive LLM Router</strong>
+            <span className={styles.footerBrand}>Adaptive LLM Router</span>
             <p>Open research on sending each prompt to the model that is good enough: measured outcomes, a small learned router, and every number reproducible from the published data. Prompts leave this computer only when you press Run.</p>
           </div>
-          <div className={styles.footerLinks}>
+          <div className={styles.footerCol}>
+            <strong>Explore</strong>
             {links.map((link) => <Link key={link.to} to={link.to}>{link.label}</Link>)}
-            <Link to="/research?section=downloads">Download the data</Link>
+          </div>
+          <div className={styles.footerCol}>
+            <strong>Data</strong>
+            <Link to="/research?section=downloads">Download the results</Link>
+            <Link to="/research?section=method">Method and limits</Link>
+            <Link to="/models">Live model catalog</Link>
           </div>
         </div>
       </footer>

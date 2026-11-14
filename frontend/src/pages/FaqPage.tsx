@@ -1,7 +1,7 @@
 import { HelpCircle, Plus } from 'lucide-react'
 import type { ReactNode } from 'react'
 import type { EvaluationSet, LearnedMatrixRow } from '../api/types'
-import { evaluationOf, find, useCatalog, useFinalReport, useLearnedReport } from '../lib/data'
+import { evaluationOf, find, useCatalog, useFinalReport, useFlagshipReport, useLearnedReport } from '../lib/data'
 import { pct, usd } from '../lib/format'
 import { Link } from '../lib/Link'
 import { PageHeader } from '../ui'
@@ -48,7 +48,19 @@ export function FaqPage() {
   const learned = useLearnedReport()
   const catalog = useCatalog()
   const fresh = evaluationOf(report.data, 'final') ?? evaluationOf(report.data, 'cp3_test')
-  const matrix = fresh?.matrix.filter((row) => row.prompts - row.failed_calls > 0) ?? learned.data?.matrix ?? []
+  const flagship = useFlagshipReport()
+  const extended = flagship.data?.evaluations.find((item) => item.evaluation_id === 'final')
+  const matrix = (extended ?? fresh)?.matrix.filter((row) => row.prompts - row.failed_calls > 0) ?? learned.data?.matrix ?? []
+  const flagshipIds = new Set(flagship.data?.flagships.map((model) => model.id) ?? [])
+  const bestFlagship = matrix.filter((row) => flagshipIds.has(row.model_id)).sort((a, b) => b.correct - a.correct || a.cost_usd - b.cost_usd)[0]
+  const argon = matrix.find((row) => row.model_id === 'gemini-4-argon')
+  const second = extended && find(extended.strategies, 'learned:quality')
+  const frozen = extended && find(extended.strategies, 'previous_router:quality')
+  const secondVsFrozen = extended?.comparisons.find((item) => item.strategy_id === 'learned:quality' && item.baseline_id === 'previous_router:quality')
+  const fastWith = extended && find(extended.strategies, 'learned:latency')
+  const fastWithout = extended && find(extended.strategies, 'previous_router:latency')
+  const fastGain = extended?.comparisons.find((item) => item.strategy_id === 'learned:latency' && item.baseline_id === 'previous_router:latency')
+  const toFlagships = second ? Object.entries(second.selected_models).filter(([id]) => flagshipIds.has(id)).reduce((sum, [, n]) => sum + n, 0) : 0
   const { lq, fs, comparison, main, share } = savings(fresh)
   const features = fresh?.comparisons.find((item) => item.strategy_id === 'learned:quality' && item.baseline_id === 'model_task_prior:quality')
   const featuresReal = features ? features.holm_p < 0.05 : false
@@ -96,6 +108,15 @@ export function FaqPage() {
             <p>{shareWords(share)} of the saving ({pct(share, 0)}) comes from {taskNames[main.task] ?? main.task}: there the router got {main.routed.correct} of {main.routed.prompts} right, against {main.strongest.correct} for the strongest model, for {usd(main.routed.total_cost_usd)} instead of {usd(main.strongest.total_cost_usd)}.</p>
           )}
         </Q>
+
+        {bestFlagship && argon && second && frozen && (
+          <Q q="Do flagship models make the router better?">
+            <p>{flagship.data?.flagships.length} flagship models ({flagship.data?.flagships.map((model) => model.display_name).join(', ')}) answered the same fresh prompts.{flagship.data?.excluded_flagships.length ? ` ${flagship.data.excluded_flagships.map((item) => item.display_name).join(', ')} was stopped before finishing, because its answers ran far past the token limit and the budget.` : ''} The best of them, <strong>{bestFlagship.display_name}</strong>, got {bestFlagship.correct} of {bestFlagship.prompts} right for {usd(bestFlagship.cost_usd)}; Gemini 4 Argon, the strongest model before, got {argon.correct} for {usd(argon.cost_usd)}.</p>
+            <p>A second router fit with the same recipe on all {extended?.models.length} models got <strong>{second.correct} right for {usd(second.total_cost_usd)}</strong> at the best-quality priority, sending {toFlagships} of {second.prompts} prompts to a flagship. The frozen router without them got {frozen.correct} for {usd(frozen.total_cost_usd)}.{secondVsFrozen && (secondVsFrozen.holm_p < 0.05 ? ' The difference in accuracy is statistically clear.' : ' The difference in accuracy is within what chance could produce on this many prompts.')}</p>
+            {fastWith && fastWithout && fastGain && <p>Where they did change things is speed: at the Fastest priority the second router got {fastWith.correct} right instead of {fastWithout.correct}{fastGain.median_latency_difference_ci.high < 0 ? `, ${Math.abs(fastGain.median_latency_difference_ms / 1000).toFixed(1)} s quicker at the median` : ''}, by sending almost every prompt to the fast flagship. {fastGain.holm_p < 0.05 ? 'That accuracy gain is statistically clear.' : 'That accuracy gain is not statistically clear once all the questions asked are accounted for.'}</p>}
+            <p>These benchmarks are close to their ceiling for strong models, so a flagship can add only a few right answers here. The full comparison is under <Link to="/research?section=flagships">With flagship models</Link>.</p>
+          </Q>
+        )}
 
         <Q q="Is the router smarter than just picking the right model per task?">
           {features ? (

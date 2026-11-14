@@ -3,6 +3,7 @@ import { client } from '../api/client'
 import type {
   EvaluationSet,
   FinalEvaluationReport,
+  FlagshipStudyReport,
   LearnedMatrixRow,
   LearnedRouterReport,
   LearnedStrategyOutcome,
@@ -18,6 +19,7 @@ export const catalogKey = ['learned-catalog']
 export const useHealth = () => useQuery({ queryKey: ['health'], queryFn: client.health, refetchInterval: 15_000 })
 export const useFinalReport = () => useQuery({ queryKey: ['final-report'], queryFn: client.finalReport, staleTime: Infinity })
 export const useLearnedReport = () => useQuery({ queryKey: ['learned-report'], queryFn: client.learnedReport, staleTime: Infinity })
+export const useFlagshipReport = () => useQuery({ queryKey: ['flagship-report'], queryFn: client.flagshipReport, staleTime: Infinity })
 export const usePool = () => useQuery({ queryKey: ['learned-pool'], queryFn: client.learnedPool, staleTime: Infinity })
 export const useCatalog = () => useQuery({ queryKey: catalogKey, queryFn: client.learnedCatalog })
 
@@ -81,6 +83,8 @@ export type ModelView = {
   inRouter: boolean
   fresh: LearnedMatrixRow | undefined
   suite: LearnedMatrixRow | undefined
+  /** In the flagship study only: reached by the second router, not the frozen one. */
+  flagship: boolean
 }
 
 export function modelViews(
@@ -88,47 +92,30 @@ export function modelViews(
   catalog: LiveCatalogStatus | null | undefined,
   learned: LearnedRouterReport | null | undefined,
   final: FinalEvaluationReport | null | undefined,
+  flagships?: FlagshipStudyReport | null,
 ): ModelView[] {
   if (!pool) return []
   const status = new Map(catalog?.models.map((item) => [item.model_id, item]))
   const fresh = new Map(final?.evaluations.find((item) => item.evaluation_id === 'final')?.matrix.map((row) => [row.model_id, row]))
   const suite = new Map(learned?.matrix.map((row) => [row.model_id, row]))
   const routed = new Set(learned?.models ?? [])
-  return pool.models.map((model) => ({
+  const views: ModelView[] = pool.models.map((model) => ({
     id: model.id,
     pool: model,
     status: status.get(model.id),
     inRouter: routed.size === 0 || routed.has(model.id),
     fresh: fresh.get(model.id),
     suite: suite.get(model.id),
+    flagship: false,
   }))
-}
-
-/** Provider families get a stable tint so avatars are recognizable at a glance. */
-const tints: Array<[RegExp, string]> = [
-  [/gemini/i, '#3b6fd8'],
-  [/gemma/i, '#1f8a9e'],
-  [/deepseek/i, '#4c62e8'],
-  [/nemotron|nvidia/i, '#4f9a1d'],
-  [/gpt-oss|openai/i, '#3a3a3a'],
-  [/llama|meta/i, '#1d6fe0'],
-  [/local/i, '#2f7d4f'],
-  [/qwen|alibaba/i, '#7a4fd8'],
-  [/mercury|inception/i, '#c0582f'],
-]
-
-/** Short, distinct codes for the pool's models; anything else gets its initials. */
-const codes: Record<string, string> = {
-  'gemma-4-26b': 'Gm', 'gemma-4-31b': 'Gm', 'gemini-4-argon': 'Gi', 'deepseek-v4-flash': 'Ds',
-  'deepseek-v4.1-flash': 'Ds', 'nemotron-3-ultra-free': 'Nv', 'gpt-oss-120b': 'Oa', 'llama-3.3-70b': 'Ll',
-  'qwen-3.8-27b': 'Qw', 'qwen-3.5-9b-local': 'Qw', 'mercury-3': 'Me',
-}
-
-export function avatarFor(model: { id: string; display_name: string }) {
-  const tint = tints.find(([pattern]) => pattern.test(model.id))?.[1] ?? '#6b6b6b'
-  const words = model.display_name.replace(/\(.*?\)/g, '').trim().split(/\s+/)
-  const letters = codes[model.id] ?? `${words[0][0] ?? '?'}${(words[1]?.[0] ?? '').toLowerCase()}`
-  return { tint, letters }
+  if (flagships) {
+    const flagshipFresh = new Map(flagships.evaluations.find((item) => item.evaluation_id === 'final')?.matrix.map((row) => [row.model_id, row]))
+    const flagshipSuite = new Map(flagships.suite_matrix.map((row) => [row.model_id, row]))
+    for (const model of flagships.flagships) {
+      views.push({ id: model.id, pool: model, status: status.get(model.id), inRouter: false, fresh: flagshipFresh.get(model.id), suite: flagshipSuite.get(model.id), flagship: true })
+    }
+  }
+  return views
 }
 
 export const accessLabel: Record<string, string> = { paid: 'Paid', free: 'Free', local: 'On this computer' }
