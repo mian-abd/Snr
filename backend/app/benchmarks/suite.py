@@ -31,6 +31,8 @@ class RouterSplit(StrEnum):
     TRAIN = "train"
     VALIDATION = "validation"
     TEST = "test"
+    # Week of Nov 19: fresh prompts drawn after the router was frozen (app.benchmarks.prepare_final)
+    FINAL = "final"
 
 
 TASK_GROUPS = {

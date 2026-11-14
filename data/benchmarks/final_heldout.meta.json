@@ -1,0 +1,88 @@
+{
+  "counts": {
+    "gsm8k": {
+      "final": 100
+    },
+    "humaneval_plus": {
+      "final": 50
+    },
+    "mbpp_plus": {
+      "final": 50
+    },
+    "mmlu_pro": {
+      "final": 100
+    }
+  },
+  "drawn_after": "the learned router was exported and evaluated on the Checkpoint 3 test split (data/learned/cp3-router-model.json)",
+  "excluded": {
+    "cp3_suite_sha256": "fbac0ccdc0611704ee7b01d0a236fa83ce0ec77fa1a834212b62de097dc25ca8",
+    "gsm8k_checkpoint1_indices": [
+      30,
+      263,
+      507,
+      509,
+      539,
+      756,
+      780,
+      851,
+      987,
+      1218,
+      1227,
+      1251
+    ]
+  },
+  "final_sha256": "527d78fc523e8cbd1e7c31a26b0bb037a0ab9cb5f460b36bc88a3e05c22cb62c",
+  "seed": 20261119,
+  "sources": {
+    "gsm8k": {
+      "configuration": "main",
+      "dataset": "openai/gsm8k",
+      "excluded_as_used": 212,
+      "file": "main/test-00000-of-00001.parquet",
+      "kind": "hf",
+      "license": "MIT",
+      "revision": "740312add88f781978c0658806c59bc2815b9866",
+      "sampled": 100,
+      "sha256": "ee7b8da9e381df27b9e3f7758a159ab2bdaa4dbaa910546cbbc47e0cb44e4f59",
+      "source_rows": 1319,
+      "split": "test"
+    },
+    "humaneval_plus": {
+      "dataset": "evalplus/humanevalplus",
+      "excluded_as_used": 100,
+      "kind": "release",
+      "license": "Apache-2.0",
+      "revision": "v0.1.10",
+      "sampled": 50,
+      "sha256": "272720b90ac375502c8ed23cd791c2a93dfb22a911641a494da74a426c09f101",
+      "source_rows": 164,
+      "split": "test",
+      "url": "https://github.com/evalplus/humanevalplus_release/releases/download/v0.1.10/HumanEvalPlus.jsonl.gz"
+    },
+    "mbpp_plus": {
+      "dataset": "evalplus/mbppplus",
+      "excluded_as_used": 100,
+      "kind": "release",
+      "license": "Apache-2.0",
+      "revision": "v0.2.0",
+      "sampled": 50,
+      "sha256": "af43697e8791c4c149bdfd6b489d8b5412507551ac20e28a439f650b8225db63",
+      "source_rows": 378,
+      "split": "test",
+      "url": "https://github.com/evalplus/mbppplus_release/releases/download/v0.2.0/MbppPlus.jsonl.gz"
+    },
+    "mmlu_pro": {
+      "dataset": "TIGER-Lab/MMLU-Pro",
+      "excluded_as_used": 200,
+      "file": "data/test-00000-of-00001.parquet",
+      "kind": "hf",
+      "license": "MIT",
+      "revision": "b189ec765aa7ed75c8acfea42df31fdae71f97be",
+      "sampled": 100,
+      "sha256": "0e24a191921c2f453518a537a8b2117bd137e7714d4ef1565e9ba06c1ecb9ad8",
+      "source_rows": 12032,
+      "split": "test"
+    }
+  },
+  "suite": "final-heldout"
+}

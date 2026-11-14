@@ -3,6 +3,7 @@
     uv run --project backend python -m app.benchmarks.suite_runner --smoke 2   # estimate only
     uv run --project backend python -m app.benchmarks.suite_runner --smoke 2 --confirm
     uv run --project backend python -m app.benchmarks.suite_runner --confirm   # all 600
+    uv run --project backend python -m app.benchmarks.suite_runner --suite final --confirm
 
 Each model runs in its own paced worker, so a slow free endpoint never blocks the others.
 Every attempt is appended as soon as it finishes and a run resumes where it stopped. Paid spend
@@ -42,6 +43,9 @@ from app.registry.pool import Access, PoolModel, PoolSnapshot, endpoint_for, loa
 from app.storage import append_jsonl, atomic_write_json, read_jsonl
 
 SUITE_PATH = REPOSITORY_ROOT / "data" / "benchmarks" / "cp3_suite.jsonl"
+FINAL_PATH = REPOSITORY_ROOT / "data" / "benchmarks" / "final_heldout.jsonl"
+SUITES = {"cp3": SUITE_PATH, "final": FINAL_PATH}
+DEFAULT_RUN_IDS = {"cp3": "cp3-full", "final": "final-heldout"}
 POOL_PATH = REPOSITORY_ROOT / "data" / "registry" / "cp3-pool-2026-10-27.json"
 RUNS_DIR = REPOSITORY_ROOT / "data" / "local" / "cp3"
 SPEND_CAP_USD = Decimal("15.00")
@@ -256,7 +260,8 @@ def _select_items(items: list[SuiteItem], smoke: int | None) -> list[SuiteItem]:
 
 async def run(args: argparse.Namespace) -> int:
     snapshot = load_pool(POOL_PATH)
-    items = _select_items(load_suite(SUITE_PATH), args.smoke)
+    suite_path = SUITES[args.suite]
+    items = _select_items(load_suite(suite_path), args.smoke)
     keys = _load_keys()
     wanted = set(args.models.split(",")) if args.models else None
     models: list[PoolModel] = []
@@ -276,7 +281,7 @@ async def run(args: argparse.Namespace) -> int:
         print("Re-run with --confirm to make the calls.")
         return 0
 
-    run_id = args.run_id or f"cp3-{'smoke' if args.smoke else 'full'}"
+    run_id = args.run_id or ("cp3-smoke" if args.smoke else DEFAULT_RUN_IDS[args.suite])
     run_dir = RUNS_DIR / run_id
     spent = sum(
         (
@@ -298,7 +303,8 @@ async def run(args: argparse.Namespace) -> int:
                 "updated_at_utc": datetime.now(UTC).isoformat(),
                 "pool_snapshot_id": snapshot.snapshot_id,
                 "pool_models_sha256": snapshot.models_sha256,
-                "suite_sha256": file_sha256(SUITE_PATH),
+                "suite": args.suite,
+                "suite_sha256": file_sha256(suite_path),
                 "prompt_version": SUITE_PROMPT_VERSION,
                 "temperature": 0,
                 "max_tokens": {group.value: MAX_TOKENS[group] for group in TaskGroup},
@@ -322,6 +328,8 @@ async def run(args: argparse.Namespace) -> int:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run the Checkpoint 3 suite through the pool")
+    parser.add_argument("--suite", choices=sorted(SUITES), default="cp3",
+                        help="cp3: the 600-prompt suite; final: the fresh final held-out set")
     parser.add_argument("--models", help="Comma-separated pool IDs (default: all with keys)")
     parser.add_argument("--smoke", type=int, help="Only the first N prompts of each benchmark")
     parser.add_argument("--run-id", help="Resume or name a run")

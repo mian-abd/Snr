@@ -1,6 +1,8 @@
 """Score generated code with EvalPlus inside a locked-down Docker container.
 
     uv run --project backend python -m app.benchmarks.code_scoring --run-id cp3-full
+    uv run --project backend python -m app.benchmarks.code_scoring --suite final \
+        --run-id final-heldout
 
 Generated code never runs on the host. Each model's answers are written as an EvalPlus samples
 file and scored by the pinned ``ganler/evalplus`` image with no network, capped memory, CPU and
@@ -21,6 +23,7 @@ from typing import Any
 
 from app.benchmarks.prepare_suite import _verified_rows
 from app.benchmarks.suite import Benchmark, SuiteItem, TaskGroup, load_suite
+from app.benchmarks.suite_runner import SUITES
 from app.config import REPOSITORY_ROOT
 from app.storage import atomic_write_jsonl, read_jsonl
 
@@ -29,7 +32,6 @@ IMAGE = (
     "ganler/evalplus:v0.3.1"
     "@sha256:26b118098bef281fe8dfe999bf05f1d5b45374b4e6c00161ec0f30592aef4740"
 )
-SUITE_PATH = REPOSITORY_ROOT / "data" / "benchmarks" / "cp3_suite.jsonl"
 RUNS_DIR = REPOSITORY_ROOT / "data" / "local" / "cp3"
 DATA_DIR = RUNS_DIR / "evalplus-data"  # mounted read-only, so answers cannot alter the tests
 DATASETS = {Benchmark.HUMANEVAL_PLUS: "humaneval", Benchmark.MBPP_PLUS: "mbpp"}
@@ -124,10 +126,11 @@ def score_model(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--suite", choices=sorted(SUITES), default="cp3")
     parser.add_argument("--run-id", default="cp3-full")
     parser.add_argument("--models", help="Comma-separated model IDs (default: all in the run)")
     args = parser.parse_args()
-    items = {item.sample_id: item for item in load_suite(SUITE_PATH)}
+    items = {item.sample_id: item for item in load_suite(SUITES[args.suite])}
     task_ids: dict[Benchmark, list[str]] = {}
     for benchmark in DATASETS:
         rows = _verified_rows(benchmark)[0]
