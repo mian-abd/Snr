@@ -1087,6 +1087,26 @@ The full record is `docs/checkpoint-3-progress.md`. Key facts:
 - **Robustness** (`app/learned/robustness.py`): price and retirement changes are handled; reliability counts only with a non-zero weight; max-normalization makes the router react the wrong way when the most expensive or slowest model changes. Both are design fixes to report, not to apply to the frozen router.
 - **Reproducible from the repo:** `data/learned/cells.jsonl` (outcomes only) rebuilds the report byte for byte without the raw runs or any key.
 
+**Flagship models and the site redesign (2026-11-14).**
+- **Owner decisions:**
+  - add GPT-6.1 Sol, Gemini 4 Carbon, Grok 4.7, and Kimi K3.1 Pro within $25, on all 900 prompts;
+  - fit a second router with the same recipe;
+  - redesign the site in a data-first leaderboard style, with open-source parts and no purple.
+- **Flagship registry:** `data/registry/flagship-pool-2026-11-14.json`, each model pinned to its maker's standard tier. The runner takes `--pool flagship` and `--spend-cap` (at most $25).
+- **Grok 4.7 was stopped after 375 prompts ($3.33).** Its reasoning ignored the 4,096-token limit on knowledge questions, and finishing would have exceeded the budget. It is reported as excluded.
+- **Spend:** $18.34 recorded and $18.46 billed in all.
+- **Study:** `python -m app.learned.flagship_study --from-runs` builds `data/learned/flagship-cells.jsonl`, the second router `data/learned/flagship-router-model.json` (12 models), and `data/learned/flagship-study.json`. It checks that the frozen router's picks reproduce its published results, and it rebuilds byte for byte from committed files.
+- **Results on the 300 fresh prompts:**
+  - GPT-6.1 Sol 284 for $0.50 (2.6 s), Gemini 4 Argon 284 for $1.16 (8.1 s), Gemini 4 Carbon 284 for $2.16, Kimi K3.1 Pro 278 for $2.33;
+  - second router against the frozen one: best quality 283 vs 282, fastest 284 vs 276 (1.3 s quicker), balanced 283 vs 276; Holm p 1.00, 0.23 and 0.33, so not significant;
+  - hindsight oracle 289 instead of 286; Gemini 4 Carbon and Kimi are never chosen.
+- **Serving:** route, preview, and what-if requests take `pool: "flagships"` to use the second router; the live catalog check covers the flagships. API: `GET /learned/flagships`.
+- **Site:**
+  - white editorial layout: Source Serif 4 and Inter, one color and logo per model maker;
+  - Recharts 3.10.1 and the LobeHub icons (MIT, license in `frontend/src/assets/makers`);
+  - a leaderboard table on Models, chart cards on Home and Research, and a pool switch on Router;
+  - pages are lazy-loaded.
+
 **Local environment.**
 - mypy must run as `python -m mypy --config-file backend/pyproject.toml`: Application Control blocks `mypy.exe`, and without `--config-file` strict mode was silently not applied. The check script and CI are fixed.
 - Ollama v0.40.12 was installed from the signed official installer (Ollama Inc. / DigiCert, SHA-256 `9A6A44DD…`) in the owner's terminal, so it lands in the real profile, not the sandboxed one.

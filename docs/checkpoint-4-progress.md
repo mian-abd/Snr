@@ -1,4 +1,4 @@
-# Week of November 19: final evaluation, error analysis, robustness, export
+# Week of November 19: final evaluation, error analysis, robustness, export, flagship models
 
 This records the proposal's work-plan items for the week of November 19. The week of November 26 (final robustness runs and plots, finished export and data validation, the final report) is not started; see [what is left](#left-for-the-week-of-november-26).
 
@@ -7,8 +7,9 @@ This records the proposal's work-plan items for the week of November 19. The wee
 | Complete the held-out evaluation | Done: the frozen router on the Checkpoint 3 test split (with intervals added) and on 300 fresh prompts answered on 2026-11-13 and 14 ([details](#the-final-held-out-set), [results](#results)) |
 | Finish the oracle and under-routing/over-routing analysis | Done: per priority and task, with a stricter "dominated" count, the extra cost, regret, and worked examples ([details](#oracle-gap-and-routing-errors)) |
 | Implement robustness tests for changed price, latency, reliability, and user priorities | Done: a replay engine with 9 scenarios per evaluation and a priority sweep, plus a stress test on the Router page ([method](#robustness-tests), [results](#robustness-results)) |
-| Begin experiment export and final interface cleanup | Done for this week: seven tables as CSV or JSON from the site and the CLI; the console rebuilt as a public research site ([details](#export-and-interface)) |
-| Owner decisions on 2026-11-13 | Check the live catalog; keep the Checkpoint 2 rule router (now in the Lab, as a baseline); retry the two keyed models once (still failing, so excluded); draw a fresh final set |
+| Begin experiment export and final interface cleanup | Done for this week: seven tables as CSV or JSON from the site and the CLI; the console rebuilt as a public research site, then redesigned on 2026-11-14 ([details](#export-and-interface)) |
+| Flagship models (owner request, 2026-11-14) | Done: GPT-6.1 Sol, Gemini 4 Carbon, and Kimi K3.1 Pro on all 900 prompts (Grok 4.7 stopped over budget), a second router fit with the same recipe, and a comparison with the frozen one ([details](#flagship-models-2026-11-14)) |
+| Owner decisions on 2026-11-13 and 14 | Check the live catalog; keep the Checkpoint 2 rule router (now in the Lab, as a baseline); retry the two keyed models once (still failing, so excluded); draw a fresh final set; redesign the site; add flagship models within $25 |
 
 ## Results in brief
 
@@ -22,13 +23,28 @@ All numbers are on the 300 fresh prompts unless the original 120-prompt test spl
 6. **The live catalog check is the largest effect measured.** Mercury 3 was retired on November 12. Without the check, the fastest and balanced settings sent 211 of 300 prompts to it and got 83 right; with it, 276: +64.3 points (95% CI +59.0 to +69.7; p < 0.001). The rule router, still calling Mercury, got 134.
 7. **There is room left.** A hindsight oracle gets 286 right for $0.045. The best-quality router's regret is only 4 answers, but it over-routes: on 276 prompts a model it expected to be cheaper was also right, which cost $0.806 extra. At lowest cost the regret is 17 answers: 21 of its 35 wrong answers were avoidable (some model got them right), 16 of them knowledge and code questions given to Nemotron 3 Ultra (free).
 8. **Robustness: price and availability changes work, reliability and normalization need fixing.** Told that a price changed or a model was retired, the router reprices and reroutes, staying within two right answers of its old choices. But the tuned priorities give reliability no weight, so a 50% outage of the free endpoints halves the lowest-cost accuracy (137 of 300) even when the router knows about it; with the reliability weight at 1 it holds 268. Cost and time are scored relative to the most expensive and slowest model available, so telling the router that the slowest models got three times slower made the fastest setting slower (7.1 s instead of 3.8 s).
+9. **Flagships make the router faster, not more accurate, on these benchmarks.** GPT-6.1 Sol is as accurate as Gemini 4 Argon (284 of 300) for $0.50 instead of $1.16, at 2.6 s instead of 8.1 s. With the three flagships in the pool, a second router fit with the same recipe:
+   - **Fastest:** gets 284 right instead of 276, 1.3 s quicker at the median;
+   - **Balanced:** gets 283 instead of 276;
+   - **Best quality:** gets 283 instead of 282.
 
-## Owner decisions (2026-11-13)
+   None of these accuracy differences is significant after the Holm correction (p = 0.23, 0.33, 1.00). Gemini 4 Carbon and Kimi K3.1 Pro are never chosen. Grok 4.7 was stopped because its reasoning ran far past the token limit and the budget ([details](#flagship-models-2026-11-14)).
+
+## Owner decisions (2026-11-13 and 14)
 
 1. **Final evaluation set:** draw about 300 fresh prompts nobody has used, run the models still available on them, and evaluate the frozen router under real provider drift. More models could be added if needed; none were (see [the two keyed models](#the-two-keyed-models-retried-once)).
 2. **Provider drift:** check the live catalog at startup. A retired model becomes unavailable (a failed hard requirement, with the reason shown), changed prices update expected costs, and the app falls back to the dated snapshot when the check fails.
 3. **Checkpoint 2 tab:** keep it as history, and make its refusal message explain what changed. It now lives on the site's Lab page, presented as the rule-based baseline.
 4. **Keyed models:** retry Gemma 4 31B and DeepSeek V4.1 Flash once; add them only if healthy.
+5. **Site (2026-11-14):**
+   - redesign it in the style of data-first model leaderboards;
+   - use open-source components where possible;
+   - no purple or generic gradient look.
+6. **Flagships (2026-11-14):**
+   - add GPT-6.1 Sol, Gemini 4 Carbon, Grok 4.7, and Kimi K3.1 Pro, within $25 (the account's remaining credit);
+   - run them on all 900 prompts;
+   - fit a second router with the same recipe;
+   - report it next to the frozen one.
 
 ## Live catalog check
 
@@ -325,6 +341,183 @@ Accuracy has weight 1; one other weight is varied with the rest at 0.
 
 Most of the saving arrives by a cost weight of 0.2 (from $1.16 to $0.018 for 19 fewer right answers), and most of the speed by a latency weight of 2 (from 8.1 s to 4.0 s for 9 fewer).
 
+## Flagship models (2026-11-14)
+
+The owner asked for flagship models in the pool. Four were chosen from the live OpenRouter catalog on 2026-11-14:
+
+- GPT-6.1 Sol;
+- Gemini 4 Carbon;
+- Grok 4.7;
+- Kimi K3.1 Pro.
+
+The owner set three rules:
+
+- a $25 cap, which was the account's remaining credit;
+- every one of the 900 prompts, the 600-prompt suite and the 300 fresh prompts;
+- a second router fit with the same recipe, reported next to the frozen one.
+
+Pricier flagships, including GPT-6 Astra, were offered and not chosen. Command: `python -m app.learned.flagship_study --from-runs`. Report: `data/learned/flagship-study.json`. The second router is `data/learned/flagship-router-model.json`.
+
+### Runs
+
+The flagships are in a separate dated registry, `data/registry/flagship-pool-2026-11-14.json`. Each model is pinned to its maker's own standard tier with no fallback, and the frozen pool and its numbers are untouched.
+
+The runner gained two options:
+
+- `--pool flagship` selects that registry;
+- `--spend-cap` takes a cap of at most $25.
+
+A smoke test of 8 prompts per model cost $0.20 and confirmed the billed prices. Prompts, token limits (2,048 for math, 4,096 otherwise), temperature, retry policy and grading are the same as for the Checkpoint 3 pool, and code is scored by the same EvalPlus container.
+
+| Model | Maker's host (pinned) | Price in / out per M | Prompts scored | Billed |
+| --- | --- | --- | ---: | ---: |
+| GPT-6.1 Sol | openai | $2 / $10 | 900 | $1.45 |
+| Gemini 4 Carbon | google-ai-studio | $2 / $10 | 900 | $6.59 |
+| Kimi K3.1 Pro | moonshotai/mxfp4 | $2 / $10 | 900 | $6.78 |
+| Grok 4.7 (stopped) | xai | $2 / $6 | 375 | $3.33 |
+
+**Grok 4.7 was stopped.** On knowledge questions its reasoning ignored the 4,096-token answer limit: one answer used 35,234 tokens and ten minutes, and its knowledge answers averaged $0.025 each, about six times what Gemini 4 Argon's token counts had predicted. Finishing would have taken the total to about $28, and the per-run caps would have stopped every model partway. Both runs were stopped and resumed without Grok; the runner resumes where it left off. Grok had answered 375 prompts:
+
+- math: 190 of 200 on the suite and 96 of 100 on the fresh prompts;
+- knowledge: 18 of 21 and 51 of 54.
+
+Those answers are kept in `data/learned/flagship-cells.jsonl`. A model needs a scored answer to every prompt to join the pool, so Grok is reported as excluded, with its reason and cost.
+
+Spend for the flagships:
+
+- **Recorded:** $18.34 in all ($11.52 suite, $6.63 fresh, $0.20 smoke).
+- **Billed:** the key's usage for the day rose by $18.46. The $0.12 difference is calls that were in flight when the first runs were stopped.
+
+### The second router
+
+The Checkpoint 3 recipe is used unchanged on all 12 models (9 + 3), with `train.py`'s own functions:
+
+- **Classifier:** logistic regression was chosen over gradient-boosted trees on validation log loss (0.433 against 0.451, C = 0.003).
+- **Presets:** tuned on the validation split with the same grids and accuracy floors.
+- **Refit:** on train + validation, giving 5,760 prompt-model pairs and 71 features.
+
+As before, the per-task table predicts better on validation (log loss 0.425).
+
+| Priority | Cost weight | Time weight | Reliability weight | Validation |
+| --- | ---: | ---: | ---: | --- |
+| Lowest cost | 1.0 | 0.05 | 0.5 | 101/120, $0.0082 |
+| Best quality | 0.05 | 0.05 | 0.0 | 110/120, $0.48 |
+| Fastest | 0.05 | 1.0 | 0.0 | 106/120, $0.10 |
+| Balanced | 0.3 | 0.5 | 0.0 | 106/120, $0.10 |
+
+**Strongest flagship.** The baseline "always the strongest flagship" uses Gemini 4 Carbon. It was chosen by a rule fixed before the test and fresh results were read: the most right answers on the train and validation prompts.
+
+**Checks.**
+
+- **Pre-registered questions:** six paired questions were fixed in code before the flagships' results were read.
+- **Frozen router unchanged:** the frozen router's choices in this study must reproduce its published final evaluation exactly; the study stops if they do not.
+- **Reproducible:** a rebuild from the committed cell tables, without the raw runs, is byte for byte the same.
+
+The fresh prompts had already been used once, to evaluate the frozen router. Nothing here was chosen on them; this reads them a second time.
+
+### The models on the fresh prompts
+
+Flagships are in bold. Mercury 3 (retired) is left out.
+
+| Model | Right | Math | Knowledge | Code | Billed | Median time |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| **GPT-6.1 Sol** | 284/300 | 97/100 | 92/100 | 95/100 | $0.50 | 2.6 s |
+| Gemini 4 Argon | 284/300 | 98/100 | 92/100 | 94/100 | $1.16 | 8.1 s |
+| **Gemini 4 Carbon** | 284/300 | 97/100 | 91/100 | 96/100 | $2.16 | 11.4 s |
+| **Kimi K3.1 Pro** | 278/300 | 97/100 | 85/100 | 96/100 | $2.33 | 12.6 s |
+| Gemma 4 26B A4B | 268/300 | 96/100 | 83/100 | 89/100 | $0.04 | 2.0 s |
+| Nemotron 3 Ultra 550B (free) | 266/300 | 95/100 | 85/100 | 86/100 | $0 | 7.4 s |
+| DeepSeek V4 Flash | 262/300 | 95/100 | 79/100 | 88/100 | $0.07 | 2.9 s |
+| gpt-oss-120b | 259/300 | 96/100 | 82/100 | 81/100 | $0 | 3.8 s |
+| Qwen 3.8 27B | 253/300 | 96/100 | 73/100 | 84/100 | $0 | 6.5 s |
+| Llama 3.3 70B Instruct | 247/300 | 95/100 | 76/100 | 76/100 | $0 | 10.5 s |
+| Qwen 3.5 9B (local) | 242/300 | 96/100 | 75/100 | 71/100 | $0 | 6.9 s |
+
+### Fresh prompts (300)
+
+| Strategy | Right | Billed | Median time | To flagships |
+| --- | ---: | ---: | ---: | ---: |
+| With flagships, best quality | 283/300 (92-97%) | $1.03 | 7.1 s | 34% |
+| With flagships, lowest cost | 265/300 (85-92%) | $0.02 | 4.1 s | 0% |
+| With flagships, fastest | 284/300 (92-97%) | $0.50 | 2.6 s | 100% |
+| With flagships, balanced | 283/300 (92-97%) | $0.40 | 2.2 s | 64% |
+| Frozen router, best quality | 282/300 (91-97%) | $0.96 | 7.2 s | 0% |
+| Frozen router, lowest cost | 265/300 (85-92%) | $0.0034 | 5.7 s | 0% |
+| Frozen router, fastest | 276/300 (89-95%) | $0.43 | 3.8 s | 0% |
+| Frozen router, balanced | 276/300 (89-95%) | $0.43 | 3.8 s | 0% |
+| Always Gemini 4 Carbon | 284/300 (92-97%) | $2.16 | 11.5 s | 100% |
+| Always Gemini 4 Argon | 284/300 (92-97%) | $1.16 | 8.1 s | 0% |
+| Always Gemma 4 26B A4B | 268/300 (86-93%) | $0.04 | 2.0 s | 0% |
+| Per-task averages, best quality | 283/300 (92-97%) | $1.06 | 7.3 s | 33% |
+| Hindsight oracle, best quality | 289/300 (94-98%) | $0.09 | 1.8 s | 3% |
+| Hindsight oracle, lowest cost | 289/300 (94-98%) | $0.06 | 2.7 s | 2% |
+
+| Question | Difference (95% CI) | Holm p | Cost ratio (95% CI) |
+| --- | --- | ---: | --- |
+| Does the best-quality setting get more right with the flagships in the pool? | +0.3 points (+0.0 to +1.0) | 1.00 | 1.07 (1.03 to 1.10) |
+| Is the best-quality setting as accurate as always using the strongest flagship, for less? | -0.3 points (-1.7 to +0.7) | 1.00 | 0.48 (0.43 to 0.52) |
+| Does adding the flagships change the lowest-cost setting? | +0.0 points (-1.7 to +2.0) | 1.00 | 5.23 (3.62 to 8.64) |
+| Does adding the flagships change the fastest setting? | +2.7 points (+0.7 to +5.0) | 0.23 | 1.15 (0.97 to 1.41) |
+| Does the balanced setting do better with the flagships in the pool? | +2.3 points (+0.3 to +4.7) | 0.33 | 0.91 (0.75 to 1.13) |
+| With the flagships, do the prompt features add accuracy beyond per-task averages? | +0.0 points (+0.0 to +0.0) | 1.00 | 0.97 (0.94 to 0.99) |
+
+Time differences, as medians with 95% intervals:
+
+- **Fastest:** the flagship version is 1.3 s quicker than the frozen fastest setting (0.6 to 1.9 s).
+- **Balanced:** 1.7 s quicker (1.1 to 2.3 s).
+- **Best quality:** no clear difference.
+
+### Original test split (120)
+
+| Strategy | Right | Billed | Median time | To flagships |
+| --- | ---: | ---: | ---: | ---: |
+| With flagships, best quality | 111/120 (88-97%) | $0.45 | 4.6 s | 32% |
+| With flagships, lowest cost | 105/120 (82-93%) | $0.0087 | 8.6 s | 0% |
+| With flagships, fastest | 104/120 (81-92%) | $0.12 | 2.0 s | 43% |
+| With flagships, balanced | 103/120 (79-92%) | $0.11 | 2.0 s | 38% |
+| Frozen router, best quality | 112/120 (88-98%) | $0.42 | 5.4 s | 0% |
+| Frozen router, lowest cost | 103/120 (79-92%) | $0.0003 | 12.7 s | 0% |
+| Frozen router, fastest | 102/120 (78-91%) | $0.12 | 2.1 s | 0% |
+| Frozen router, balanced | 102/120 (78-91%) | $0.12 | 2.1 s | 0% |
+| Always Gemini 4 Carbon | 110/120 (87-96%) | $0.91 | 11.7 s | 100% |
+| Always Gemini 4 Argon | 112/120 (88-98%) | $0.49 | 5.1 s | 0% |
+| Always Gemma 4 26B A4B | 103/120 (79-92%) | $0.02 | 5.1 s | 0% |
+| Per-task averages, best quality | 111/120 (88-97%) | $0.46 | 4.9 s | 33% |
+| Hindsight oracle, best quality | 116/120 (93-99%) | $0.03 | 1.9 s | 2% |
+| Hindsight oracle, lowest cost | 116/120 (93-99%) | $0.01 | 5.4 s | 0% |
+
+| Question | Difference (95% CI) | Holm p | Cost ratio (95% CI) |
+| --- | --- | ---: | --- |
+| Does the best-quality setting get more right with the flagships in the pool? | -0.8 points (-2.5 to +0.0) | 1.00 | 1.06 (1.02 to 1.12) |
+| Is the best-quality setting as accurate as always using the strongest flagship, for less? | +0.8 points (-2.5 to +4.2) | 1.00 | 0.50 (0.44 to 0.55) |
+| Does adding the flagships change the lowest-cost setting? | +1.7 points (-2.5 to +6.7) | 1.00 | 26.86 (9.75 to 67.20) |
+| Does adding the flagships change the fastest setting? | +1.7 points (-1.7 to +5.0) | 1.00 | 1.02 (0.79 to 1.35) |
+| Does the balanced setting do better with the flagships in the pool? | +0.8 points (-1.7 to +3.3) | 1.00 | 0.93 (0.72 to 1.21) |
+| With the flagships, do the prompt features add accuracy beyond per-task averages? | +0.0 points (+0.0 to +0.0) | 1.00 | 0.97 (0.93 to 0.99) |
+
+On this split the Fastest and Balanced settings of both routers still used Mercury 3, which was served in late October.
+
+### What it shows
+
+1. **The flagships do not make the best-quality setting more accurate here.** It got 283 of 300 against 282 without them, for 7% more money. GPT-6.1 Sol, Gemini 4 Argon and Gemini 4 Carbon each got 284, so these four benchmarks are at the ceiling for strong models. Hindsight over all 12 models reaches 289 instead of 286: three prompts only a flagship got right.
+2. **GPT-6.1 Sol is the useful addition.** It is as accurate as Gemini 4 Argon (284 of 300) for $0.50 instead of $1.16, at a 2.6 s median instead of 8.1 s.
+   - **Fastest:** sends 299 of 300 prompts to it and gets 284 right instead of the frozen router's 276, 1.3 s quicker.
+   - **Balanced:** splits between it and Gemma 4 26B and gets 283.
+   - **Significance:** both accuracy intervals exclude zero (+2.7 and +2.3 points), but with six questions the Holm-adjusted McNemar p-values are 0.23 and 0.33, so they are not counted as significant.
+3. **The expensive flagships are never chosen.**
+   - **Gemini 4 Carbon** costs 1.9 times as much as Gemini 4 Argon for the same 284.
+   - **Kimi K3.1 Pro** got 278 for $2.33 and is the slowest, at 12.6 s.
+   - **No setting picks either one.** Always using Gemini 4 Carbon costs $2.16; the best-quality setting matches it within 0.3 points for 48% of that.
+4. **The lowest-cost setting got dearer, not better.** It got 265 again, but for $0.018 instead of $0.0034. The new validation tuning gave it a reliability weight of 0.5, so it sends 100 prompts to Gemma 4 26B instead of 22 and 100 to the free Nemotron 3 Ultra instead of 178. That is a tuning change on 120 validation prompts, not an effect of the flagships, which it never uses.
+5. **Prompt features still add nothing measurable.** Per-task averages tie the second router at best quality (283 against 283).
+6. **On the original split nothing changes measurably.** No difference is significant, and best quality got 111 against 112.
+
+**On the site.**
+
+- **Charts and leaderboard:** the Models page, the Home charts and the Research page include the three flagships.
+- **Research section:** "With flagship models" shows the tables above, the questions, and the excluded model.
+- **Router page:** a switch routes over the pool with the flagships using the second router. The live catalog check now covers the flagships too.
+
 ## Export and interface
 
 **Export.** `GET /api/v1/learned/export/{table}?format=csv|json` and `python -m app.learned.export TABLE --format csv --out FILE` serve seven tables, built only from committed files:
@@ -339,14 +532,54 @@ Most of the saving arrives by a cost weight of 0.2 (from $1.16 to $0.018 for 19 
 
 None of them contains model responses, request IDs, or keys.
 
-**Interface.** The tabbed console is replaced by a public research site, written for someone who has never seen the project: no page mentions checkpoints, and every number on it is computed from the committed reports. It has light and dark themes (following the system setting, with a toggle), hash routes so every page and model can be linked, and it fits a 390 px phone screen without sideways scrolling.
+**Interface.** The tabbed console was first replaced by a public research site, then redesigned on 2026-11-14 in the style of data-first model leaderboards. It is written for someone who has never seen the project: no page mentions checkpoints, and every number on it is computed from the committed reports.
 
-- **Home:** what the router does, a diagram of which models the fresh prompts went to under each priority, four findings computed from the final report, and how it works.
-- **Router:** the adaptive router with priority cards, example prompts, and custom weights under advanced settings. Before anything is sent it shows the decision, every model's score and why the others lost, and a notice that names where **Run** would send the prompt (a third-party API, or the local Ollama server) and that route's data policy. A "Stress-test this decision" panel changes one condition for one model (price, speed, failure rate, or retirement) and shows whether the choice moves, with no provider call.
-- **Models:** the pool as a catalog, with search, an access filter (paid, free, local), sorting by accuracy, price, speed, or context, live availability, snapshot and live prices side by side, and accuracy. Each model has its own page with per-task accuracy, latency, and how often each priority picks it.
-- **Research:** highlights; a leaderboard with 95% intervals; accuracy against cost and time, with the oracle; "Is it real?" (the paired tests); where the router goes wrong, with real examples; robustness scenarios; the priority sweep; how the router was built (tuning, the model x task matrix, the classifier comparison); method and limits; and downloads of the seven export tables.
-- **FAQ:** eleven questions a visitor would ask (which model is best per task, how much routing saves, what happens when a model is retired, whether a prompt is stored), each answered from the data.
-- **Lab:** the earlier tools, presented as baselines: the rule-based router, side-by-side comparison, the context filter, and the GSM8K pilot runs.
+- **Look:**
+  - white pages with a gray band for the summary;
+  - a serif display face (Source Serif 4) for titles, Inter for text and numbers, and hairline cards;
+  - color only for data: each model maker has one hue, and every bar carries the maker's logo and the model's name, so color is never the only label;
+  - the adaptive router drawn as hatched black bars and black diamonds;
+  - no gradients and no accent color;
+  - a selected dark theme (its own steps, not an inversion), following the system setting with a toggle.
+
+  Every page fits a 390 px phone screen without sideways scrolling; the one wide chart scrolls inside its card.
+- **Open-source parts:**
+  - Recharts 3.10.1 (MIT) for the bar charts;
+  - the LobeHub icon set (MIT) for the maker logos (`frontend/src/assets/makers`, with its license);
+  - Inter and Source Serif 4 from Fontsource (SIL Open Font License);
+  - the existing Radix primitives and Lucide icons.
+
+  The trade-off scatter and the share bars are small SVG components of our own.
+- **Home:**
+  - the question and two actions;
+  - highlight cards that name the most accurate, fastest, and cheapest models, the router's two headline results, and the flagship result;
+  - bar charts of right answers, billed cost, and median time for every model, with the routers among them;
+  - accuracy against cost on a log scale, with free models at the left and a dotted line through the cheapest model at each accuracy;
+  - where each priority sends the fresh prompts;
+  - how the router works.
+- **Router:**
+  - opens with a scored decision for the example prompt (a preview never calls a provider);
+  - a switch between the standard pool and the pool with the flagships;
+  - the decision, with the notice naming where **Run** would send the prompt;
+  - every model's score, and the stress test.
+- **Models:** a sortable leaderboard table:
+  - accuracy overall and per task on the fresh prompts;
+  - input and output prices, with live prices highlighted;
+  - billed cost for all fresh prompts, median time, context, and status;
+  - filters for paid, free, local, and flagship models.
+
+  Each model has its own page with per-task accuracy on both prompt sets, how often each priority picks it, its price and availability, and its data policy.
+- **Research:**
+  - a sticky table of contents;
+  - the highlights and the leaderboard with 95% intervals;
+  - accuracy against cost and time;
+  - the paired tests;
+  - the flagship study;
+  - routing errors with examples;
+  - robustness, the priority sweep, and how the router was built;
+  - method and limits, and the downloads.
+- **FAQ:** twelve questions answered from the data, including whether flagship models help.
+- **Lab:** the earlier tools, presented as baselines.
 
 New API endpoints:
 
@@ -354,11 +587,12 @@ New API endpoints:
 - `GET /learned/pool`;
 - `GET /learned/catalog` and `POST /learned/catalog/refresh`;
 - `POST /learned/what-if`;
-- `GET /learned/export/{table}`.
+- `GET /learned/export/{table}`;
+- `GET /learned/flagships` (the flagship study), and a `pool` field on route, preview, and what-if requests that selects the second router.
 
 ## Tests
 
-Backend tests went from 75 to 100, all offline: provider catalogs and calls are served by mock transports, and a test fixture turns the startup catalog check off.
+Backend tests went from 75 to 108, all offline: provider catalogs and calls are served by mock transports, and a test fixture turns the startup catalog check off.
 
 - `test_live_catalog.py`: retirement, price changes, lost hosts, the snapshot fallback, a stopped Ollama server, the router's exclusion and repricing, the API, and the Checkpoint 2 drift message.
 - `test_final_eval.py`:
@@ -368,8 +602,14 @@ Backend tests went from 75 to 100, all offline: provider catalogs and calls are 
   - scenario transforms with nested failures;
   - the error analysis.
 - `test_learned_api.py`: the final report, every export table in both formats (and that no response text appears), the pool, the what-if, and the empty states.
+- `test_flagship_study.py`:
+  - the flagship registry (paid, checksummed, one pinned host each) and the combined pool;
+  - the strongest-flagship rule, which uses only train and validation and breaks ties by cost;
+  - the runner refusing a cap above $25;
+  - requests routing over the pool they name, with the stopped model never routed;
+  - a broken flagship router file leaving the standard router running.
 
-Frontend: 10 unit tests cover the home page and its findings, the routing preview with its third-party notice and the stress test, the model catalog and a model page, the research page and its task filters, the FAQ, the lab (rule router without a key, and a paid pilot that starts only after the estimate is confirmed), and the theme toggle. 2 Playwright tests run the site in Chrome with the API stubbed as a fresh install (no key, no reports): the home page and the router's missing-key notice, and the home page at phone width without sideways scrolling.
+Frontend: 11 unit tests cover the home page and its findings, the flagship study on the research, models, and router pages, the routing preview with its third-party notice and the stress test, the model catalog and a model page, the research page and its task filters, the FAQ, the lab (rule router without a key, and a paid pilot that starts only after the estimate is confirmed), and the theme toggle. 2 Playwright tests run the site in Chrome with the API stubbed as a fresh install (no key, no reports): the home page and the router's missing-key notice, and the home page at phone width without sideways scrolling.
 
 ## Left for the week of November 26
 
@@ -378,4 +618,10 @@ The proposal's last week: final robustness runs and plots, finishing export and 
 - **Robustness plots:** the scenarios above as figures (accuracy and cost per scenario, told against old estimates), next to the held-out figures.
 - **Data validation:** a script that checks every committed table against the raw runs and the published hashes, and a short data dictionary for the seven export tables.
 - **Two design fixes, to report rather than evaluate:** score cost and time against fixed reference values (for example the snapshot's own maximum) instead of the current maximum, and give reliability a small default weight. Both change the router, so they cannot be tested on the fresh prompts without spending them; the report should describe them as recommendations, backed by the scenarios above.
-- **The final report:** the method, the two evaluations, the error analysis, the robustness results, and the limits (benchmarks are not real traffic, prompt features add little here, and the router only knows the models it was measured on).
+- **The final report:**
+  - the method;
+  - the two evaluations;
+  - the error analysis;
+  - the robustness results;
+  - the flagship study, where a fast, accurate flagship helps the faster settings and the expensive flagships are never chosen;
+  - the limits: benchmarks are not real traffic, they are at the ceiling for strong models, prompt features add little here, and the router only knows the models it was measured on.

@@ -49,7 +49,17 @@ Run each command with `uv run --project backend` from the repository root. See [
 - Results on the 300 fresh prompts: the best-quality setting got 282 right against 284 for always using the strongest model, for 17% less; the lowest-cost setting got 265 for $0.0034; and after Mercury 3 was retired, the live catalog check kept the fastest setting at 276 right instead of 83. Prompt-level features did not beat a per-task reference.
 - A live catalog check at startup: models a provider no longer serves are excluded with the reason shown, and changed prices update expected costs (`python -m app.registry.live_catalog` prints it).
 - Export of seven result tables as CSV or JSON, from the console or `python -m app.learned.export`.
-- The app is now a public research site with light and dark themes: **Home**, **Router** (with a stress-test panel and a notice naming where a prompt would be sent), **Models** (catalog and a page per model), **Research** (results, significance, errors, robustness, downloads), **FAQ**, and **Lab** (the earlier rule-based tools).
+- Flagship models (2026-11-14): GPT-6.1 Sol, Gemini 4 Carbon, and Kimi K3.1 Pro answered all 900 prompts; Grok 4.7 was stopped because its reasoning ran past the token limit and the $25 budget.
+  - **Command:** `python -m app.benchmarks.suite_runner --pool flagship --spend-cap N --confirm` runs them.
+  - **Study:** `python -m app.learned.flagship_study` fits a second router with the same recipe and compares it with the frozen one. Report: `data/learned/flagship-study.json`.
+  - **Results:** GPT-6.1 Sol matches Gemini 4 Argon (284 of 300) for less than half the cost at a third of the time. With it, the fastest setting gets 284 right instead of 276 and is 1.3 s quicker (not significant after the Holm correction). Best quality does not improve (283 vs 282), and the expensive flagships are never chosen.
+- The app is a public research site, redesigned on 2026-11-14 as a data-first leaderboard. It has light and dark themes and these pages:
+  - **Home:** highlights and charts of accuracy, cost, and time per model;
+  - **Router:** with a stress-test panel, a notice naming where a prompt would be sent, and a switch to the pool with the flagships;
+  - **Models:** a sortable leaderboard table and a page per model;
+  - **Research:** results, significance, the flagship study, errors, robustness, and downloads;
+  - **FAQ**;
+  - **Lab:** the earlier rule-based tools.
 
 See the [week of November 19](docs/checkpoint-4-progress.md).
 
