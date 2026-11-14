@@ -1,8 +1,35 @@
-# Live demo guide (Checkpoints 2 and 3)
+# Live demo guide
 
-Checkpoint 2 comes first; the Checkpoint 3 walkthrough is at the end.
+The current site (since 2026-11-14) comes first. The Checkpoint 2 and 3 walkthroughs below it describe the earlier tabbed console and are kept as a record; their tab names no longer exist.
 
-## Start the production application
+## The current site (rehearsal for Checkpoint 4)
+
+Start it as before (`./scripts/demo.ps1`, then `http://127.0.0.1:8000`). The pages are **Router**, **Models**, **Research**, **FAQ**, and **Lab**; the sun / moon button switches between light and dark. The pill at the top right shows the live catalog check ("1 model unavailable": Mercury 3).
+
+### Robustness, live (about two minutes; no provider call)
+
+1. Open **Router**. The demo prompt is already filled in ("A train travels 180 km in 2.5 hours…").
+2. Pick **Fastest**, then **Preview decision**. The router picks **Gemma 4 26B A4B**. The reason ends: "Without the live catalog check it would have chosen Mercury 3, which is no longer served." In **How every model scored**, Mercury 3 is faded with "Unavailable now: OpenRouter lists inception/mercury-3 but no host serves it any more (retired)", and Gemma shows its new, lower price.
+3. In **Stress-test this decision**, keep **Gemma 4 26B A4B** and **Gets slower**, set **3**, and press **Simulate**. The choice moves from Gemma to **Qwen 3.5 9B (local)**.
+4. Say: "I changed one condition, the response time of one model, and the router chose differently. Nothing was sent anywhere and nothing was retrained."
+
+### One real call
+
+Keep **Fastest** and press **Run prompt** only if Gemma is chosen and the OpenRouter key works; the notice above the result names where the prompt goes (OpenRouter, pinned to NextBit). If the key fails, use **Lowest cost**: it picks the free gpt-oss-120b on OVHcloud, which needs no key (it is still a third-party API, and the notice says so).
+
+### Results
+
+Open **Research**: the highlights, the leaderboard (press **Show** under References for the hindsight oracle), **Is the difference real?**, **Where the router goes wrong** (worked examples), and **When prices, speed, or providers change** (pick **Fastest** to see 'Router, old estimates' collapse when Mercury was retired). **Download the data** offers every table as CSV or JSON.
+
+### If something fails
+
+- **OpenRouter unreachable:** the pill says "Live check failed"; previews still work from the dated snapshot.
+- **Ollama not running:** the local model is shown as unavailable; start Ollama and press **Check again** on the Models page.
+- **Server down:** rerun `./scripts/demo.ps1`.
+
+## Checkpoint 2 walkthrough (earlier console)
+
+### Start the production application
 
 From the repository root in PowerShell:
 

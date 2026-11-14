@@ -622,6 +622,38 @@ Since 2026-11-12 the app opens on the Learned tab, which is first:
 - tab order: **01 Learned**, **02 Rule route** (the Checkpoint 2 Route tab, whose pools are the Checkpoint 1 and 2 model sets), **03 Compare**, **04 Eligibility**, **05 Benchmark**;
 - the intro text describes the learned router, and the footer reads "LEARNED ROUTER · FIXED MODEL IDENTITIES".
 
+### The public research site (week of Nov 19, replaces the tabbed console)
+
+On 2026-11-14 the owner asked for an interface a general visitor can use and learn from, modelled on OpenRouter, with no checkpoint wording anywhere in the app. The tabs became pages with their own URLs (hash routing, `frontend/src/lib/router.ts`):
+
+- **Home (`#/`)**: what the router does, a routing-flow diagram of where the fresh prompts went under each priority, four findings computed from the final report, how it works, and links to the other pages.
+- **Router (`#/router`)**:
+  - prompt with example chips, four priority cards (best quality, lowest cost, fastest, balanced), and advanced settings (task, minimum context, weights);
+  - the decision with its chance of being right, expected cost and time, and the reason;
+  - a notice naming where Run would send the prompt and that route's data policy;
+  - every model's score, with excluded models faded and their reason shown;
+  - the response after Run;
+  - a "Stress-test this decision" panel (one model, one changed condition, before and after).
+- **Models (`#/models`, `#/models/{id}`)**: an OpenRouter-style catalog with search, access filter, and sort. Each row has availability, live price (old price struck through), context, median time, and accuracy on the fresh prompts. A model page has stat cards, accuracy by task on both prompt sets, how often each priority picks the model, price and availability, and data policy.
+- **Research (`#/research`)**: sticky section navigation, a prompt-set switch (fresh prompts, original test split), and a task filter. The sections:
+  - highlights;
+  - a leaderboard with 95% intervals (references folded);
+  - accuracy against cost and speed;
+  - "Is the difference real?" (paired tests as verdicts with interval bars);
+  - where the router goes wrong (with examples);
+  - robustness scenarios;
+  - the priority sweep charts;
+  - how the router was built;
+  - method and limits;
+  - downloads.
+- **FAQ (`#/faq`)**: questions answered with numbers computed from the report: best model per task, savings, prompt features, retirements, privacy, grading, trust, and limits.
+- **Lab (`#/lab`)**: the rule-based router, side-by-side compare, the GSM8K pilot, and the context filter, kept unchanged as the baselines and renamed without checkpoint terms.
+
+Design:
+- **Look:** light and dark themes (system default, toggle saved in `localStorage`), Geist and Geist Mono, neutral surfaces with one violet accent, and the validated chart palette slots 1-3 (`frontend/src/styles/tokens.css`).
+- **Building blocks:** primitives in `frontend/src/ui/`, charts in `frontend/src/charts/`, pages in `frontend/src/pages/`.
+- **Text:** API-visible text was reworded too: comparison questions, scenario descriptions, the router's preset names, the rule route's refusal message, and the replay note.
+
 ### Visual system
 
 The interface uses a dark, data-dense console style inspired by OpenRouter's structure without copying its brand assets. It uses thin borders, restrained status colors, Inter for interface text, JetBrains Mono for identifiers and metrics, responsive stacking, visible focus states, reduced-motion support, and explicit loading, empty, error, partial-success, and completed states.
@@ -1043,6 +1075,17 @@ The full record is `docs/checkpoint-3-progress.md`. Key facts:
   - Free models count as the cheapest, so paid choices dominate over-routing.
 - **Both are in the report** (`heldout.oracle`, `heldout.routing_errors`) and in the Learned tab's "Oracle gap and routing errors" table.
 - **`app.learned.plots --slides DIR`** writes the dark one-panel versions used in the deck.
+
+**Week of Nov 19 (2026-11-13 and 14).** Full record: `docs/checkpoint-4-progress.md`.
+- **Fresh final set:** 300 new prompts (100 GSM8K, 100 MMLU-Pro, 50 HumanEval+, 50 MBPP+; seed 20261119, SHA-256 recorded before any model answered), run through the nine router models on 2026-11-13 and 14 for $1.27 of paid calls. Mercury 3's 300 calls all failed with HTTP 404 (retired on Nov 12).
+- **Final evaluation** (`python -m app.learned.final_eval`, report `data/learned/final-evaluation.json`), frozen router with the live catalog of 2026-11-13, correct of 300 and cost:
+  - always strongest 284, $1.164; always cheapest paid 268, $0.035; rule router 276, $0.393;
+  - learned quality 282, $0.964 (17% cheaper than always strongest, not significantly less accurate);
+  - learned cost 265, $0.0034; learned faster / balanced 276, $0.433 (1.1 s slower than the rule router at the median);
+  - without the catalog check, faster / balanced send 211 prompts to Mercury and get 83 (p < 0.001);
+  - oracle quality 286 for $0.045. The model × task reference ties the router (282 vs 282).
+- **Robustness** (`app/learned/robustness.py`): price and retirement changes are handled; reliability counts only with a non-zero weight; max-normalization makes the router react the wrong way when the most expensive or slowest model changes. Both are design fixes to report, not to apply to the frozen router.
+- **Reproducible from the repo:** `data/learned/cells.jsonl` (outcomes only) rebuilds the report byte for byte without the raw runs or any key.
 
 **Local environment.**
 - mypy must run as `python -m mypy --config-file backend/pyproject.toml`: Application Control blocks `mypy.exe`, and without `--config-file` strict mode was silently not applied. The check script and CI are fixed.

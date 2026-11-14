@@ -42,6 +42,17 @@ Checkpoint 2 is deliberately a simple, rule-based policy—not a learned router 
 
 Run each command with `uv run --project backend` from the repository root. See [weeks of Oct 22 and Oct 29](docs/checkpoint-3-progress.md) and the [data provenance errata](docs/data-provenance-errata.md).
 
+## Toward Checkpoint 4 (week of Nov 19)
+
+- A fresh final held-out set of 300 prompts, drawn after the router was frozen and excluding every earlier prompt: `python -m app.benchmarks.prepare_final`, run with `python -m app.benchmarks.suite_runner --suite final --confirm`.
+- The final evaluation of the frozen router on the Checkpoint 3 test split and the final set, with 95% bootstrap intervals, paired tests, the oracle gap, a per-task routing-error analysis with worked examples, and robustness scenarios for price, latency, reliability, availability, and user priorities: `python -m app.learned.final_eval`. Report: `data/learned/final-evaluation.json`.
+- Results on the 300 fresh prompts: the best-quality setting got 282 right against 284 for always using the strongest model, for 17% less; the lowest-cost setting got 265 for $0.0034; and after Mercury 3 was retired, the live catalog check kept the fastest setting at 276 right instead of 83. Prompt-level features did not beat a per-task reference.
+- A live catalog check at startup: models a provider no longer serves are excluded with the reason shown, and changed prices update expected costs (`python -m app.registry.live_catalog` prints it).
+- Export of seven result tables as CSV or JSON, from the console or `python -m app.learned.export`.
+- The app is now a public research site with light and dark themes: **Home**, **Router** (with a stress-test panel and a notice naming where a prompt would be sent), **Models** (catalog and a page per model), **Research** (results, significance, errors, robustness, downloads), **FAQ**, and **Lab** (the earlier rule-based tools).
+
+See the [week of November 19](docs/checkpoint-4-progress.md).
+
 ## Prerequisites
 
 - Python 3.12 managed by [uv](https://docs.astral.sh/uv/)
