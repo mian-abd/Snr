@@ -1,62 +1,106 @@
-import * as Tabs from '@radix-ui/react-tabs'
-import { useQuery } from '@tanstack/react-query'
-import { client } from './api/client'
-import { StatusBadge } from './components/StatusBadge'
-import { BenchmarkPanel } from './features/BenchmarkPanel'
-import { ComparePanel } from './features/ComparePanel'
-import { EligibilityPanel } from './features/EligibilityPanel'
-import { LearnedPanel } from './features/LearnedPanel'
-import { RouterPanel } from './features/RouterPanel'
+import { Menu, Moon, Route as RouteIcon, Sun, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { useCatalog, useHealth } from './lib/data'
+import { shortTime } from './lib/format'
+import { Link } from './lib/Link'
+import { useRoute } from './lib/router'
+import { useTheme } from './lib/theme'
+import { FaqPage } from './pages/FaqPage'
+import { HomePage } from './pages/HomePage'
+import { LabPage } from './pages/LabPage'
+import { ModelPage } from './pages/ModelPage'
+import { ModelsPage } from './pages/ModelsPage'
+import { ResearchPage } from './pages/ResearchPage'
+import { RouterPage } from './pages/RouterPage'
+import { Notice } from './ui'
 import styles from './App.module.css'
 
-export default function App() {
-  const health = useQuery({ queryKey: ['health'], queryFn: client.health, refetchInterval: 10_000 })
-  const models = useQuery({ queryKey: ['models', 'baseline'], queryFn: () => client.models('baseline') })
-  const paidModels = useQuery({ queryKey: ['models', 'paid'], queryFn: () => client.models('paid') })
-  // The Checkpoint 3 pool's dated snapshot, from the learned-router report (absent until trained).
-  const learned = useQuery({ queryKey: ['learned-report'], queryFn: client.learnedReport })
+const links = [
+  { to: '/router', label: 'Router' },
+  { to: '/models', label: 'Models' },
+  { to: '/research', label: 'Research' },
+  { to: '/faq', label: 'FAQ' },
+  { to: '/lab', label: 'Lab' },
+]
 
-  if (health.isError || models.isError || paidModels.isError) {
-    return <main className={styles.main}><p className={styles.error}>The backend could not be loaded. Confirm FastAPI is running on port 8000.</p></main>
+function CatalogPill() {
+  const catalog = useCatalog()
+  const status = catalog.data
+  if (!status) return null
+  const gone = status.models.filter((item) => !item.available).length
+  const tone = status.source !== 'live' ? 'off' : gone ? 'warn' : 'good'
+  const text = status.source === 'live'
+    ? gone ? `${gone} model unavailable` : 'All models available'
+    : status.source === 'snapshot' ? 'Live check failed' : 'Live check off'
+  return (
+    <Link to="/models" className={styles.status} data-tone={tone} title={`Provider catalogs checked ${shortTime(status.checked_at_utc)}`}>
+      <i aria-hidden="true" /><span>{text}</span>
+    </Link>
+  )
+}
+
+function Page({ segments }: { segments: string[] }) {
+  switch (segments[0]) {
+    case undefined: return <HomePage />
+    case 'router': return <RouterPage />
+    case 'models': return segments[1] ? <ModelPage id={decodeURIComponent(segments[1])} /> : <ModelsPage />
+    case 'research': return <ResearchPage />
+    case 'faq': return <FaqPage />
+    case 'lab': return <LabPage />
+    default: return <HomePage />
   }
-  if (!health.data || !models.data || !paidModels.data) return <main className={styles.main}><p className={styles.loading}>Loading checkpoint registry…</p></main>
-  const pools = { baseline: models.data.models, paid: paidModels.data.models }
+}
+
+export default function App() {
+  const { segments, path } = useRoute()
+  const { theme, toggle } = useTheme()
+  const [menu, setMenu] = useState(false)
+  const health = useHealth()
+  useEffect(() => setMenu(false), [path])
+  const current = (to: string) => (path === to || path.startsWith(`${to}/`) ? 'page' : undefined)
 
   return (
     <div className={styles.app}>
       <header className={styles.header}>
         <div className={styles.headerInner}>
-          <div className={styles.brand}><span className={styles.mark}>AR</span><div><strong>Adaptive LLM Router</strong><span>CHECKPOINT 3</span></div></div>
-          <div className={styles.statusRail}>
-            <StatusBadge status={health.data.status} label="Backend online" />
-            <StatusBadge status={health.data.credential_configured ? 'success' : 'neutral'} label={health.data.credential_configured ? 'OpenRouter ready' : 'Key not configured'} />
-            <StatusBadge status="neutral" label={models.data.snapshot_id} />
-            <StatusBadge status="neutral" label={paidModels.data.snapshot_id} />
-            {learned.data?.pool_snapshot_id && <StatusBadge status="neutral" label={`${learned.data.pool_snapshot_id}-cp3`} />}
+          <Link to="/" className={styles.brand}><span className={styles.mark}><RouteIcon size={15} strokeWidth={2.4} /></span>Adaptive Router</Link>
+          <nav className={styles.nav} aria-label="Main">
+            {links.map((link) => <Link key={link.to} to={link.to} aria-current={current(link.to)}>{link.label}</Link>)}
+          </nav>
+          <span className={styles.spacer} />
+          <div className={styles.tools}>
+            <CatalogPill />
+            <button type="button" className={styles.iconButton} onClick={toggle} aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'} title={theme === 'dark' ? 'Light theme' : 'Dark theme'}>
+              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+            <button type="button" className={`${styles.iconButton} ${styles.menuButton}`} onClick={() => setMenu(!menu)} aria-label="Menu" aria-expanded={menu}>
+              {menu ? <X size={16} /> : <Menu size={16} />}
+            </button>
           </div>
         </div>
+        {menu && (
+          <nav className={styles.mobileNav} aria-label="Main">
+            {links.map((link) => <Link key={link.to} to={link.to} aria-current={current(link.to)}>{link.label}</Link>)}
+          </nav>
+        )}
       </header>
       <main className={styles.main}>
-        <section className={styles.intro}>
-          <h1>Evidence first.<br /><span>Route with intent.</span></h1>
-          <div className={styles.introAside}>A learned router predicts each model's chance of answering correctly and weighs it against cost and speed for the priority you choose. The Checkpoint 2 rule router stays available for comparison.</div>
-        </section>
-        <Tabs.Root defaultValue="learned">
-          <Tabs.List className={styles.tabsList} aria-label="Checkpoint sections">
-            <Tabs.Trigger className={styles.tab} value="learned">01 Learned</Tabs.Trigger>
-            <Tabs.Trigger className={styles.tab} value="route">02 Rule route</Tabs.Trigger>
-            <Tabs.Trigger className={styles.tab} value="compare">03 Compare</Tabs.Trigger>
-            <Tabs.Trigger className={styles.tab} value="eligibility">04 Eligibility</Tabs.Trigger>
-            <Tabs.Trigger className={styles.tab} value="benchmark">05 Benchmark</Tabs.Trigger>
-          </Tabs.List>
-          <Tabs.Content value="learned"><LearnedPanel /></Tabs.Content>
-          <Tabs.Content value="route"><RouterPanel models={models.data.models} credentialConfigured={health.data.credential_configured} /></Tabs.Content>
-          <Tabs.Content value="compare"><ComparePanel pools={pools} credentialConfigured={health.data.credential_configured} /></Tabs.Content>
-          <Tabs.Content value="eligibility"><EligibilityPanel pools={pools} /></Tabs.Content>
-          <Tabs.Content value="benchmark"><BenchmarkPanel pools={pools} credentialConfigured={health.data.credential_configured} /></Tabs.Content>
-        </Tabs.Root>
-        <footer className={styles.footer}><span>LEARNED ROUTER · FIXED MODEL IDENTITIES</span><span>SCHEMA 1.0 · {models.data.metadata_as_of.slice(0, 10)}</span></footer>
+        {health.isError
+          ? <div className={styles.error}><Notice tone="bad" role="alert"><strong>The server could not be reached.</strong> Start it with <code>./scripts/demo.ps1</code> and reload this page.</Notice></div>
+          : <Page segments={segments} />}
       </main>
+      <footer className={styles.footer}>
+        <div className={styles.footerInner}>
+          <div>
+            <strong>Adaptive LLM Router</strong>
+            <p>Open research on sending each prompt to the model that is good enough: measured outcomes, a small learned router, and every number reproducible from the published data. Prompts leave this computer only when you press Run.</p>
+          </div>
+          <div className={styles.footerLinks}>
+            {links.map((link) => <Link key={link.to} to={link.to}>{link.label}</Link>)}
+            <Link to="/research?section=downloads">Download the data</Link>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }

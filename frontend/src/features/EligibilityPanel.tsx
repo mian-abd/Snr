@@ -27,7 +27,7 @@ export function EligibilityPanel({ pools }: Props) {
     <section className={styles.panel} aria-labelledby="eligibility-heading">
       <div className={styles.sectionHeading}>
         <div>
-          <span className={styles.index}>04 / ELIGIBILITY</span>
+          <span className={styles.index}>CONTEXT FILTER</span>
           <h2 id="eligibility-heading">Hard requirements before routing.</h2>
           <p>A pure metadata filter checks every registered model in both pools before any generation call. Each pool comes from its own dated registry snapshot.</p>
         </div>

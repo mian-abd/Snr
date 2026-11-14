@@ -348,6 +348,9 @@ export type LearnedCandidate = {
   expected_cost_usd: number
   expected_latency_ms: number
   failure_rate: number
+  snapshot_expected_cost_usd: number | null
+  catalog_note: string | null
+  what_if_note: string | null
   score: number | null
   quality_term: number | null
   cost_penalty: number | null
@@ -369,6 +372,8 @@ export type LearnedRoutingDecision = {
   selected_model_id: string
   candidates: LearnedCandidate[]
   reason: string
+  catalog_source: CatalogSource
+  catalog_checked_at_utc: string | null
 }
 
 export type LearnedRouteRequest = {
@@ -380,3 +385,214 @@ export type LearnedRouteRequest = {
 }
 
 export type LearnedRouteResponse = { decision: LearnedRoutingDecision; result: GenerationResult }
+
+export type CatalogSource = 'live' | 'snapshot' | 'off'
+
+export type LiveModelStatus = {
+  model_id: string
+  display_name: string
+  provider: string
+  upstream_model: string
+  checked: boolean
+  available: boolean
+  note: string
+  snapshot_prompt_price_per_million: number
+  snapshot_completion_price_per_million: number
+  live_prompt_price_per_million: number | null
+  live_completion_price_per_million: number | null
+  serving_hosts: string[]
+  missing_hosts: string[]
+}
+
+export type LiveCatalogStatus = {
+  source: CatalogSource
+  pool_snapshot_id: string
+  snapshot_as_of: string
+  checked_at_utc: string | null
+  error: string | null
+  models: LiveModelStatus[]
+}
+
+export type PoolModel = {
+  id: string
+  display_name: string
+  family: string
+  open_weight: boolean
+  parameters: string
+  access: 'paid' | 'free' | 'local'
+  provider: string
+  base_url: string
+  upstream_model: string
+  api_key_env: string | null
+  prompt_price_per_token: string
+  completion_price_per_token: string
+  context_length: number
+  requests_per_minute: number
+  max_concurrency: number
+  request_options: Record<string, unknown>
+  data_policy: string
+  enabled: boolean
+}
+
+export type PoolSnapshot = {
+  schema_version: string
+  snapshot_id: string
+  metadata_as_of: string
+  models_sha256: string
+  models: PoolModel[]
+}
+
+export type WhatIfChanges = {
+  price_multipliers: Record<string, number>
+  latency_multipliers: Record<string, number>
+  failure_shares: Record<string, number>
+  unavailable: string[]
+}
+
+export type WhatIfResponse = { before: LearnedRoutingDecision; after: LearnedRoutingDecision; changed: boolean }
+
+export type Interval = { low: number; high: number }
+
+export type StrategyUncertainty = {
+  strategy_id: string
+  accuracy: Interval
+  total_cost_usd: Interval
+  median_latency_ms: Interval
+}
+
+export type PairedComparison = {
+  strategy_id: string
+  baseline_id: string
+  question: string
+  prompts: number
+  correct: number
+  baseline_correct: number
+  only_strategy_correct: number
+  only_baseline_correct: number
+  accuracy_difference: number
+  accuracy_difference_ci: Interval
+  mcnemar_p: number
+  holm_p: number
+  cost_difference_usd: number
+  cost_difference_ci: Interval
+  cost_ratio: number | null
+  cost_ratio_ci: Interval | null
+  median_latency_difference_ms: number
+  median_latency_difference_ci: Interval
+}
+
+export type ErrorBreakdown = {
+  prompts: number
+  correct: number
+  wrong: number
+  unavoidable: number
+  under_routed: number
+  over_routed: number
+  over_routed_dominated: number
+  over_routing_extra_cost_usd: number
+  total_cost_usd: number
+  oracle_correct: number
+  oracle_cost_usd: number
+  regret_correct: number
+}
+
+export type ErrorExample = {
+  kind: 'under' | 'over' | 'good'
+  sample_id: string
+  benchmark: string
+  task_group: TaskGroup
+  prompt_excerpt: string
+  chosen_model_id: string
+  chosen_correct: boolean
+  chosen_cost_usd: number
+  chosen_latency_ms: number
+  predicted_success: number
+  alternative_model_id: string | null
+  alternative_correct: boolean | null
+  alternative_cost_usd: number | null
+  alternative_latency_ms: number | null
+  explanation: string
+}
+
+export type RoutingErrorAnalysis = {
+  strategy_id: string
+  overall: ErrorBreakdown
+  by_task: Record<string, ErrorBreakdown>
+  examples: ErrorExample[]
+}
+
+export type ScenarioSpec = {
+  scenario_id: string
+  title: string
+  condition: string
+  observed: boolean
+  description: string
+  price_multipliers: Record<string, number>
+  latency_multipliers: Record<string, number>
+  failure_shares: Record<string, number>
+  unavailable: string[]
+  reliability_weight: number | null
+  world_already_changed: boolean
+}
+
+export type ScenarioStrategy = {
+  strategy_id: string
+  correct: number
+  accuracy: number
+  total_cost_usd: number
+  median_latency_ms: number | null
+  changed_decisions: number | null
+  selected_models: Record<string, number>
+}
+
+export type ScenarioResult = { scenario: ScenarioSpec; prompts: number; strategies: ScenarioStrategy[] }
+
+export type PrioritySweepPoint = {
+  axis: 'cost' | 'latency'
+  weight: number
+  correct: number
+  accuracy: number
+  total_cost_usd: number
+  median_latency_ms: number | null
+  selected_models: Record<string, number>
+}
+
+export type RobustnessReport = {
+  evaluation_id: string
+  prompts: number
+  scenarios: ScenarioResult[]
+  priority_sweep: PrioritySweepPoint[]
+  notes: string[]
+}
+
+export type EvaluationSet = {
+  evaluation_id: 'cp3_test' | 'final'
+  title: string
+  description: string
+  prompts: number
+  prompts_by_task: Record<string, number>
+  models: string[]
+  catalog_applied: boolean
+  classifier: ClassifierMetrics
+  reference_model_task_prior: ClassifierMetrics
+  matrix: LearnedMatrixRow[]
+  strategies: LearnedStrategyOutcome[]
+  oracle: LearnedStrategyOutcome[]
+  uncertainty: StrategyUncertainty[]
+  comparisons: PairedComparison[]
+  routing_errors: RoutingErrorAnalysis[]
+}
+
+export type FinalEvaluationReport = {
+  artifact_id: string
+  artifact_sha256: string
+  final_set_sha256: string
+  pool_snapshot_id: string
+  catalog: LiveCatalogStatus | null
+  protocol: string[]
+  evaluations: EvaluationSet[]
+  robustness: RobustnessReport[]
+  spend_usd: number
+}
+
+export type ExportTable = 'strategies' | 'comparisons' | 'errors' | 'robustness' | 'sweep' | 'decisions' | 'cells'

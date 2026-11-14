@@ -10,7 +10,7 @@
 .prompt:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-faint); }
 .actionRow { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 1rem; }
 .primaryButton, .secondaryActions button, .filterForm button, .iconButton { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; min-height: 2.5rem; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); padding: 0 0.85rem; background: var(--panel-raised); color: var(--text); font-weight: 650; cursor: pointer; transition: 120ms ease; }
-.primaryButton { border-color: var(--accent); background: var(--accent); color: #081006; }
+.primaryButton { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
 .primaryButton:hover:not(:disabled) { background: var(--accent-strong); }
 .primaryButton:disabled, .secondaryActions button:disabled { cursor: not-allowed; opacity: 0.45; }
 .switchLabel { display: flex; align-items: center; gap: 0.65rem; color: var(--text-muted); font-size: 0.8rem; }
@@ -170,3 +170,38 @@
 .weightGrid input { width: 100%; accent-color: var(--accent); }
 .inlineSelect { padding: 0.45rem 0.6rem; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font: 0.8rem var(--font-mono); }
 @media (max-width: 760px) { .chartPair, .weightGrid { grid-template-columns: 1fr; } }
+.mutedRow td { opacity: 0.62; }
+.catalogOk, .catalogWarn { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; margin-bottom: 1rem; padding: 0.7rem 0.85rem; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--panel-raised); color: var(--text-muted); font-size: 0.8rem; line-height: 1.45; }
+.catalogOk svg { color: var(--success); flex: 0 0 auto; }
+.catalogWarn { border-color: color-mix(in srgb, var(--warning) 45%, var(--border)); }
+.catalogWarn svg { color: var(--warning); flex: 0 0 auto; }
+.catalogOk > span, .catalogWarn > span { flex: 1 1 18rem; }
+.sendNotice, .sendNoticeLocal { display: flex; gap: 0.65rem; align-items: flex-start; margin-top: 1rem; padding: 0.8rem 0.9rem; border: 1px solid color-mix(in srgb, var(--warning) 45%, var(--border)); border-radius: var(--radius-md); background: color-mix(in srgb, var(--warning) 7%, transparent); }
+.sendNoticeLocal { border-color: color-mix(in srgb, var(--success) 45%, var(--border)); background: color-mix(in srgb, var(--success) 7%, transparent); }
+.sendNotice svg { flex: 0 0 auto; margin-top: 0.15rem; color: var(--warning); }
+.sendNoticeLocal svg { flex: 0 0 auto; margin-top: 0.15rem; color: var(--success); }
+.sendNotice p, .sendNoticeLocal p { margin: 0; color: var(--text-muted); font-size: 0.8rem; line-height: 1.55; }
+.sendNotice strong, .sendNoticeLocal strong { color: var(--text); }
+.whatIf { margin-top: 1.4rem; padding: 1rem; border: 1px dashed var(--border-strong); border-radius: var(--radius-md); background: var(--background); }
+.whatIfControls { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.75rem; margin-top: 0.9rem; }
+.whatIfControls label { display: grid; gap: 0.35rem; color: var(--text-muted); font-size: 0.7rem; }
+.whatIfControls input { width: 8rem; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); padding: 0.45rem 0.6rem; background: var(--panel); color: var(--text); font: 0.8rem var(--font-mono); }
+.whatIfResult { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; margin: 1rem 0 0.4rem; }
+.whatIfResult > div { display: grid; gap: 0.3rem; padding: 0.7rem 0.9rem; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel-raised); }
+.whatIfResult strong { font-size: 0.95rem; }
+.whatIfArrow { color: var(--text-dim); font: 600 1.1rem var(--font-mono); }
+.observedBadge, .hypotheticalBadge { display: inline-block; margin: 0 0 0.3rem; padding: 0.12rem 0.4rem; border: 1px solid var(--border); border-radius: 999px; font: 600 0.62rem var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase; }
+.observedBadge { border-color: color-mix(in srgb, var(--warning) 50%, var(--border)); color: var(--warning); }
+.hypotheticalBadge { color: var(--text-dim); }
+.exampleGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: 0.75rem; margin-top: 0.5rem; }
+.exampleCard { padding: 0.85rem; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--panel-raised); }
+.exampleCard header { display: flex; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.5rem; }
+.exampleCard code { color: var(--text-dim); font-size: 0.68rem; }
+.exampleCard p { margin: 0.4rem 0; color: var(--text-muted); font-size: 0.78rem; line-height: 1.5; }
+.exampleText { color: var(--text) !important; font-style: italic; }
+.exportGrid { display: grid; gap: 0.4rem; margin-top: 0.8rem; }
+.exportRow { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; padding: 0.55rem 0.75rem; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel-raised); color: var(--text-muted); font-size: 0.8rem; }
+.exportRow > span { flex: 1 1 14rem; }
+.downloadLink { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.6rem; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); color: var(--text); font: 600 0.72rem var(--font-mono); text-decoration: none; }
+.downloadLink:hover { border-color: var(--accent); color: var(--accent); }
+.protocolList { margin: 0; padding: 0 1rem 0 2rem; color: var(--text-muted); font-size: 0.8rem; line-height: 1.6; }

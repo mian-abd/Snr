@@ -3,9 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#080a0b" />
-    <meta name="description" content="Adaptive LLM Router Checkpoint 2 routing console" />
+    <meta name="theme-color" content="#0b0c0e" />
+    <meta name="description" content="Adaptive LLM Router: route every prompt to the model that is good enough, and read the research behind it." />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236d5cf6'/%3E%3Cpath d='M9 22c4-9 10-12 14-12M9 22c4-3 9-4 14-2M9 22h14' stroke='white' stroke-width='2.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E" />
     <title>Adaptive LLM Router</title>
+    <script>
+      // Apply the saved theme before the first paint, so the page never flashes.
+      try {
+        const saved = localStorage.getItem('router-theme')
+        if (saved === 'light' || saved === 'dark') document.documentElement.dataset.theme = saved
+      } catch {
+        // Storage may be blocked; the system preference applies.
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

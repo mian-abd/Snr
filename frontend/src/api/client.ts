@@ -3,12 +3,16 @@ import type {
   BenchmarkView,
   ComparisonResponse,
   EligibilityResult,
+  ExportTable,
+  FinalEvaluationReport,
   Health,
   LearnedRouteRequest,
   LearnedRouteResponse,
   LearnedRouterReport,
   LearnedRoutingDecision,
+  LiveCatalogStatus,
   PaginatedRecords,
+  PoolSnapshot,
   RegistrySnapshot,
   RoutingDecision,
   RouteResponse,
@@ -16,6 +20,8 @@ import type {
   RoutingPool,
   RoutingPriority,
   RoutingValidationReport,
+  WhatIfChanges,
+  WhatIfResponse,
 } from './types'
 
 export class ApiError extends Error {
@@ -92,6 +98,34 @@ export const client = {
     api<LearnedRoutingDecision>('/api/v1/learned/decisions', { method: 'POST', body: JSON.stringify(request) }),
   learnedRoute: (request: LearnedRouteRequest) =>
     api<LearnedRouteResponse>('/api/v1/learned/routes', { method: 'POST', body: JSON.stringify(request) }),
+  learnedWhatIf: (route: LearnedRouteRequest, changes: WhatIfChanges) =>
+    api<WhatIfResponse>('/api/v1/learned/what-if', { method: 'POST', body: JSON.stringify({ route, changes }) }),
+  learnedCatalog: async () => {
+    try {
+      return await api<LiveCatalogStatus>('/api/v1/learned/catalog')
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 503) return null
+      throw error
+    }
+  },
+  refreshCatalog: () => api<LiveCatalogStatus>('/api/v1/learned/catalog/refresh', { method: 'POST' }),
+  learnedPool: async () => {
+    try {
+      return await api<PoolSnapshot>('/api/v1/learned/pool')
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 503) return null
+      throw error
+    }
+  },
+  finalReport: async () => {
+    try {
+      return await api<FinalEvaluationReport>('/api/v1/learned/final')
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 404) return null
+      throw error
+    }
+  },
+  exportUrl: (table: ExportTable, format: 'csv' | 'json') => `/api/v1/learned/export/${table}?format=${format}`,
   records: (runId: string) =>
     api<PaginatedRecords>(`/api/v1/benchmarks/runs/${runId}/records?limit=100`),
   benchmarkEstimate: (pool: RoutingPool, mode: 'pilot' | 'full') =>

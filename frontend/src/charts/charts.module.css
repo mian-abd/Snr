@@ -1,0 +1,50 @@
+.figure { margin: 0; padding: 1rem 1rem 0.75rem; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--chart-surface); }
+.figure figcaption { display: grid; gap: 0.2rem; margin-bottom: 0.6rem; }
+.figure figcaption strong { color: var(--text); font-size: 0.9rem; font-weight: 600; }
+.figure figcaption span { color: var(--text-3); font-size: 0.76rem; }
+.frame { position: relative; }
+.frame svg { display: block; width: 100%; height: auto; overflow: visible; }
+.grid { stroke: var(--border); stroke-width: 1; }
+.axis { stroke: var(--border-strong); stroke-width: 1; }
+.tick { fill: var(--text-3); font: 11px var(--font-mono); font-variant-numeric: tabular-nums; }
+.axisLabel { fill: var(--text-2); font-size: 11.5px; }
+.label { fill: var(--text-2); font-size: 11.5px; }
+.labelStrong { fill: var(--text); font-size: 12px; font-weight: 600; }
+.markLearned { fill: var(--series-1); stroke: var(--chart-surface); stroke-width: 2; }
+.markBaseline { fill: var(--series-2); stroke: var(--chart-surface); stroke-width: 2; }
+.markOracle { fill: var(--series-3); stroke: var(--chart-surface); stroke-width: 2; }
+.line { fill: none; stroke: var(--series-1); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.hit { fill: transparent; cursor: pointer; outline: none; }
+.hit:focus-visible { stroke: var(--accent); stroke-width: 2; }
+.tooltip { position: absolute; z-index: 5; display: grid; gap: 0.15rem; min-width: 11rem; max-width: 16rem; padding: 0.55rem 0.7rem; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); box-shadow: var(--shadow-md); color: var(--text-2); font-size: 0.76rem; pointer-events: none; transform: translate(-50%, calc(-100% - 14px)); }
+.tooltip strong { color: var(--text); font-size: 0.8rem; }
+.legend { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; color: var(--text-2); font-size: 0.78rem; }
+.legend span { display: inline-flex; align-items: center; gap: 0.4rem; }
+.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
+.swatchSquare { border-radius: 2px; }
+
+/* Routing flow */
+.flowPath { fill: none; stroke: var(--accent); stroke-linecap: round; opacity: 0.55; transition: opacity 150ms ease; }
+.flowNode { fill: var(--surface); stroke: var(--border-strong); stroke-width: 1; }
+.flowHub { fill: var(--accent); }
+.flowHubText { fill: var(--accent-ink); font: 700 11px var(--font-sans); }
+.flowDot { fill: var(--accent); }
+.flowName { fill: var(--text); font-size: 12.5px; font-weight: 550; }
+.flowShare { fill: var(--text-3); font: 12px var(--font-mono); }
+.flowMuted { fill: var(--text-3); font-size: 12px; }
+
+/* Bars */
+.bars { display: grid; gap: 0.55rem; }
+.barRow { display: grid; grid-template-columns: minmax(7rem, 12rem) 1fr 4.5rem; align-items: center; gap: 0.75rem; font-size: 0.82rem; }
+.barRow > span:first-child { overflow: hidden; color: var(--text-2); text-overflow: ellipsis; white-space: nowrap; }
+.barTrack { position: relative; height: 18px; }
+.barFill { position: absolute; left: 0; height: 100%; border-radius: 0 4px 4px 0; }
+.barValue { color: var(--text); font: 500 0.8rem var(--font-mono); text-align: right; font-variant-numeric: tabular-nums; }
+.barGroup { display: grid; gap: 3px; }
+.barGroup .barTrack { height: 10px; }
+
+/* Interval rows (significance) */
+.interval { position: relative; height: 22px; }
+.intervalZero { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--border-strong); }
+.intervalWhisker { position: absolute; top: 10px; height: 2px; border-radius: 2px; background: var(--text-3); }
+.intervalPoint { position: absolute; top: 6px; width: 10px; height: 10px; margin-left: -5px; border: 2px solid var(--chart-surface); border-radius: 50%; background: var(--series-1); }

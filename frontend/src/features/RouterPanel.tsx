@@ -53,9 +53,9 @@ export function RouterPanel({ models, credentialConfigured }: Props) {
     <section className={styles.panel} aria-labelledby="router-heading">
       <div className={styles.sectionHeading}>
         <div>
-          <span className={styles.index}>02 / RULE ROUTE · CHECKPOINT 2</span>
-          <h2 id="router-heading">One explicit policy. One selected model.</h2>
-          <p>Choose the preserved two-model free pool from Checkpoint 1 or the dated three-model paid pool. The policy never substitutes a hidden model.</p>
+          <span className={styles.index}>RULE-BASED ROUTER · THE BASELINE</span>
+          <h2 id="router-heading">The hand-written rules the adaptive router is measured against.</h2>
+          <p>A few fixed rules pick a cheap, a fast, or a strong model from the prompt's visible signals. It is kept exactly as first built so it stays a fair baseline. Its live route checks OpenRouter against its own dated price list and refuses to run when they differ, as they have since Mercury 3 was retired on 2026-11-12; previews and the saved results still work.</p>
         </div>
         <div className={styles.modelPair} aria-label="Routing candidates">
           {candidateModels.map((model) => <span key={model.id}>{shortModel(model.id)} · {model.context_length.toLocaleString()} ctx</span>)}
@@ -66,10 +66,10 @@ export function RouterPanel({ models, credentialConfigured }: Props) {
         <legend>Model pool</legend>
         <div className={styles.poolGrid}>
           <button type="button" className={pool === 'paid' ? styles.priorityActive : styles.priorityOption} onClick={() => choosePool('paid')}>
-            <strong>Checkpoint 2 paid pool</strong><span>Gemma, Mercury, and Gemini Argon with dated catalog pricing and 36-cell evidence.</span>
+            <strong>Paid models (Oct 23 prices)</strong><span>Gemma, Mercury, and Gemini Argon with dated catalog pricing and 36-cell evidence.</span>
           </button>
           <button type="button" className={pool === 'baseline' ? styles.priorityActive : styles.priorityOption} onClick={() => choosePool('baseline')}>
-            <strong>Checkpoint 1 free pool</strong><span>The original two fixed free identities and saved 24-cell evidence.</span>
+            <strong>Free models (Sep 30 list)</strong><span>The original two fixed free identities and saved 24-cell evidence.</span>
           </button>
         </div>
       </fieldset>
@@ -175,7 +175,7 @@ export function RouterPanel({ models, credentialConfigured }: Props) {
         <div className={styles.dashboardHeading}><div><span className={styles.eyebrow}>Results dashboard · offline strategy replay</span><h3 id="strategy-dashboard-heading">Same saved matrix, different decisions.</h3></div><ArrowRight size={18} aria-hidden="true" /></div>
         {dashboard.isError && <p className={styles.errorBox}>Saved routing replay could not be loaded for this pool.</p>}
         {dashboard.data && <>
-          <p className={styles.disclaimer}>{dashboard.data.note} Source: {dashboard.data.source_dataset}, {dashboard.data.source_cells} cells ({dashboard.data.prompts.length} prompts × {dashboard.data.model_ids.length} models), run <code>{dashboard.data.source_run_id}</code>. Failed calls stay in the accuracy denominator; p95 uses the nearest-rank method.</p>
+          <p className={styles.disclaimer}>{dashboard.data.note} Source: {dashboard.data.source_dataset}, {dashboard.data.source_cells} cells ({dashboard.data.prompts.length} prompts × {dashboard.data.model_ids.length} models). Failed calls stay in the accuracy denominator; p95 uses the nearest-rank method.</p>
           <div className={styles.tableWrap}>
             <table><thead><tr><th>Strategy</th><th>Selected</th><th>Accuracy</th><th>Served</th><th>Median latency</th><th>p95 latency</th><th>Total cost</th><th>Cost / correct</th></tr></thead>
               <tbody>{dashboard.data.strategies.map((strategy) => <tr key={strategy.strategy_id} className={strategy.strategy_id === replayStrategy ? styles.selectedRow : undefined}>

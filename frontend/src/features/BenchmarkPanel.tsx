@@ -59,7 +59,7 @@ export function BenchmarkPanel({ pools, credentialConfigured }: Props) {
     <section className={styles.panel} aria-labelledby="benchmark-heading">
       <div className={styles.sectionHeading}>
         <div>
-          <span className={styles.index}>05 / BENCHMARK</span>
+          <span className={styles.index}>GSM8K PILOT RUNS</span>
           <h2 id="benchmark-heading">A small baseline, captured completely.</h2>
           <p>The same twelve fixed GSM8K questions, prompt, and scorer run against each pool, so both matrices stay comparable.</p>
         </div>
@@ -70,7 +70,7 @@ export function BenchmarkPanel({ pools, credentialConfigured }: Props) {
         onChange={choosePool}
         descriptions={{
           paid: 'Gemma, Mercury, and Gemini Argon. Paid runs show a cost estimate and need confirmation.',
-          baseline: 'The original free Gemma and Nemotron matrix from Checkpoint 1.',
+          baseline: 'The original free Gemma and Nemotron matrix from September.',
         }}
       />
       <div className={styles.protocolStrip}>
@@ -79,7 +79,7 @@ export function BenchmarkPanel({ pools, credentialConfigured }: Props) {
 
       {manifest ? (
         <div className={styles.progressBlock} aria-live="polite">
-          <div className={styles.progressLabels}><span>{manifest.run_id}</span><strong>{manifest.completed_cells} / {manifest.total_cells}</strong></div>
+          <div className={styles.progressLabels}><span>{manifest.mode === "full" ? "Full run" : "Pilot run"} · {manifest.dataset}</span><strong>{manifest.completed_cells} / {manifest.total_cells}</strong></div>
           <div className={styles.progressTrack}><span style={{ width: `${(manifest.completed_cells / manifest.total_cells) * 100}%` }} /></div>
           {manifest.error_message && <p className={styles.errorBox}>{manifest.error_message}</p>}
         </div>

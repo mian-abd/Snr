@@ -143,6 +143,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/learned/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Learned Catalog
+         * @description What the providers' live catalogs said about the router's pool at the last check.
+         */
+        get: operations["learned_catalog_api_v1_learned_catalog_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/learned/catalog/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Refresh Learned Catalog
+         * @description Re-check the live catalogs now (public catalog endpoints only; no prompt is sent).
+         */
+        post: operations["refresh_learned_catalog_api_v1_learned_catalog_refresh_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/learned/decisions": {
         parameters: {
             query?: never;
@@ -157,6 +197,66 @@ export interface paths {
          * @description Score every model with the learned router and the chosen weights; no provider call.
          */
         post: operations["preview_learned_decision_api_v1_learned_decisions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/learned/export/{table}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export Table
+         * @description Download one results table as CSV or JSON (no provider call).
+         */
+        get: operations["export_table_api_v1_learned_export__table__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/learned/final": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Final Evaluation
+         * @description The final held-out evaluation, oracle and error analysis, and robustness scenarios.
+         */
+        get: operations["final_evaluation_api_v1_learned_final_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/learned/pool": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Learned Pool
+         * @description The dated Checkpoint 3 model pool the learned router was trained on (Model Registry).
+         */
+        get: operations["learned_pool_api_v1_learned_pool_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -197,6 +297,26 @@ export interface paths {
          * @description Route with the learned router and send exactly one generation request (one retry).
          */
         post: operations["learned_route_api_v1_learned_routes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/learned/what-if": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Learned What If
+         * @description Route the same prompt under current and hypothetical conditions; no provider call.
+         */
+        post: operations["learned_what_if_api_v1_learned_what_if_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -321,6 +441,11 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * Access
+         * @enum {string}
+         */
+        Access: "paid" | "free" | "local";
         /** BenchmarkEstimate */
         BenchmarkEstimate: {
             /** Cells */
@@ -488,6 +613,11 @@ export interface components {
              */
             tools: boolean;
         };
+        /**
+         * CatalogSource
+         * @enum {string}
+         */
+        CatalogSource: "live" | "snapshot" | "off";
         /** ClassifierMetrics */
         ClassifierMetrics: {
             /** Accuracy At 0 5 */
@@ -588,6 +718,131 @@ export interface components {
             /** Reasons */
             reasons: string[];
         };
+        /**
+         * ErrorBreakdown
+         * @description Routing errors against what every model actually did on the same prompts.
+         *
+         *     Under-routed: wrong, while a model with a higher expected cost was right. Over-routed: right,
+         *     while a model with a lower expected cost was also right (the proposal's definition).
+         *     Over-routed and dominated: that cheaper model was also no slower on the actual call.
+         */
+        ErrorBreakdown: {
+            /** Correct */
+            correct: number;
+            /** Oracle Correct */
+            oracle_correct: number;
+            /** Oracle Cost Usd */
+            oracle_cost_usd: number;
+            /** Over Routed */
+            over_routed: number;
+            /** Over Routed Dominated */
+            over_routed_dominated: number;
+            /** Over Routing Extra Cost Usd */
+            over_routing_extra_cost_usd: number;
+            /** Prompts */
+            prompts: number;
+            /** Regret Correct */
+            regret_correct: number;
+            /** Total Cost Usd */
+            total_cost_usd: number;
+            /** Unavoidable */
+            unavoidable: number;
+            /** Under Routed */
+            under_routed: number;
+            /** Wrong */
+            wrong: number;
+        };
+        /** ErrorExample */
+        ErrorExample: {
+            /** Alternative Correct */
+            alternative_correct: boolean | null;
+            /** Alternative Cost Usd */
+            alternative_cost_usd: number | null;
+            /** Alternative Latency Ms */
+            alternative_latency_ms: number | null;
+            /** Alternative Model Id */
+            alternative_model_id: string | null;
+            /** Benchmark */
+            benchmark: string;
+            /** Chosen Correct */
+            chosen_correct: boolean;
+            /** Chosen Cost Usd */
+            chosen_cost_usd: number;
+            /** Chosen Latency Ms */
+            chosen_latency_ms: number;
+            /** Chosen Model Id */
+            chosen_model_id: string;
+            /** Explanation */
+            explanation: string;
+            /** Kind */
+            kind: string;
+            /** Predicted Success */
+            predicted_success: number;
+            /** Prompt Excerpt */
+            prompt_excerpt: string;
+            /** Sample Id */
+            sample_id: string;
+            task_group: components["schemas"]["TaskGroup"];
+        };
+        /**
+         * EvaluationSet
+         * @description The frozen router and every baseline on one set of prompts.
+         */
+        EvaluationSet: {
+            /** Catalog Applied */
+            catalog_applied: boolean;
+            classifier: components["schemas"]["ClassifierMetrics"];
+            /** Comparisons */
+            comparisons: components["schemas"]["PairedComparison"][];
+            /** Description */
+            description: string;
+            /** Evaluation Id */
+            evaluation_id: string;
+            /** Matrix */
+            matrix: components["schemas"]["LearnedMatrixRow"][];
+            /** Models */
+            models: string[];
+            /** Oracle */
+            oracle: components["schemas"]["LearnedStrategyOutcome"][];
+            /** Prompts */
+            prompts: number;
+            /** Prompts By Task */
+            prompts_by_task: {
+                [key: string]: number;
+            };
+            reference_model_task_prior: components["schemas"]["ClassifierMetrics"];
+            /** Routing Errors */
+            routing_errors: components["schemas"]["RoutingErrorAnalysis"][];
+            /** Strategies */
+            strategies: components["schemas"]["LearnedStrategyOutcome"][];
+            /** Title */
+            title: string;
+            /** Uncertainty */
+            uncertainty: components["schemas"]["StrategyUncertainty"][];
+        };
+        /**
+         * FinalEvaluationReport
+         * @description Week of Nov 19: the held-out evaluation, oracle and error analysis, and robustness.
+         */
+        FinalEvaluationReport: {
+            /** Artifact Id */
+            artifact_id: string;
+            /** Artifact Sha256 */
+            artifact_sha256: string;
+            catalog: components["schemas"]["LiveCatalogStatus"] | null;
+            /** Evaluations */
+            evaluations: components["schemas"]["EvaluationSet"][];
+            /** Final Set Sha256 */
+            final_set_sha256: string;
+            /** Pool Snapshot Id */
+            pool_snapshot_id: string;
+            /** Protocol */
+            protocol: string[];
+            /** Robustness */
+            robustness: components["schemas"]["RobustnessReport"][];
+            /** Spend Usd */
+            spend_usd: number;
+        };
         /** GenerationResult */
         GenerationResult: {
             /** Attempt Number */
@@ -685,10 +940,19 @@ export interface components {
             /** Trained On */
             trained_on: string[];
         };
+        /** Interval */
+        Interval: {
+            /** High */
+            high: number;
+            /** Low */
+            low: number;
+        };
         /** LearnedCandidate */
         LearnedCandidate: {
             /** Access */
             access: string;
+            /** Catalog Note */
+            catalog_note?: string | null;
             /** Context Length */
             context_length: number;
             /** Cost Penalty */
@@ -721,6 +985,10 @@ export interface components {
             reliability_penalty?: number | null;
             /** Score */
             score?: number | null;
+            /** Snapshot Expected Cost Usd */
+            snapshot_expected_cost_usd?: number | null;
+            /** What If Note */
+            what_if_note?: string | null;
         };
         /**
          * LearnedMatrixRow
@@ -817,6 +1085,10 @@ export interface components {
             artifact_id: string;
             /** Candidates */
             candidates: components["schemas"]["LearnedCandidate"][];
+            /** Catalog Checked At Utc */
+            catalog_checked_at_utc?: string | null;
+            /** @default off */
+            catalog_source: components["schemas"]["CatalogSource"];
             /** Custom Weights */
             custom_weights: boolean;
             /** Min Context Tokens */
@@ -863,6 +1135,52 @@ export interface components {
             strategy_id: string;
             /** Total Cost Usd */
             total_cost_usd: number;
+        };
+        /** LiveCatalogStatus */
+        LiveCatalogStatus: {
+            /** Checked At Utc */
+            checked_at_utc?: string | null;
+            /** Error */
+            error?: string | null;
+            /** Models */
+            models?: components["schemas"]["LiveModelStatus"][];
+            /** Pool Snapshot Id */
+            pool_snapshot_id: string;
+            /** Snapshot As Of */
+            snapshot_as_of: string;
+            source: components["schemas"]["CatalogSource"];
+        };
+        /**
+         * LiveModelStatus
+         * @description One pool model as its provider's live catalog describes it now.
+         */
+        LiveModelStatus: {
+            /** Available */
+            available: boolean;
+            /** Checked */
+            checked: boolean;
+            /** Display Name */
+            display_name: string;
+            /** Live Completion Price Per Million */
+            live_completion_price_per_million?: number | null;
+            /** Live Prompt Price Per Million */
+            live_prompt_price_per_million?: number | null;
+            /** Missing Hosts */
+            missing_hosts?: string[];
+            /** Model Id */
+            model_id: string;
+            /** Note */
+            note: string;
+            /** Provider */
+            provider: string;
+            /** Serving Hosts */
+            serving_hosts?: string[];
+            /** Snapshot Completion Price Per Million */
+            snapshot_completion_price_per_million: number;
+            /** Snapshot Prompt Price Per Million */
+            snapshot_prompt_price_per_million: number;
+            /** Upstream Model */
+            upstream_model: string;
         };
         /** ModelBenchmarkSummary */
         ModelBenchmarkSummary: {
@@ -939,12 +1257,140 @@ export interface components {
             /** Total */
             total: number;
         };
+        /**
+         * PairedComparison
+         * @description One comparison from a family fixed before the final results were read.
+         */
+        PairedComparison: {
+            /** Accuracy Difference */
+            accuracy_difference: number;
+            accuracy_difference_ci: components["schemas"]["Interval"];
+            /** Baseline Correct */
+            baseline_correct: number;
+            /** Baseline Id */
+            baseline_id: string;
+            /** Correct */
+            correct: number;
+            cost_difference_ci: components["schemas"]["Interval"];
+            /** Cost Difference Usd */
+            cost_difference_usd: number;
+            /** Cost Ratio */
+            cost_ratio: number | null;
+            cost_ratio_ci: components["schemas"]["Interval"] | null;
+            /** Holm P */
+            holm_p: number;
+            /** Mcnemar P */
+            mcnemar_p: number;
+            median_latency_difference_ci: components["schemas"]["Interval"];
+            /** Median Latency Difference Ms */
+            median_latency_difference_ms: number;
+            /** Only Baseline Correct */
+            only_baseline_correct: number;
+            /** Only Strategy Correct */
+            only_strategy_correct: number;
+            /** Prompts */
+            prompts: number;
+            /** Question */
+            question: string;
+            /** Strategy Id */
+            strategy_id: string;
+        };
+        /** PoolModel */
+        PoolModel: {
+            access: components["schemas"]["Access"];
+            /** Api Key Env */
+            api_key_env?: string | null;
+            /** Base Url */
+            base_url: string;
+            /**
+             * Completion Price Per Token
+             * @default 0
+             */
+            completion_price_per_token: string;
+            /** Context Length */
+            context_length: number;
+            /** Data Policy */
+            data_policy: string;
+            /** Display Name */
+            display_name: string;
+            /**
+             * Enabled
+             * @default true
+             */
+            enabled: boolean;
+            /** Family */
+            family: string;
+            /** Id */
+            id: string;
+            /**
+             * Max Concurrency
+             * @default 1
+             */
+            max_concurrency: number;
+            /** Open Weight */
+            open_weight: boolean;
+            /** Parameters */
+            parameters: string;
+            /**
+             * Prompt Price Per Token
+             * @default 0
+             */
+            prompt_price_per_token: string;
+            /** Provider */
+            provider: string;
+            /** Request Options */
+            request_options?: {
+                [key: string]: unknown;
+            };
+            /** Requests Per Minute */
+            requests_per_minute: number;
+            /** Upstream Model */
+            upstream_model: string;
+        };
+        /** PoolSnapshot */
+        PoolSnapshot: {
+            /** Metadata As Of */
+            metadata_as_of: string;
+            /** Models */
+            models: components["schemas"]["PoolModel"][];
+            /** Models Sha256 */
+            models_sha256: string;
+            /**
+             * Schema Version
+             * @default 1.0
+             */
+            schema_version: string;
+            /** Snapshot Id */
+            snapshot_id: string;
+        };
         /** PricingSpec */
         PricingSpec: {
             /** Completion Per Token */
             completion_per_token?: string | null;
             /** Prompt Per Token */
             prompt_per_token?: string | null;
+        };
+        /**
+         * PrioritySweepPoint
+         * @description The router with quality weight 1 and one other weight varied (user-priority robustness).
+         */
+        PrioritySweepPoint: {
+            /** Accuracy */
+            accuracy: number;
+            /** Axis */
+            axis: string;
+            /** Correct */
+            correct: number;
+            /** Median Latency Ms */
+            median_latency_ms: number | null;
+            /** Selected Models */
+            selected_models: {
+                [key: string]: number;
+            };
+            /** Total Cost Usd */
+            total_cost_usd: number;
+            /** Weight */
+            weight: number;
         };
         /** RegistrySnapshot */
         RegistrySnapshot: {
@@ -1006,6 +1452,19 @@ export interface components {
             /** Strategy Id */
             strategy_id: string;
         };
+        /** RobustnessReport */
+        RobustnessReport: {
+            /** Evaluation Id */
+            evaluation_id: string;
+            /** Notes */
+            notes: string[];
+            /** Priority Sweep */
+            priority_sweep: components["schemas"]["PrioritySweepPoint"][];
+            /** Prompts */
+            prompts: number;
+            /** Scenarios */
+            scenarios: components["schemas"]["ScenarioResult"][];
+        };
         /** RouteRequest */
         RouteRequest: {
             /**
@@ -1059,6 +1518,18 @@ export interface components {
             strategy_id: string;
             /** Task Signals */
             task_signals: string[];
+        };
+        /** RoutingErrorAnalysis */
+        RoutingErrorAnalysis: {
+            /** By Task */
+            by_task: {
+                [key: string]: components["schemas"]["ErrorBreakdown"];
+            };
+            /** Examples */
+            examples: components["schemas"]["ErrorExample"][];
+            overall: components["schemas"]["ErrorBreakdown"];
+            /** Strategy Id */
+            strategy_id: string;
         };
         /** RoutingErrorExample */
         RoutingErrorExample: {
@@ -1186,6 +1657,70 @@ export interface components {
              */
             reliability: number;
         };
+        /** ScenarioResult */
+        ScenarioResult: {
+            /** Prompts */
+            prompts: number;
+            scenario: components["schemas"]["ScenarioSpec"];
+            /** Strategies */
+            strategies: components["schemas"]["ScenarioStrategy"][];
+        };
+        /**
+         * ScenarioSpec
+         * @description One what-if replayed over stored results (proposal: robustness tests).
+         */
+        ScenarioSpec: {
+            /** Condition */
+            condition: string;
+            /** Description */
+            description: string;
+            /** Failure Shares */
+            failure_shares?: {
+                [key: string]: number;
+            };
+            /** Latency Multipliers */
+            latency_multipliers?: {
+                [key: string]: number;
+            };
+            /** Observed */
+            observed: boolean;
+            /** Price Multipliers */
+            price_multipliers?: {
+                [key: string]: number;
+            };
+            /** Reliability Weight */
+            reliability_weight?: number | null;
+            /** Scenario Id */
+            scenario_id: string;
+            /** Title */
+            title: string;
+            /** Unavailable */
+            unavailable?: string[];
+            /**
+             * World Already Changed
+             * @default false
+             */
+            world_already_changed: boolean;
+        };
+        /** ScenarioStrategy */
+        ScenarioStrategy: {
+            /** Accuracy */
+            accuracy: number;
+            /** Changed Decisions */
+            changed_decisions?: number | null;
+            /** Correct */
+            correct: number;
+            /** Median Latency Ms */
+            median_latency_ms: number | null;
+            /** Selected Models */
+            selected_models: {
+                [key: string]: number;
+            };
+            /** Strategy Id */
+            strategy_id: string;
+            /** Total Cost Usd */
+            total_cost_usd: number;
+        };
         /** StrategyTaskOutcome */
         StrategyTaskOutcome: {
             /** Accuracy */
@@ -1198,6 +1733,17 @@ export interface components {
             prompts: number;
             /** Total Cost Usd */
             total_cost_usd: number;
+        };
+        /**
+         * StrategyUncertainty
+         * @description 95% percentile-bootstrap intervals over prompts.
+         */
+        StrategyUncertainty: {
+            accuracy: components["schemas"]["Interval"];
+            median_latency_ms: components["schemas"]["Interval"];
+            /** Strategy Id */
+            strategy_id: string;
+            total_cost_usd: components["schemas"]["Interval"];
         };
         /**
          * TaskGroup
@@ -1234,6 +1780,41 @@ export interface components {
             /** Validation Median Latency Ms */
             validation_median_latency_ms: number | null;
             weights: components["schemas"]["RoutingWeights"];
+        };
+        /**
+         * WhatIfChanges
+         * @description Hypothetical conditions for one preview (proposal: robustness, shown live for CP4).
+         */
+        WhatIfChanges: {
+            /** Failure Shares */
+            failure_shares?: {
+                [key: string]: number;
+            };
+            /** Latency Multipliers */
+            latency_multipliers?: {
+                [key: string]: number;
+            };
+            /** Price Multipliers */
+            price_multipliers?: {
+                [key: string]: number;
+            };
+            /** Unavailable */
+            unavailable?: string[];
+        };
+        /** WhatIfRequest */
+        WhatIfRequest: {
+            changes: components["schemas"]["WhatIfChanges"];
+            route: components["schemas"]["LearnedRouteRequest"];
+        };
+        /**
+         * WhatIfResponse
+         * @description The same prompt routed under current conditions and under the hypothetical ones.
+         */
+        WhatIfResponse: {
+            after: components["schemas"]["LearnedRoutingDecision"];
+            before: components["schemas"]["LearnedRoutingDecision"];
+            /** Changed */
+            changed: boolean;
         };
     };
     responses: never;
@@ -1491,6 +2072,46 @@ export interface operations {
             };
         };
     };
+    learned_catalog_api_v1_learned_catalog_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LiveCatalogStatus"];
+                };
+            };
+        };
+    };
+    refresh_learned_catalog_api_v1_learned_catalog_refresh_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LiveCatalogStatus"];
+                };
+            };
+        };
+    };
     preview_learned_decision_api_v1_learned_decisions_post: {
         parameters: {
             query?: never;
@@ -1520,6 +2141,77 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_table_api_v1_learned_export__table__get: {
+        parameters: {
+            query?: {
+                format?: string;
+            };
+            header?: never;
+            path: {
+                table: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    final_evaluation_api_v1_learned_final_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinalEvaluationReport"];
+                };
+            };
+        };
+    };
+    learned_pool_api_v1_learned_pool_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PoolSnapshot"];
                 };
             };
         };
@@ -1564,6 +2256,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LearnedRouteResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    learned_what_if_api_v1_learned_what_if_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WhatIfRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WhatIfResponse"];
                 };
             };
             /** @description Validation Error */
