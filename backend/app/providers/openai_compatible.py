@@ -29,6 +29,12 @@ PUBLIC_ERRORS = {
     GenerationStatus.INVALID_RESPONSE: "The provider returned a response that could not be used.",
     GenerationStatus.MODEL_MISMATCH: "The provider served a different model than requested.",
 }
+# Client errors that mean something specific; anything else keeps its status's message.
+CODE_ERRORS = {
+    "401": "The provider rejected the API key.",
+    "402": "The provider account has no credit left.",
+    "404": "The provider does not serve this model on the requested route; it may be retired.",
+}
 # Google AI Studio returns Gemma 4's reasoning inline as a leading <thought> block and cannot
 # turn it off; other providers return reasoning in a separate field. Scoring sees the answer only.
 INLINE_THOUGHT_RE = re.compile(r"\A\s*<thought>.*?</thought>", re.DOTALL)
@@ -88,7 +94,7 @@ class OpenAICompatibleAdapter:
             status=status,
             latency_ms=latency_ms,
             error_code=code,
-            error_message=PUBLIC_ERRORS.get(status),
+            error_message=CODE_ERRORS.get(code or "", PUBLIC_ERRORS.get(status)),
             started_at_utc=started_at,
             completed_at_utc=datetime.now(UTC),
             attempt_number=attempt_number,

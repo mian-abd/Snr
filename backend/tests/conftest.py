@@ -8,6 +8,12 @@ from app.state import PAID_MODEL_IDS, PAID_REGISTRY_PATH
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 
 
+@pytest.fixture(autouse=True)
+def no_live_catalog(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Tests never reach the providers; catalog tests opt in with a mock transport."""
+    monkeypatch.setenv("LIVE_CATALOG_CHECK", "false")
+
+
 @pytest.fixture
 def registry() -> ModelRegistry:
     return ModelRegistry(REPOSITORY_ROOT / "data" / "registry" / "openrouter-2026-09-30.json")

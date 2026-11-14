@@ -22,12 +22,13 @@ def create_app(
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         app.state.services = services or build_services(resolved_settings)
+        await app.state.services.refresh_catalog()
         yield
 
     app = FastAPI(
         title="Adaptive LLM Router",
         version=__version__,
-        description="Checkpoint 2 transparent routing over a reproducible model benchmark API",
+        description="Route prompts to a model that is good enough, with the evaluation behind it",
         lifespan=lifespan,
     )
     app.add_middleware(
@@ -52,7 +53,6 @@ def create_app(
         return JSONResponse(
             {
                 "name": "Adaptive LLM Router",
-                "checkpoint": 2,
                 "message": "Frontend build not found. Run npm run build in frontend/.",
                 "docs": "/docs",
             }

@@ -16,8 +16,10 @@ class Settings(BaseSettings):
 
     openrouter_api_key: SecretStr | None = None
     openrouter_site_url: str = "http://localhost:8000"
-    openrouter_app_name: str = "Adaptive LLM Router Checkpoint 2"
+    openrouter_app_name: str = "Adaptive LLM Router"
     max_daily_provider_requests: int = Field(default=40, ge=1, le=1000)
+    # Week of Nov 19: compare the learned router's pool with the providers' live catalogs.
+    live_catalog_check: bool = True
     data_dir: Path = REPOSITORY_ROOT / "data"
     frontend_dist_dir: Path = REPOSITORY_ROOT / "frontend" / "dist"
 

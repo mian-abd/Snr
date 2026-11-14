@@ -55,7 +55,7 @@ SLIDE = Theme("#111316", "#f0efec", "#c3c2b7", "#898781", "#2c2c2a", "#383835",
 LABELS = {
     "fixed_cheapest": "Always cheapest",
     "fixed_strongest": "Always strongest",
-    "rule_balanced": "CP2 rule router",
+    "rule_balanced": "Rule-based router",
     "learned:quality": "Learned · quality",
     "learned:cost": "Learned · cost",
     "learned:latency": "Learned · faster",
@@ -220,7 +220,9 @@ def _panel(
 
 
 def figure(
-    report: LearnedRouterReport,
+    strategies: list[LearnedStrategyOutcome],
+    prompts: int,
+    subtitle: str,
     title: str,
     x_of: Callable[[Point], float],
     x_label: str,
@@ -229,20 +231,22 @@ def figure(
     theme: Theme = LIGHT,
 ) -> list[Path]:
     """All four panels with a heading (docs), or the all-prompts panel alone (slides)."""
-    held = report.heldout
     slide = theme is SLIDE
-    panels = PANELS[:1] if slide else PANELS
+    present = set(next(iter(strategies)).by_task) if strategies else set()
+    panels = PANELS[:1] if slide else [
+        (task, name) for task, name in PANELS if task is None or task in present
+    ]
     fig, grid = plt.subplots(
         1 if slide else 2, 1 if slide else 2, figsize=(9.2, 6.3) if slide else (12, 8.2),
         facecolor=theme.surface, squeeze=False,
     )
     axes = list(grid.flat)
+    for unused in axes[len(panels):]:  # a task group with no prompts gets no panel
+        fig.delaxes(unused)
+    axes = axes[: len(panels)]
     for ax, (task, name) in zip(axes, panels, strict=True):
-        count = (
-            held.prompts if task is None
-            else next(iter(held.strategies)).by_task[task].prompts
-        )
-        _panel(ax, _points(held.strategies, task), x_of,
+        count = prompts if task is None else next(iter(strategies)).by_task[task].prompts
+        _panel(ax, _points(strategies, task), x_of,
                "" if slide else f"{name} · {count} prompts", x_label, x_unit, theme)
     handles, labels = axes[0].get_legend_handles_labels()
     fig.legend(handles, labels, loc="upper right", frameon=False, fontsize=9.5 * theme.scale,
@@ -253,17 +257,14 @@ def figure(
     else:
         fig.suptitle(title, x=0.015, y=0.975, ha="left", fontsize=13, color=theme.ink,
                      fontweight="semibold")
-        fig.text(0.015, 0.935, (
-            f"Held-out test split, read once. Router {held.artifact_id}, trained on "
-            f"{' + '.join(held.trained_on)}; outcomes replayed from the saved matrix."
-        ), fontsize=9, color=theme.muted)
+        fig.text(0.015, 0.935, subtitle, fontsize=9, color=theme.muted)
         fig.tight_layout(rect=(0, 0, 1, 0.92), h_pad=2.2, w_pad=2.5)
     for ax in axes:  # tight_layout moved the axes, so place the labels again
         for text in list(ax.texts):
             text.remove()
     fig.canvas.draw()
     for ax, (task, _) in zip(axes, panels, strict=True):
-        _place_labels(ax, _points(held.strategies, task), x_of, theme)
+        _place_labels(ax, _points(strategies, task), x_of, theme)
     written = []
     for suffix in (".png", ".svg"):
         path = out.with_suffix(suffix)
@@ -274,6 +275,32 @@ def figure(
     return written
 
 
+def write_pair(
+    strategies: list[LearnedStrategyOutcome],
+    prompts: int,
+    subtitle: str,
+    noun: str,
+    stem: str,
+    out_dir: Path,
+    theme: Theme = LIGHT,
+) -> list[Path]:
+    """The accuracy-cost and accuracy-latency figures for one evaluation."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    plt.rcParams["svg.fonttype"] = "none"
+    plt.rcParams["svg.hashsalt"] = stem  # fixed element IDs, so reruns are identical
+    written = figure(
+        strategies, prompts, subtitle, f"Accuracy against cost on {noun}",
+        lambda point: point.cost, "Total paid cost (USD)", ("$", ""),
+        out_dir / f"{stem}-accuracy-cost", theme,
+    )
+    written += figure(
+        strategies, prompts, subtitle, f"Accuracy against response time on {noun}",
+        lambda point: point.latency_s, "Median latency (seconds)", ("", " s"),
+        out_dir / f"{stem}-accuracy-latency", theme,
+    )
+    return written
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--report", type=Path, default=REPORT_PATH)
@@ -281,17 +308,14 @@ def main() -> int:
     args = parser.parse_args()
     report = LearnedRouterReport.model_validate_json(args.report.read_text(encoding="utf-8"))
     theme, out_dir = (SLIDE, args.slides) if args.slides else (LIGHT, FIGURE_DIR)
-    out_dir.mkdir(parents=True, exist_ok=True)
-    plt.rcParams["svg.fonttype"] = "none"
-    plt.rcParams["svg.hashsalt"] = "cp3-heldout"  # fixed element IDs, so reruns are identical
-    written = figure(
-        report, "Accuracy against cost on held-out prompts", lambda point: point.cost,
-        "Total paid cost (USD)", ("$", ""), out_dir / "cp3-heldout-accuracy-cost", theme,
+    held = report.heldout
+    subtitle = (
+        f"Held-out test split, read once. Router {held.artifact_id}, trained on "
+        f"{' + '.join(held.trained_on)}; outcomes replayed from the saved matrix."
     )
-    written += figure(
-        report, "Accuracy against response time on held-out prompts",
-        lambda point: point.latency_s, "Median latency (seconds)", ("", " s"),
-        out_dir / "cp3-heldout-accuracy-latency", theme,
+    written = write_pair(
+        held.strategies, held.prompts, subtitle, "held-out prompts", "cp3-heldout",
+        out_dir, theme,
     )
     for path in written:
         print(f"wrote {path}")

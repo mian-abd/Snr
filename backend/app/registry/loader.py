@@ -33,6 +33,50 @@ def canonical_models_sha256(models: list[ModelSpec] | list[dict[str, Any]]) -> s
     return hashlib.sha256(encoded).hexdigest()
 
 
+def _per_million(price: Decimal | None) -> str:
+    if price is None:
+        return "unknown"
+    return f"${price * 1_000_000:.4f}".rstrip("0").rstrip(".")
+
+
+def drift_problems(
+    models: list[ModelSpec], live_by_id: dict[Any, dict[str, Any]], *, require_free: bool
+) -> list[str]:
+    """Every difference between frozen registry entries and the live catalog, in plain words."""
+    problems: list[str] = []
+    for frozen in models:
+        name = f"{frozen.display_name} ({frozen.id})"
+        live = live_by_id.get(frozen.id)
+        if live is None:
+            problems.append(f"{name} is no longer served by OpenRouter (retired)")
+            continue
+        architecture = live.get("architecture") or {}
+        if "text" not in (architecture.get("output_modalities") or []):
+            problems.append(f"{name} no longer supports text output")
+        pricing = live.get("pricing") or {}
+        live_prompt = _price(pricing.get("prompt"))
+        live_completion = _price(pricing.get("completion"))
+        if require_free:
+            if live_prompt != 0 or live_completion != 0:
+                problems.append(f"{name} is no longer free")
+        elif (
+            live_prompt != frozen.pricing.prompt_per_token
+            or live_completion != frozen.pricing.completion_per_token
+        ):
+            problems.append(
+                f"{name} changed price from {_per_million(frozen.pricing.prompt_per_token)} / "
+                f"{_per_million(frozen.pricing.completion_per_token)} to "
+                f"{_per_million(live_prompt)} / {_per_million(live_completion)} per million "
+                "input / output tokens"
+            )
+        if int(live.get("context_length") or 0) != frozen.context_length:
+            problems.append(
+                f"{name} context length changed from {frozen.context_length:,} to "
+                f"{int(live.get('context_length') or 0):,} tokens"
+            )
+    return problems
+
+
 class RegistryError(RuntimeError):
     pass
 
@@ -90,27 +134,13 @@ class ModelRegistry:
             response.raise_for_status()
         rows = response.json().get("data", [])
         live_by_id = {row.get("id"): row for row in rows}
-        for frozen in self.models:
-            live = live_by_id.get(frozen.id)
-            if live is None:
-                raise ModelDriftError(f"Pinned model unavailable: {frozen.id}")
-            architecture = live.get("architecture") or {}
-            output_modalities = architecture.get("output_modalities") or []
-            if "text" not in output_modalities:
-                raise ModelDriftError(f"Pinned model no longer supports text output: {frozen.id}")
-            pricing = live.get("pricing") or {}
-            live_prompt_price = _price(pricing.get("prompt"))
-            live_completion_price = _price(pricing.get("completion"))
-            if self.require_free:
-                if live_prompt_price != 0 or live_completion_price != 0:
-                    raise ModelDriftError(f"Pinned model is no longer free: {frozen.id}")
-            elif (
-                live_prompt_price != frozen.pricing.prompt_per_token
-                or live_completion_price != frozen.pricing.completion_per_token
-            ):
-                raise ModelDriftError(f"Pricing drift for {frozen.id}")
-            if int(live.get("context_length") or 0) != frozen.context_length:
-                raise ModelDriftError(
-                    f"Context length drift for {frozen.id}: "
-                    f"{live.get('context_length')} != {frozen.context_length}"
-                )
+        problems = drift_problems(self.models, live_by_id, require_free=self.require_free)
+        if problems:
+            raise ModelDriftError(
+                f"The live OpenRouter catalog no longer matches the "
+                f"{self.snapshot.snapshot_id} snapshot this route was frozen on: "
+                + "; ".join(problems)
+                + ". This route fails closed instead of sending a prompt to a model or price "
+                "it was not validated against; it is kept unchanged as the baseline the adaptive "
+                "router is measured against."
+            )

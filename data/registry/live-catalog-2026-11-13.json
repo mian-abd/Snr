@@ -1,0 +1,155 @@
+{
+  "source": "live",
+  "pool_snapshot_id": "cp3-pool-2026-10-27",
+  "snapshot_as_of": "2026-10-27T00:00:00Z",
+  "checked_at_utc": "2026-11-14T05:15:33.034490Z",
+  "error": null,
+  "models": [
+    {
+      "model_id": "deepseek-v4-flash",
+      "display_name": "DeepSeek V4 Flash",
+      "provider": "openrouter",
+      "upstream_model": "deepseek/deepseek-v4-flash",
+      "checked": true,
+      "available": true,
+      "note": "Pinned host crusoe/fp8 no longer serves it",
+      "snapshot_prompt_price_per_million": 0.14,
+      "snapshot_completion_price_per_million": 0.28,
+      "live_prompt_price_per_million": 0.14,
+      "live_completion_price_per_million": 0.28,
+      "serving_hosts": [
+        "parasail/fp8",
+        "deepinfra/fp8"
+      ],
+      "missing_hosts": [
+        "crusoe/fp8"
+      ]
+    },
+    {
+      "model_id": "gemini-4-argon",
+      "display_name": "Gemini 4 Argon",
+      "provider": "openrouter",
+      "upstream_model": "google/gemini-4-argon",
+      "checked": true,
+      "available": true,
+      "note": "Served by its pinned host; price unchanged",
+      "snapshot_prompt_price_per_million": 2.0,
+      "snapshot_completion_price_per_million": 10.0,
+      "live_prompt_price_per_million": 2.0,
+      "live_completion_price_per_million": 10.0,
+      "serving_hosts": [
+        "google-ai-studio"
+      ],
+      "missing_hosts": []
+    },
+    {
+      "model_id": "gemma-4-26b",
+      "display_name": "Gemma 4 26B A4B",
+      "provider": "openrouter",
+      "upstream_model": "google/gemma-4-26b-a4b-it",
+      "checked": true,
+      "available": true,
+      "note": "Price changed from $0.0765 / $0.255 to $0.0675 / $0.225 per million input / output tokens",
+      "snapshot_prompt_price_per_million": 0.0765,
+      "snapshot_completion_price_per_million": 0.255,
+      "live_prompt_price_per_million": 0.0675,
+      "live_completion_price_per_million": 0.225,
+      "serving_hosts": [
+        "nextbit/bf16"
+      ],
+      "missing_hosts": []
+    },
+    {
+      "model_id": "gpt-oss-120b",
+      "display_name": "gpt-oss-120b",
+      "provider": "ovhcloud",
+      "upstream_model": "gpt-oss-120b",
+      "checked": true,
+      "available": true,
+      "note": "Listed by the OVHcloud endpoint",
+      "snapshot_prompt_price_per_million": 0.0,
+      "snapshot_completion_price_per_million": 0.0,
+      "live_prompt_price_per_million": null,
+      "live_completion_price_per_million": null,
+      "serving_hosts": [],
+      "missing_hosts": []
+    },
+    {
+      "model_id": "llama-3.3-70b",
+      "display_name": "Llama 3.3 70B Instruct",
+      "provider": "ovhcloud",
+      "upstream_model": "Meta-Llama-3_3-70B-Instruct",
+      "checked": true,
+      "available": true,
+      "note": "Listed by the OVHcloud endpoint",
+      "snapshot_prompt_price_per_million": 0.0,
+      "snapshot_completion_price_per_million": 0.0,
+      "live_prompt_price_per_million": null,
+      "live_completion_price_per_million": null,
+      "serving_hosts": [],
+      "missing_hosts": []
+    },
+    {
+      "model_id": "mercury-3",
+      "display_name": "Mercury 3",
+      "provider": "openrouter",
+      "upstream_model": "inception/mercury-3",
+      "checked": true,
+      "available": false,
+      "note": "OpenRouter lists inception/mercury-3 but no host serves it any more (retired)",
+      "snapshot_prompt_price_per_million": 0.1,
+      "snapshot_completion_price_per_million": 0.35,
+      "live_prompt_price_per_million": null,
+      "live_completion_price_per_million": null,
+      "serving_hosts": [],
+      "missing_hosts": []
+    },
+    {
+      "model_id": "nemotron-3-ultra-free",
+      "display_name": "Nemotron 3 Ultra 550B (free)",
+      "provider": "openrouter",
+      "upstream_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "checked": true,
+      "available": true,
+      "note": "Served on OpenRouter; price unchanged",
+      "snapshot_prompt_price_per_million": 0.0,
+      "snapshot_completion_price_per_million": 0.0,
+      "live_prompt_price_per_million": 0.0,
+      "live_completion_price_per_million": 0.0,
+      "serving_hosts": [
+        "nvidia"
+      ],
+      "missing_hosts": []
+    },
+    {
+      "model_id": "qwen-3.5-9b-local",
+      "display_name": "Qwen 3.5 9B (local)",
+      "provider": "ollama",
+      "upstream_model": "qwen3.5-9b-cp3",
+      "checked": true,
+      "available": true,
+      "note": "Listed by the local Ollama server",
+      "snapshot_prompt_price_per_million": 0.0,
+      "snapshot_completion_price_per_million": 0.0,
+      "live_prompt_price_per_million": null,
+      "live_completion_price_per_million": null,
+      "serving_hosts": [],
+      "missing_hosts": []
+    },
+    {
+      "model_id": "qwen-3.8-27b",
+      "display_name": "Qwen 3.8 27B",
+      "provider": "ovhcloud",
+      "upstream_model": "Qwen3.8-27B",
+      "checked": true,
+      "available": true,
+      "note": "Listed by the OVHcloud endpoint",
+      "snapshot_prompt_price_per_million": 0.0,
+      "snapshot_completion_price_per_million": 0.0,
+      "live_prompt_price_per_million": null,
+      "live_completion_price_per_million": null,
+      "serving_hosts": [],
+      "missing_hosts": []
+    }
+  ]
+}

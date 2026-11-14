@@ -392,6 +392,224 @@ class LearnedRouterReport(StrictModel):
     note: str
 
 
+class Interval(StrictModel):
+    low: float
+    high: float
+
+
+class StrategyUncertainty(StrictModel):
+    """95% percentile-bootstrap intervals over prompts."""
+
+    strategy_id: str
+    accuracy: Interval
+    total_cost_usd: Interval
+    median_latency_ms: Interval
+
+
+class PairedComparison(StrictModel):
+    """One comparison from a family fixed before the final results were read."""
+
+    strategy_id: str
+    baseline_id: str
+    question: str
+    prompts: int
+    correct: int
+    baseline_correct: int
+    only_strategy_correct: int
+    only_baseline_correct: int
+    accuracy_difference: float
+    accuracy_difference_ci: Interval
+    mcnemar_p: float
+    holm_p: float
+    cost_difference_usd: float
+    cost_difference_ci: Interval
+    cost_ratio: float | None
+    cost_ratio_ci: Interval | None
+    median_latency_difference_ms: float
+    median_latency_difference_ci: Interval
+
+
+class ErrorBreakdown(StrictModel):
+    """Routing errors against what every model actually did on the same prompts.
+
+    Under-routed: wrong, while a model with a higher expected cost was right. Over-routed: right,
+    while a model with a lower expected cost was also right (the proposal's definition).
+    Over-routed and dominated: that cheaper model was also no slower on the actual call.
+    """
+
+    prompts: int
+    correct: int
+    wrong: int
+    unavoidable: int  # wrong, and no model was right
+    under_routed: int
+    over_routed: int
+    over_routed_dominated: int
+    over_routing_extra_cost_usd: float
+    total_cost_usd: float
+    oracle_correct: int
+    oracle_cost_usd: float
+    regret_correct: int  # oracle correct minus strategy correct
+
+
+class ErrorExample(StrictModel):
+    kind: str  # "under", "over", or "good" (right, and cheaper than always-strongest)
+    sample_id: str
+    benchmark: str
+    task_group: TaskGroup
+    prompt_excerpt: str
+    chosen_model_id: str
+    chosen_correct: bool
+    chosen_cost_usd: float
+    chosen_latency_ms: float
+    predicted_success: float
+    alternative_model_id: str | None
+    alternative_correct: bool | None
+    alternative_cost_usd: float | None
+    alternative_latency_ms: float | None
+    explanation: str
+
+
+class RoutingErrorAnalysis(StrictModel):
+    strategy_id: str
+    overall: ErrorBreakdown
+    by_task: dict[str, ErrorBreakdown]
+    examples: list[ErrorExample]
+
+
+class ScenarioSpec(StrictModel):
+    """One what-if replayed over stored results (proposal: robustness tests)."""
+
+    scenario_id: str
+    title: str
+    condition: str  # none, availability, price, latency, reliability
+    observed: bool  # a change actually seen on the providers, not a hypothetical
+    description: str
+    price_multipliers: dict[str, float] = Field(default_factory=dict)
+    latency_multipliers: dict[str, float] = Field(default_factory=dict)
+    failure_shares: dict[str, float] = Field(default_factory=dict)
+    unavailable: list[str] = Field(default_factory=list)
+    reliability_weight: float | None = None  # replaces the presets' reliability weight
+    # True when the stored calls were made after the change (the final set's real drift).
+    world_already_changed: bool = False
+
+
+class ScenarioStrategy(StrictModel):
+    strategy_id: str
+    correct: int
+    accuracy: float
+    total_cost_usd: float
+    median_latency_ms: float | None
+    changed_decisions: int | None = None  # against the same strategy with nothing changed
+    selected_models: dict[str, int]
+
+
+class ScenarioResult(StrictModel):
+    scenario: ScenarioSpec
+    prompts: int
+    strategies: list[ScenarioStrategy]
+
+
+class PrioritySweepPoint(StrictModel):
+    """The router with quality weight 1 and one other weight varied (user-priority robustness)."""
+
+    axis: str  # "cost" or "latency"
+    weight: float
+    correct: int
+    accuracy: float
+    total_cost_usd: float
+    median_latency_ms: float | None
+    selected_models: dict[str, int]
+
+
+class RobustnessReport(StrictModel):
+    evaluation_id: str
+    prompts: int
+    scenarios: list[ScenarioResult]
+    priority_sweep: list[PrioritySweepPoint]
+    notes: list[str]
+
+
+class EvaluationSet(StrictModel):
+    """The frozen router and every baseline on one set of prompts."""
+
+    evaluation_id: str  # "cp3_test" or "final"
+    title: str
+    description: str
+    prompts: int
+    prompts_by_task: dict[str, int]
+    models: list[str]
+    catalog_applied: bool
+    classifier: ClassifierMetrics
+    reference_model_task_prior: ClassifierMetrics
+    matrix: list[LearnedMatrixRow]
+    strategies: list[LearnedStrategyOutcome]
+    oracle: list[LearnedStrategyOutcome]
+    uncertainty: list[StrategyUncertainty]
+    comparisons: list[PairedComparison]
+    routing_errors: list[RoutingErrorAnalysis]
+
+
+class FinalEvaluationReport(StrictModel):
+    """Week of Nov 19: the held-out evaluation, oracle and error analysis, and robustness."""
+
+    artifact_id: str
+    artifact_sha256: str
+    final_set_sha256: str
+    pool_snapshot_id: str
+    catalog: LiveCatalogStatus | None
+    protocol: list[str]
+    evaluations: list[EvaluationSet]
+    robustness: list[RobustnessReport]
+    spend_usd: float  # provider-billed cost of the final-set run
+
+
+class CatalogSource(StrEnum):
+    LIVE = "live"  # at least one provider catalog answered
+    SNAPSHOT = "snapshot"  # every check failed; the dated pool snapshot is used as is
+    OFF = "off"  # the check is disabled (tests, offline work)
+
+
+class WhatIfChanges(StrictModel):
+    """Hypothetical conditions for one preview (proposal: robustness, shown live for CP4)."""
+
+    price_multipliers: dict[str, float] = Field(default_factory=dict)
+    latency_multipliers: dict[str, float] = Field(default_factory=dict)
+    failure_shares: dict[str, float] = Field(default_factory=dict)
+    unavailable: list[str] = Field(default_factory=list)
+
+    @field_validator("price_multipliers", "latency_multipliers")
+    @classmethod
+    def multipliers_in_range(cls, value: dict[str, float]) -> dict[str, float]:
+        if any(not 0 < factor <= 1000 for factor in value.values()):
+            raise ValueError("multipliers must be above 0 and at most 1000")
+        return value
+
+    @field_validator("failure_shares")
+    @classmethod
+    def shares_in_range(cls, value: dict[str, float]) -> dict[str, float]:
+        if any(not 0 <= share <= 1 for share in value.values()):
+            raise ValueError("failure shares must be between 0 and 1")
+        return value
+
+    def model_ids(self) -> set[str]:
+        return (
+            set(self.price_multipliers) | set(self.latency_multipliers)
+            | set(self.failure_shares) | set(self.unavailable)
+        )
+
+    def describe(self, model_id: str) -> str | None:
+        parts = []
+        if model_id in self.unavailable:
+            parts.append("marked unavailable")
+        if self.price_multipliers.get(model_id, 1.0) != 1.0:
+            parts.append(f"price x{self.price_multipliers[model_id]:g}")
+        if self.latency_multipliers.get(model_id, 1.0) != 1.0:
+            parts.append(f"latency x{self.latency_multipliers[model_id]:g}")
+        if self.failure_shares.get(model_id, 0.0):
+            parts.append(f"{self.failure_shares[model_id]:.0%} of calls fail")
+        return ", ".join(parts) or None
+
+
 class LearnedRouteRequest(StrictModel):
     prompt: str = Field(min_length=1, max_length=50_000)
     priority: RoutingPriority = RoutingPriority.BALANCED
@@ -420,6 +638,10 @@ class LearnedCandidate(StrictModel):
     expected_cost_usd: float
     expected_latency_ms: float
     failure_rate: float
+    # Week of Nov 19: what the live catalog changed for this model, if anything.
+    snapshot_expected_cost_usd: float | None = None  # before the live price was applied
+    catalog_note: str | None = None
+    what_if_note: str | None = None
     score: float | None = None
     quality_term: float | None = None
     cost_penalty: float | None = None
@@ -441,11 +663,53 @@ class LearnedRoutingDecision(StrictModel):
     selected_model_id: str
     candidates: list[LearnedCandidate]
     reason: str
+    catalog_source: CatalogSource = CatalogSource.OFF
+    catalog_checked_at_utc: datetime | None = None
 
 
 class LearnedRouteResponse(StrictModel):
     decision: LearnedRoutingDecision
     result: GenerationResult
+
+
+class WhatIfRequest(StrictModel):
+    route: LearnedRouteRequest
+    changes: WhatIfChanges
+
+
+class WhatIfResponse(StrictModel):
+    """The same prompt routed under current conditions and under the hypothetical ones."""
+
+    before: LearnedRoutingDecision
+    after: LearnedRoutingDecision
+    changed: bool
+
+
+class LiveModelStatus(StrictModel):
+    """One pool model as its provider's live catalog describes it now."""
+
+    model_id: str
+    display_name: str
+    provider: str
+    upstream_model: str
+    checked: bool  # False: no public catalog for this provider, or the check failed
+    available: bool  # False only when a catalog positively shows the model is gone
+    note: str  # why unavailable, what changed, or why it was not checked
+    snapshot_prompt_price_per_million: float
+    snapshot_completion_price_per_million: float
+    live_prompt_price_per_million: float | None = None
+    live_completion_price_per_million: float | None = None
+    serving_hosts: list[str] = Field(default_factory=list)
+    missing_hosts: list[str] = Field(default_factory=list)
+
+
+class LiveCatalogStatus(StrictModel):
+    source: CatalogSource
+    pool_snapshot_id: str
+    snapshot_as_of: str
+    checked_at_utc: datetime | None = None
+    error: str | None = None
+    models: list[LiveModelStatus] = Field(default_factory=list)
 
 
 class EligibilityRequest(StrictModel):
@@ -599,3 +863,7 @@ class PaginatedRecords(StrictModel):
     total: int
     offset: int
     limit: int
+
+
+# Defined above LiveCatalogStatus, which it references.
+FinalEvaluationReport.model_rebuild()

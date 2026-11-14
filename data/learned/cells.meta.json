@@ -1,0 +1,13 @@
+{
+  "cells_sha256": "76ffdc6b59e60e148d1988acd176a52724d00eced01550c380a962f47ae4bef7",
+  "note": "Scored outcomes only: no prompts, responses, or request IDs. Prompts are in data/benchmarks; failed calls count as wrong.",
+  "provider_billed_spend_usd": {
+    "cp3": 2.606282,
+    "final": 1.271326
+  },
+  "rows": 8100,
+  "rows_by_suite": {
+    "cp3": 5400,
+    "final": 2700
+  }
+}

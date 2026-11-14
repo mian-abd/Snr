@@ -4,6 +4,8 @@ import asyncio
 from dataclasses import dataclass
 from pathlib import Path
 
+import httpx
+
 from app.benchmarks.costs import (
     PAID_BUDGET_FILE,
     PAID_DEMO_NAME,
@@ -12,15 +14,17 @@ from app.benchmarks.costs import (
 )
 from app.benchmarks.runner import BenchmarkRunner
 from app.config import REPOSITORY_ROOT, Settings
-from app.domain.models import BenchmarkMode, BenchmarkStatus, RoutingPool
+from app.domain.models import BenchmarkMode, BenchmarkStatus, LiveCatalogStatus, RoutingPool
 from app.learned.router import ROUTER_MODEL_FILE, ROUTER_POOL_FILE, LearnedRouter, load_router
 from app.providers import GenerationService
 from app.providers.openai_compatible import OpenAICompatibleAdapter
 from app.registry import ModelRegistry
+from app.registry.live_catalog import check_live_catalog, snapshot_status
 from app.registry.pool import endpoint_for, load_pool
 
 REGISTRY_PATH = REPOSITORY_ROOT / "data" / "registry" / "openrouter-2026-09-30.json"
 PAID_REGISTRY_PATH = REPOSITORY_ROOT / "data" / "registry" / "openrouter-paid-2026-10-23.json"
+CATALOG_TIMEOUT_SECONDS = 12.0  # startup waits at most this long, then uses the snapshot
 PAID_MODEL_IDS = (
     "google/gemma-4-26b-a4b-it",
     "inception/mercury-3",
@@ -41,6 +45,30 @@ class AppServices:
     paid_benchmark_coordinator: BenchmarkCoordinator | None = None
     learned_router: LearnedRouter | None = None
     learned_generation_service: GenerationService | None = None
+    catalog: LiveCatalogStatus | None = None
+    catalog_transport: httpx.AsyncBaseTransport | None = None  # tests inject a mock
+
+    async def refresh_catalog(self) -> LiveCatalogStatus | None:
+        """Check the learned router's pool against the live catalogs; never raises."""
+        router = self.learned_router
+        if router is None:
+            return None
+        snapshot = router.pool
+        if not self.settings.live_catalog_check:
+            self.catalog = snapshot_status(snapshot)
+            return self.catalog
+        try:
+            self.catalog = await asyncio.wait_for(
+                check_live_catalog(
+                    router.models.values(), snapshot, transport=self.catalog_transport
+                ),
+                timeout=CATALOG_TIMEOUT_SECONDS,
+            )
+        except Exception as exc:  # the snapshot is always a safe fallback
+            self.catalog = snapshot_status(
+                snapshot, error=f"Live catalog check failed ({type(exc).__name__})"
+            )
+        return self.catalog
 
     def pool_registry(self, pool: RoutingPool) -> ModelRegistry | None:
         return self.routing_registry if pool == RoutingPool.PAID else self.registry

@@ -176,9 +176,9 @@ def build_dashboard(
         )
 
     source = (
-        "the saved Checkpoint 1 free-tier matrix"
+        "the saved free-model matrix of September 30"
         if pool == RoutingPool.BASELINE
-        else "the saved Checkpoint 2 paid-pool matrix"
+        else "the saved paid-model matrix of October 23"
     )
     return RoutingDashboard(
         pool=pool,

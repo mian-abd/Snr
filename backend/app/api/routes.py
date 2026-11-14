@@ -5,7 +5,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Annotated, cast
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 
 from app import __version__
 from app.benchmarks.costs import PAID_DEMO_NAME, SPEND_CAP_USD, estimate_worst_case_usd
@@ -21,12 +21,14 @@ from app.domain.models import (
     EligibilityRequest,
     EligibilityResponse,
     EligibilityResult,
+    FinalEvaluationReport,
     GenerationRequest,
     HealthResponse,
     LearnedRouteRequest,
     LearnedRouteResponse,
     LearnedRouterReport,
     LearnedRoutingDecision,
+    LiveCatalogStatus,
     PaginatedRecords,
     RegistrySnapshot,
     RouteRequest,
@@ -35,10 +37,14 @@ from app.domain.models import (
     RoutingDecision,
     RoutingPool,
     RoutingValidationReport,
+    WhatIfRequest,
+    WhatIfResponse,
 )
+from app.learned.export import TABLES, ExportError, load_report, render
 from app.learned.router import LearnedRouter, NoEligibleModelError
 from app.registry.filtering import evaluate_eligibility
 from app.registry.loader import ModelDriftError, ModelRegistry
+from app.registry.pool import PoolSnapshot
 from app.routing import RuleBasedRouter, build_dashboard, build_validation_report
 from app.routing.replay import EVIDENCE_DIRS
 from app.state import AppServices
@@ -310,11 +316,104 @@ def _learned_decision(
         )
     configured = {"OPENROUTER_API_KEY"} if services.settings.credential_configured else set()
     try:
-        return router, router.decide(payload, configured)
+        return router, router.decide(payload, configured, services.catalog)
     except NoEligibleModelError as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
         ) from exc
+
+
+def _catalog_or_503(status_value: LiveCatalogStatus | None) -> LiveCatalogStatus:
+    if status_value is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="The learned router has not been trained yet",
+        )
+    return status_value
+
+
+@router.get("/learned/catalog", response_model=LiveCatalogStatus)
+async def learned_catalog(services: Services) -> LiveCatalogStatus:
+    """What the providers' live catalogs said about the router's pool at the last check."""
+    if services.catalog is None and services.learned_router is not None:
+        await services.refresh_catalog()
+    return _catalog_or_503(services.catalog)
+
+
+@router.post("/learned/catalog/refresh", response_model=LiveCatalogStatus)
+async def refresh_learned_catalog(services: Services) -> LiveCatalogStatus:
+    """Re-check the live catalogs now (public catalog endpoints only; no prompt is sent)."""
+    return _catalog_or_503(await services.refresh_catalog())
+
+
+@router.get("/learned/final", response_model=FinalEvaluationReport)
+async def final_evaluation(services: Services) -> FinalEvaluationReport:
+    """The final held-out evaluation, oracle and error analysis, and robustness scenarios."""
+    try:
+        return load_report(services.settings.data_dir)
+    except ExportError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+
+@router.get("/learned/pool", response_model=PoolSnapshot)
+async def learned_pool(services: Services) -> PoolSnapshot:
+    """The dated Checkpoint 3 model pool the learned router was trained on (Model Registry)."""
+    if services.learned_router is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="The learned router has not been trained yet",
+        )
+    return services.learned_router.pool
+
+
+@router.get("/learned/export/{table}", response_class=Response)
+async def export_table(
+    table: str,
+    services: Services,
+    export_format: Annotated[str, Query(alias="format", pattern="^(csv|json)$")] = "csv",
+) -> Response:
+    """Download one results table as CSV or JSON (no provider call)."""
+    if table not in TABLES:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Unknown table {table}")
+    try:
+        text, media_type = render(table, export_format, services.settings.data_dir)
+    except (ExportError, FileNotFoundError) as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    return Response(
+        content=text,
+        media_type=media_type,
+        headers={
+            "Content-Disposition": f'attachment; filename="router-{table}.{export_format}"'
+        },
+    )
+
+
+@router.post("/learned/what-if", response_model=WhatIfResponse)
+async def learned_what_if(payload: WhatIfRequest, services: Services) -> WhatIfResponse:
+    """Route the same prompt under current and hypothetical conditions; no provider call."""
+    router_ = services.learned_router
+    if router_ is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="The learned router has not been trained yet",
+        )
+    unknown = payload.changes.model_ids() - set(router_.pool_ids)
+    if unknown:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Unknown model IDs: {', '.join(sorted(unknown))}",
+        )
+    configured = {"OPENROUTER_API_KEY"} if services.settings.credential_configured else set()
+    try:
+        before = router_.decide(payload.route, configured, services.catalog)
+        after = router_.decide(payload.route, configured, services.catalog, payload.changes)
+    except NoEligibleModelError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
+        ) from exc
+    return WhatIfResponse(
+        before=before, after=after, changed=before.selected_model_id != after.selected_model_id
+    )
 
 
 @router.post("/learned/decisions", response_model=LearnedRoutingDecision)

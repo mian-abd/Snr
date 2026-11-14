@@ -1,6 +1,15 @@
 {
   "components": {
     "schemas": {
+      "Access": {
+        "enum": [
+          "paid",
+          "free",
+          "local"
+        ],
+        "title": "Access",
+        "type": "string"
+      },
       "BenchmarkEstimate": {
         "additionalProperties": false,
         "properties": {
@@ -416,6 +425,15 @@
         "title": "CapabilitySpec",
         "type": "object"
       },
+      "CatalogSource": {
+        "enum": [
+          "live",
+          "snapshot",
+          "off"
+        ],
+        "title": "CatalogSource",
+        "type": "string"
+      },
       "ClassifierMetrics": {
         "additionalProperties": false,
         "properties": {
@@ -693,6 +711,364 @@
           "model_snapshot_id"
         ],
         "title": "EligibilityResult",
+        "type": "object"
+      },
+      "ErrorBreakdown": {
+        "additionalProperties": false,
+        "description": "Routing errors against what every model actually did on the same prompts.\n\nUnder-routed: wrong, while a model with a higher expected cost was right. Over-routed: right,\nwhile a model with a lower expected cost was also right (the proposal's definition).\nOver-routed and dominated: that cheaper model was also no slower on the actual call.",
+        "properties": {
+          "correct": {
+            "title": "Correct",
+            "type": "integer"
+          },
+          "oracle_correct": {
+            "title": "Oracle Correct",
+            "type": "integer"
+          },
+          "oracle_cost_usd": {
+            "title": "Oracle Cost Usd",
+            "type": "number"
+          },
+          "over_routed": {
+            "title": "Over Routed",
+            "type": "integer"
+          },
+          "over_routed_dominated": {
+            "title": "Over Routed Dominated",
+            "type": "integer"
+          },
+          "over_routing_extra_cost_usd": {
+            "title": "Over Routing Extra Cost Usd",
+            "type": "number"
+          },
+          "prompts": {
+            "title": "Prompts",
+            "type": "integer"
+          },
+          "regret_correct": {
+            "title": "Regret Correct",
+            "type": "integer"
+          },
+          "total_cost_usd": {
+            "title": "Total Cost Usd",
+            "type": "number"
+          },
+          "unavoidable": {
+            "title": "Unavoidable",
+            "type": "integer"
+          },
+          "under_routed": {
+            "title": "Under Routed",
+            "type": "integer"
+          },
+          "wrong": {
+            "title": "Wrong",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "prompts",
+          "correct",
+          "wrong",
+          "unavoidable",
+          "under_routed",
+          "over_routed",
+          "over_routed_dominated",
+          "over_routing_extra_cost_usd",
+          "total_cost_usd",
+          "oracle_correct",
+          "oracle_cost_usd",
+          "regret_correct"
+        ],
+        "title": "ErrorBreakdown",
+        "type": "object"
+      },
+      "ErrorExample": {
+        "additionalProperties": false,
+        "properties": {
+          "alternative_correct": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alternative Correct"
+          },
+          "alternative_cost_usd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alternative Cost Usd"
+          },
+          "alternative_latency_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alternative Latency Ms"
+          },
+          "alternative_model_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alternative Model Id"
+          },
+          "benchmark": {
+            "title": "Benchmark",
+            "type": "string"
+          },
+          "chosen_correct": {
+            "title": "Chosen Correct",
+            "type": "boolean"
+          },
+          "chosen_cost_usd": {
+            "title": "Chosen Cost Usd",
+            "type": "number"
+          },
+          "chosen_latency_ms": {
+            "title": "Chosen Latency Ms",
+            "type": "number"
+          },
+          "chosen_model_id": {
+            "title": "Chosen Model Id",
+            "type": "string"
+          },
+          "explanation": {
+            "title": "Explanation",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "predicted_success": {
+            "title": "Predicted Success",
+            "type": "number"
+          },
+          "prompt_excerpt": {
+            "title": "Prompt Excerpt",
+            "type": "string"
+          },
+          "sample_id": {
+            "title": "Sample Id",
+            "type": "string"
+          },
+          "task_group": {
+            "$ref": "#/components/schemas/TaskGroup"
+          }
+        },
+        "required": [
+          "kind",
+          "sample_id",
+          "benchmark",
+          "task_group",
+          "prompt_excerpt",
+          "chosen_model_id",
+          "chosen_correct",
+          "chosen_cost_usd",
+          "chosen_latency_ms",
+          "predicted_success",
+          "alternative_model_id",
+          "alternative_correct",
+          "alternative_cost_usd",
+          "alternative_latency_ms",
+          "explanation"
+        ],
+        "title": "ErrorExample",
+        "type": "object"
+      },
+      "EvaluationSet": {
+        "additionalProperties": false,
+        "description": "The frozen router and every baseline on one set of prompts.",
+        "properties": {
+          "catalog_applied": {
+            "title": "Catalog Applied",
+            "type": "boolean"
+          },
+          "classifier": {
+            "$ref": "#/components/schemas/ClassifierMetrics"
+          },
+          "comparisons": {
+            "items": {
+              "$ref": "#/components/schemas/PairedComparison"
+            },
+            "title": "Comparisons",
+            "type": "array"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "evaluation_id": {
+            "title": "Evaluation Id",
+            "type": "string"
+          },
+          "matrix": {
+            "items": {
+              "$ref": "#/components/schemas/LearnedMatrixRow"
+            },
+            "title": "Matrix",
+            "type": "array"
+          },
+          "models": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Models",
+            "type": "array"
+          },
+          "oracle": {
+            "items": {
+              "$ref": "#/components/schemas/LearnedStrategyOutcome"
+            },
+            "title": "Oracle",
+            "type": "array"
+          },
+          "prompts": {
+            "title": "Prompts",
+            "type": "integer"
+          },
+          "prompts_by_task": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Prompts By Task",
+            "type": "object"
+          },
+          "reference_model_task_prior": {
+            "$ref": "#/components/schemas/ClassifierMetrics"
+          },
+          "routing_errors": {
+            "items": {
+              "$ref": "#/components/schemas/RoutingErrorAnalysis"
+            },
+            "title": "Routing Errors",
+            "type": "array"
+          },
+          "strategies": {
+            "items": {
+              "$ref": "#/components/schemas/LearnedStrategyOutcome"
+            },
+            "title": "Strategies",
+            "type": "array"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "uncertainty": {
+            "items": {
+              "$ref": "#/components/schemas/StrategyUncertainty"
+            },
+            "title": "Uncertainty",
+            "type": "array"
+          }
+        },
+        "required": [
+          "evaluation_id",
+          "title",
+          "description",
+          "prompts",
+          "prompts_by_task",
+          "models",
+          "catalog_applied",
+          "classifier",
+          "reference_model_task_prior",
+          "matrix",
+          "strategies",
+          "oracle",
+          "uncertainty",
+          "comparisons",
+          "routing_errors"
+        ],
+        "title": "EvaluationSet",
+        "type": "object"
+      },
+      "FinalEvaluationReport": {
+        "additionalProperties": false,
+        "description": "Week of Nov 19: the held-out evaluation, oracle and error analysis, and robustness.",
+        "properties": {
+          "artifact_id": {
+            "title": "Artifact Id",
+            "type": "string"
+          },
+          "artifact_sha256": {
+            "title": "Artifact Sha256",
+            "type": "string"
+          },
+          "catalog": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LiveCatalogStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "evaluations": {
+            "items": {
+              "$ref": "#/components/schemas/EvaluationSet"
+            },
+            "title": "Evaluations",
+            "type": "array"
+          },
+          "final_set_sha256": {
+            "title": "Final Set Sha256",
+            "type": "string"
+          },
+          "pool_snapshot_id": {
+            "title": "Pool Snapshot Id",
+            "type": "string"
+          },
+          "protocol": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Protocol",
+            "type": "array"
+          },
+          "robustness": {
+            "items": {
+              "$ref": "#/components/schemas/RobustnessReport"
+            },
+            "title": "Robustness",
+            "type": "array"
+          },
+          "spend_usd": {
+            "title": "Spend Usd",
+            "type": "number"
+          }
+        },
+        "required": [
+          "artifact_id",
+          "artifact_sha256",
+          "final_set_sha256",
+          "pool_snapshot_id",
+          "catalog",
+          "protocol",
+          "evaluations",
+          "robustness",
+          "spend_usd"
+        ],
+        "title": "FinalEvaluationReport",
         "type": "object"
       },
       "GenerationResult": {
@@ -1000,12 +1376,42 @@
         "title": "HeldoutEvaluation",
         "type": "object"
       },
+      "Interval": {
+        "additionalProperties": false,
+        "properties": {
+          "high": {
+            "title": "High",
+            "type": "number"
+          },
+          "low": {
+            "title": "Low",
+            "type": "number"
+          }
+        },
+        "required": [
+          "low",
+          "high"
+        ],
+        "title": "Interval",
+        "type": "object"
+      },
       "LearnedCandidate": {
         "additionalProperties": false,
         "properties": {
           "access": {
             "title": "Access",
             "type": "string"
+          },
+          "catalog_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Catalog Note"
           },
           "context_length": {
             "title": "Context Length",
@@ -1112,6 +1518,28 @@
               }
             ],
             "title": "Score"
+          },
+          "snapshot_expected_cost_usd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Expected Cost Usd"
+          },
+          "what_if_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "What If Note"
           }
         },
         "required": [
@@ -1393,6 +1821,22 @@
             "title": "Candidates",
             "type": "array"
           },
+          "catalog_checked_at_utc": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Catalog Checked At Utc"
+          },
+          "catalog_source": {
+            "$ref": "#/components/schemas/CatalogSource",
+            "default": "off"
+          },
           "custom_weights": {
             "title": "Custom Weights",
             "type": "boolean"
@@ -1539,6 +1983,150 @@
           "selected_models"
         ],
         "title": "LearnedStrategyOutcome",
+        "type": "object"
+      },
+      "LiveCatalogStatus": {
+        "additionalProperties": false,
+        "properties": {
+          "checked_at_utc": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Checked At Utc"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "models": {
+            "items": {
+              "$ref": "#/components/schemas/LiveModelStatus"
+            },
+            "title": "Models",
+            "type": "array"
+          },
+          "pool_snapshot_id": {
+            "title": "Pool Snapshot Id",
+            "type": "string"
+          },
+          "snapshot_as_of": {
+            "title": "Snapshot As Of",
+            "type": "string"
+          },
+          "source": {
+            "$ref": "#/components/schemas/CatalogSource"
+          }
+        },
+        "required": [
+          "source",
+          "pool_snapshot_id",
+          "snapshot_as_of"
+        ],
+        "title": "LiveCatalogStatus",
+        "type": "object"
+      },
+      "LiveModelStatus": {
+        "additionalProperties": false,
+        "description": "One pool model as its provider's live catalog describes it now.",
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "checked": {
+            "title": "Checked",
+            "type": "boolean"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "live_completion_price_per_million": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Live Completion Price Per Million"
+          },
+          "live_prompt_price_per_million": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Live Prompt Price Per Million"
+          },
+          "missing_hosts": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing Hosts",
+            "type": "array"
+          },
+          "model_id": {
+            "title": "Model Id",
+            "type": "string"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "serving_hosts": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Serving Hosts",
+            "type": "array"
+          },
+          "snapshot_completion_price_per_million": {
+            "title": "Snapshot Completion Price Per Million",
+            "type": "number"
+          },
+          "snapshot_prompt_price_per_million": {
+            "title": "Snapshot Prompt Price Per Million",
+            "type": "number"
+          },
+          "upstream_model": {
+            "title": "Upstream Model",
+            "type": "string"
+          }
+        },
+        "required": [
+          "model_id",
+          "display_name",
+          "provider",
+          "upstream_model",
+          "checked",
+          "available",
+          "note",
+          "snapshot_prompt_price_per_million",
+          "snapshot_completion_price_per_million"
+        ],
+        "title": "LiveModelStatus",
         "type": "object"
       },
       "ModelBenchmarkSummary": {
@@ -1755,6 +2343,262 @@
         "title": "PaginatedRecords",
         "type": "object"
       },
+      "PairedComparison": {
+        "additionalProperties": false,
+        "description": "One comparison from a family fixed before the final results were read.",
+        "properties": {
+          "accuracy_difference": {
+            "title": "Accuracy Difference",
+            "type": "number"
+          },
+          "accuracy_difference_ci": {
+            "$ref": "#/components/schemas/Interval"
+          },
+          "baseline_correct": {
+            "title": "Baseline Correct",
+            "type": "integer"
+          },
+          "baseline_id": {
+            "title": "Baseline Id",
+            "type": "string"
+          },
+          "correct": {
+            "title": "Correct",
+            "type": "integer"
+          },
+          "cost_difference_ci": {
+            "$ref": "#/components/schemas/Interval"
+          },
+          "cost_difference_usd": {
+            "title": "Cost Difference Usd",
+            "type": "number"
+          },
+          "cost_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Ratio"
+          },
+          "cost_ratio_ci": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Interval"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "holm_p": {
+            "title": "Holm P",
+            "type": "number"
+          },
+          "mcnemar_p": {
+            "title": "Mcnemar P",
+            "type": "number"
+          },
+          "median_latency_difference_ci": {
+            "$ref": "#/components/schemas/Interval"
+          },
+          "median_latency_difference_ms": {
+            "title": "Median Latency Difference Ms",
+            "type": "number"
+          },
+          "only_baseline_correct": {
+            "title": "Only Baseline Correct",
+            "type": "integer"
+          },
+          "only_strategy_correct": {
+            "title": "Only Strategy Correct",
+            "type": "integer"
+          },
+          "prompts": {
+            "title": "Prompts",
+            "type": "integer"
+          },
+          "question": {
+            "title": "Question",
+            "type": "string"
+          },
+          "strategy_id": {
+            "title": "Strategy Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "strategy_id",
+          "baseline_id",
+          "question",
+          "prompts",
+          "correct",
+          "baseline_correct",
+          "only_strategy_correct",
+          "only_baseline_correct",
+          "accuracy_difference",
+          "accuracy_difference_ci",
+          "mcnemar_p",
+          "holm_p",
+          "cost_difference_usd",
+          "cost_difference_ci",
+          "cost_ratio",
+          "cost_ratio_ci",
+          "median_latency_difference_ms",
+          "median_latency_difference_ci"
+        ],
+        "title": "PairedComparison",
+        "type": "object"
+      },
+      "PoolModel": {
+        "additionalProperties": false,
+        "properties": {
+          "access": {
+            "$ref": "#/components/schemas/Access"
+          },
+          "api_key_env": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Api Key Env"
+          },
+          "base_url": {
+            "title": "Base Url",
+            "type": "string"
+          },
+          "completion_price_per_token": {
+            "default": "0",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Completion Price Per Token",
+            "type": "string"
+          },
+          "context_length": {
+            "title": "Context Length",
+            "type": "integer"
+          },
+          "data_policy": {
+            "title": "Data Policy",
+            "type": "string"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "enabled": {
+            "default": true,
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "family": {
+            "title": "Family",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "max_concurrency": {
+            "default": 1,
+            "maximum": 8.0,
+            "minimum": 1.0,
+            "title": "Max Concurrency",
+            "type": "integer"
+          },
+          "open_weight": {
+            "title": "Open Weight",
+            "type": "boolean"
+          },
+          "parameters": {
+            "title": "Parameters",
+            "type": "string"
+          },
+          "prompt_price_per_token": {
+            "default": "0",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Prompt Price Per Token",
+            "type": "string"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "request_options": {
+            "additionalProperties": true,
+            "title": "Request Options",
+            "type": "object"
+          },
+          "requests_per_minute": {
+            "exclusiveMinimum": 0.0,
+            "title": "Requests Per Minute",
+            "type": "number"
+          },
+          "upstream_model": {
+            "title": "Upstream Model",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "display_name",
+          "family",
+          "open_weight",
+          "parameters",
+          "access",
+          "provider",
+          "base_url",
+          "upstream_model",
+          "context_length",
+          "requests_per_minute",
+          "data_policy"
+        ],
+        "title": "PoolModel",
+        "type": "object"
+      },
+      "PoolSnapshot": {
+        "additionalProperties": false,
+        "properties": {
+          "metadata_as_of": {
+            "title": "Metadata As Of",
+            "type": "string"
+          },
+          "models": {
+            "items": {
+              "$ref": "#/components/schemas/PoolModel"
+            },
+            "title": "Models",
+            "type": "array"
+          },
+          "models_sha256": {
+            "title": "Models Sha256",
+            "type": "string"
+          },
+          "schema_version": {
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "snapshot_id": {
+            "title": "Snapshot Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "snapshot_id",
+          "metadata_as_of",
+          "models_sha256",
+          "models"
+        ],
+        "title": "PoolSnapshot",
+        "type": "object"
+      },
       "PricingSpec": {
         "additionalProperties": false,
         "properties": {
@@ -1784,6 +2628,61 @@
           }
         },
         "title": "PricingSpec",
+        "type": "object"
+      },
+      "PrioritySweepPoint": {
+        "additionalProperties": false,
+        "description": "The router with quality weight 1 and one other weight varied (user-priority robustness).",
+        "properties": {
+          "accuracy": {
+            "title": "Accuracy",
+            "type": "number"
+          },
+          "axis": {
+            "title": "Axis",
+            "type": "string"
+          },
+          "correct": {
+            "title": "Correct",
+            "type": "integer"
+          },
+          "median_latency_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median Latency Ms"
+          },
+          "selected_models": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Selected Models",
+            "type": "object"
+          },
+          "total_cost_usd": {
+            "title": "Total Cost Usd",
+            "type": "number"
+          },
+          "weight": {
+            "title": "Weight",
+            "type": "number"
+          }
+        },
+        "required": [
+          "axis",
+          "weight",
+          "correct",
+          "accuracy",
+          "total_cost_usd",
+          "median_latency_ms",
+          "selected_models"
+        ],
+        "title": "PrioritySweepPoint",
         "type": "object"
       },
       "RegistrySnapshot": {
@@ -1943,6 +2842,49 @@
         "title": "ReplaySelection",
         "type": "object"
       },
+      "RobustnessReport": {
+        "additionalProperties": false,
+        "properties": {
+          "evaluation_id": {
+            "title": "Evaluation Id",
+            "type": "string"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "priority_sweep": {
+            "items": {
+              "$ref": "#/components/schemas/PrioritySweepPoint"
+            },
+            "title": "Priority Sweep",
+            "type": "array"
+          },
+          "prompts": {
+            "title": "Prompts",
+            "type": "integer"
+          },
+          "scenarios": {
+            "items": {
+              "$ref": "#/components/schemas/ScenarioResult"
+            },
+            "title": "Scenarios",
+            "type": "array"
+          }
+        },
+        "required": [
+          "evaluation_id",
+          "prompts",
+          "scenarios",
+          "priority_sweep",
+          "notes"
+        ],
+        "title": "RobustnessReport",
+        "type": "object"
+      },
       "RouteRequest": {
         "additionalProperties": false,
         "properties": {
@@ -2098,6 +3040,40 @@
           "reason"
         ],
         "title": "RoutingDecision",
+        "type": "object"
+      },
+      "RoutingErrorAnalysis": {
+        "additionalProperties": false,
+        "properties": {
+          "by_task": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ErrorBreakdown"
+            },
+            "title": "By Task",
+            "type": "object"
+          },
+          "examples": {
+            "items": {
+              "$ref": "#/components/schemas/ErrorExample"
+            },
+            "title": "Examples",
+            "type": "array"
+          },
+          "overall": {
+            "$ref": "#/components/schemas/ErrorBreakdown"
+          },
+          "strategy_id": {
+            "title": "Strategy Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "strategy_id",
+          "overall",
+          "by_task",
+          "examples"
+        ],
+        "title": "RoutingErrorAnalysis",
         "type": "object"
       },
       "RoutingErrorExample": {
@@ -2447,6 +3423,171 @@
         "title": "RoutingWeights",
         "type": "object"
       },
+      "ScenarioResult": {
+        "additionalProperties": false,
+        "properties": {
+          "prompts": {
+            "title": "Prompts",
+            "type": "integer"
+          },
+          "scenario": {
+            "$ref": "#/components/schemas/ScenarioSpec"
+          },
+          "strategies": {
+            "items": {
+              "$ref": "#/components/schemas/ScenarioStrategy"
+            },
+            "title": "Strategies",
+            "type": "array"
+          }
+        },
+        "required": [
+          "scenario",
+          "prompts",
+          "strategies"
+        ],
+        "title": "ScenarioResult",
+        "type": "object"
+      },
+      "ScenarioSpec": {
+        "additionalProperties": false,
+        "description": "One what-if replayed over stored results (proposal: robustness tests).",
+        "properties": {
+          "condition": {
+            "title": "Condition",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "failure_shares": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Failure Shares",
+            "type": "object"
+          },
+          "latency_multipliers": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Latency Multipliers",
+            "type": "object"
+          },
+          "observed": {
+            "title": "Observed",
+            "type": "boolean"
+          },
+          "price_multipliers": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Price Multipliers",
+            "type": "object"
+          },
+          "reliability_weight": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reliability Weight"
+          },
+          "scenario_id": {
+            "title": "Scenario Id",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "unavailable": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unavailable",
+            "type": "array"
+          },
+          "world_already_changed": {
+            "default": false,
+            "title": "World Already Changed",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "scenario_id",
+          "title",
+          "condition",
+          "observed",
+          "description"
+        ],
+        "title": "ScenarioSpec",
+        "type": "object"
+      },
+      "ScenarioStrategy": {
+        "additionalProperties": false,
+        "properties": {
+          "accuracy": {
+            "title": "Accuracy",
+            "type": "number"
+          },
+          "changed_decisions": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Changed Decisions"
+          },
+          "correct": {
+            "title": "Correct",
+            "type": "integer"
+          },
+          "median_latency_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median Latency Ms"
+          },
+          "selected_models": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Selected Models",
+            "type": "object"
+          },
+          "strategy_id": {
+            "title": "Strategy Id",
+            "type": "string"
+          },
+          "total_cost_usd": {
+            "title": "Total Cost Usd",
+            "type": "number"
+          }
+        },
+        "required": [
+          "strategy_id",
+          "correct",
+          "accuracy",
+          "total_cost_usd",
+          "median_latency_ms",
+          "selected_models"
+        ],
+        "title": "ScenarioStrategy",
+        "type": "object"
+      },
       "StrategyTaskOutcome": {
         "additionalProperties": false,
         "properties": {
@@ -2486,6 +3627,33 @@
           "median_latency_ms"
         ],
         "title": "StrategyTaskOutcome",
+        "type": "object"
+      },
+      "StrategyUncertainty": {
+        "additionalProperties": false,
+        "description": "95% percentile-bootstrap intervals over prompts.",
+        "properties": {
+          "accuracy": {
+            "$ref": "#/components/schemas/Interval"
+          },
+          "median_latency_ms": {
+            "$ref": "#/components/schemas/Interval"
+          },
+          "strategy_id": {
+            "title": "Strategy Id",
+            "type": "string"
+          },
+          "total_cost_usd": {
+            "$ref": "#/components/schemas/Interval"
+          }
+        },
+        "required": [
+          "strategy_id",
+          "accuracy",
+          "total_cost_usd",
+          "median_latency_ms"
+        ],
+        "title": "StrategyUncertainty",
         "type": "object"
       },
       "TaskGroup": {
@@ -2593,11 +3761,87 @@
         ],
         "title": "WeightTuningResult",
         "type": "object"
+      },
+      "WhatIfChanges": {
+        "additionalProperties": false,
+        "description": "Hypothetical conditions for one preview (proposal: robustness, shown live for CP4).",
+        "properties": {
+          "failure_shares": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Failure Shares",
+            "type": "object"
+          },
+          "latency_multipliers": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Latency Multipliers",
+            "type": "object"
+          },
+          "price_multipliers": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Price Multipliers",
+            "type": "object"
+          },
+          "unavailable": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unavailable",
+            "type": "array"
+          }
+        },
+        "title": "WhatIfChanges",
+        "type": "object"
+      },
+      "WhatIfRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "changes": {
+            "$ref": "#/components/schemas/WhatIfChanges"
+          },
+          "route": {
+            "$ref": "#/components/schemas/LearnedRouteRequest"
+          }
+        },
+        "required": [
+          "route",
+          "changes"
+        ],
+        "title": "WhatIfRequest",
+        "type": "object"
+      },
+      "WhatIfResponse": {
+        "additionalProperties": false,
+        "description": "The same prompt routed under current conditions and under the hypothetical ones.",
+        "properties": {
+          "after": {
+            "$ref": "#/components/schemas/LearnedRoutingDecision"
+          },
+          "before": {
+            "$ref": "#/components/schemas/LearnedRoutingDecision"
+          },
+          "changed": {
+            "title": "Changed",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "before",
+          "after",
+          "changed"
+        ],
+        "title": "WhatIfResponse",
+        "type": "object"
       }
     }
   },
   "info": {
-    "description": "Checkpoint 2 transparent routing over a reproducible model benchmark API",
+    "description": "Route prompts to a model that is good enough, with the evaluation behind it",
     "title": "Adaptive LLM Router",
     "version": "0.1.0"
   },
@@ -2924,6 +4168,44 @@
         "summary": "Health"
       }
     },
+    "/api/v1/learned/catalog": {
+      "get": {
+        "description": "What the providers' live catalogs said about the router's pool at the last check.",
+        "operationId": "learned_catalog_api_v1_learned_catalog_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveCatalogStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Learned Catalog"
+      }
+    },
+    "/api/v1/learned/catalog/refresh": {
+      "post": {
+        "description": "Re-check the live catalogs now (public catalog endpoints only; no prompt is sent).",
+        "operationId": "refresh_learned_catalog_api_v1_learned_catalog_refresh_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveCatalogStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Refresh Learned Catalog"
+      }
+    },
     "/api/v1/learned/decisions": {
       "post": {
         "description": "Score every model with the learned router and the chosen weights; no provider call.",
@@ -2961,6 +4243,88 @@
           }
         },
         "summary": "Preview Learned Decision"
+      }
+    },
+    "/api/v1/learned/export/{table}": {
+      "get": {
+        "description": "Download one results table as CSV or JSON (no provider call).",
+        "operationId": "export_table_api_v1_learned_export__table__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "table",
+            "required": true,
+            "schema": {
+              "title": "Table",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "format",
+            "required": false,
+            "schema": {
+              "default": "csv",
+              "pattern": "^(csv|json)$",
+              "title": "Format",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Table"
+      }
+    },
+    "/api/v1/learned/final": {
+      "get": {
+        "description": "The final held-out evaluation, oracle and error analysis, and robustness scenarios.",
+        "operationId": "final_evaluation_api_v1_learned_final_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinalEvaluationReport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Final Evaluation"
+      }
+    },
+    "/api/v1/learned/pool": {
+      "get": {
+        "description": "The dated Checkpoint 3 model pool the learned router was trained on (Model Registry).",
+        "operationId": "learned_pool_api_v1_learned_pool_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PoolSnapshot"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Learned Pool"
       }
     },
     "/api/v1/learned/report": {
@@ -3019,6 +4383,45 @@
           }
         },
         "summary": "Learned Route"
+      }
+    },
+    "/api/v1/learned/what-if": {
+      "post": {
+        "description": "Route the same prompt under current and hypothetical conditions; no provider call.",
+        "operationId": "learned_what_if_api_v1_learned_what_if_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WhatIfRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WhatIfResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Learned What If"
       }
     },
     "/api/v1/models": {
