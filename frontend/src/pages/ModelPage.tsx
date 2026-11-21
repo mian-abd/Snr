@@ -1,7 +1,8 @@
-import { BarChart3, ChevronRight, Coins, ShieldCheck, Shuffle } from 'lucide-react'
+import { BarChart3, ChevronRight, Coins, Columns3, ShieldCheck, Shuffle } from 'lucide-react'
 import { PairedBars, BarList } from '../charts/Charts'
 import { accessLabel, evaluationOf, find, modelViews, priorityLabel, priorityOrder, providerLabel, useCatalog, useFinalReport, useLearnedReport, usePool, useStudyReports } from '../lib/data'
 import { perMillion, pct, seconds, shortTime, usd } from '../lib/format'
+import { compareHref } from '../lib/measures'
 import { availability, changedPrice, priceOf } from '../lib/models'
 import { Link } from '../lib/Link'
 import { Badge, Card, Empty, ModelAvatar, Notice, Section, SideNav, Skeleton, Stat } from '../ui'
@@ -59,6 +60,9 @@ export function ModelPage({ id }: { id: string }) {
             <Badge tone={model.access === 'paid' ? 'neutral' : 'accent'}>{accessLabel[model.access]}</Badge>
             <Badge tone={state.tone} dot>{state.text}</Badge>
           </div>
+        </div>
+        <div style={{ marginLeft: 'auto' }}>
+          <Link to={compareHref([model.id])} className={`${ui.button} ${ui.secondary}`} aria-label={`Compare ${model.display_name} with other models`}><Columns3 size={15} />Compare</Link>
         </div>
       </div>
       <p className={styles.body} style={{ maxWidth: '50rem' }}>

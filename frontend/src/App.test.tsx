@@ -4,6 +4,9 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, expect, test, vi } from 'vitest'
 import App from './App'
 
+// jsdom does not scroll; the research page scrolls to the section a link names.
+Element.prototype.scrollIntoView ??= () => {}
+
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
 const health = { status: 'ok', version: '0.1.0', registry_loaded: true, registry_snapshot_id: 'snapshot', credential_configured: false, active_benchmark_run_id: null }
 const model = (id: string, context: number) => ({ id, display_name: id, provider: id.split('/')[0], context_length: context, pricing: { prompt_per_token: '0', completion_per_token: '0' }, input_modalities: ['text'], output_modalities: ['text'], supported_parameters: [], capabilities: { tools: true, structured_output: true }, enabled: true, snapshot_id: 'snapshot', metadata_as_of: '2026-09-30T00:00:00Z', source_url: 'https://example.com' })
@@ -350,6 +353,119 @@ test('starts a paid pilot only after the cost estimate is confirmed', async () =
   await user.click(screen.getByRole('button', { name: /confirm and start/i }))
   await waitFor(() => expect(posts).toHaveLength(1))
   expect(JSON.parse(posts[0])).toEqual({ mode: 'pilot', pool: 'paid', confirmed_estimate_usd: '0.02268' })
+})
+
+test('opens the search palette with Ctrl K, closes it with Escape, and goes to a model', async () => {
+  stub([])
+  renderAt('/')
+  const user = userEvent.setup()
+  await screen.findByRole('heading', { name: /good enough/i })
+  const trigger = screen.getByRole('button', { name: 'Search' })
+  trigger.focus()
+  await user.keyboard('{Control>}k{/Control}')
+  const dialog = await screen.findByRole('dialog', { name: 'Search the site' })
+  expect(within(dialog).getByRole('combobox')).toHaveFocus()
+  expect(within(dialog).getByRole('option', { name: /^Compare/ })).toBeInTheDocument()
+  expect(within(dialog).getByRole('option', { name: /^Method and limits/ })).toBeInTheDocument()
+  await user.keyboard('{Escape}')
+  expect(screen.queryByRole('dialog')).toBeNull()
+  expect(trigger).toHaveFocus()
+
+  await user.keyboard('{Control>}k{/Control}')
+  await user.keyboard('gema 26')
+  await waitFor(() => expect(screen.getAllByRole('option')[0]).toHaveTextContent(/Gemma 4 26B/))
+  expect(screen.getAllByRole('option')[0]).toHaveAttribute('aria-selected', 'true')
+  expect(screen.getByText(/86\.2%/)).toBeInTheDocument()
+  await user.keyboard('{Enter}')
+  expect(await screen.findByRole('heading', { name: 'Gemma 4 26B', level: 1 })).toBeInTheDocument()
+  expect(window.location.hash).toBe('#/models/gemma-4-26b')
+  expect(screen.queryByRole('dialog')).toBeNull()
+})
+
+test('moves through the search results with the arrow keys and opens a research section', async () => {
+  stub([])
+  renderAt('/models')
+  const user = userEvent.setup()
+  await user.click(await screen.findByRole('button', { name: 'Search' }))
+  await user.keyboard('limits')
+  const options = await screen.findAllByRole('option')
+  expect(options[0]).toHaveTextContent('Method and limits')
+  await user.keyboard('{ArrowDown}{ArrowUp}')
+  expect(screen.getAllByRole('option')[0]).toHaveAttribute('aria-selected', 'true')
+  await user.keyboard('{Enter}')
+  await waitFor(() => expect(window.location.hash).toBe('#/research?section=method'))
+})
+
+test('compares two models from the address, side by side', async () => {
+  stub([], { flagships: flagshipReport })
+  renderAt('/compare?models=gemma-4-26b,gpt-6.1-sol')
+  const user = userEvent.setup()
+  const table = await screen.findByRole('table', { name: 'Model comparison' })
+  expect(within(table).getByRole('columnheader', { name: /Gemma 4 26B/ })).toBeInTheDocument()
+  expect(within(table).getByRole('columnheader', { name: /GPT-6.1 Sol/ })).toBeInTheDocument()
+  const overall = within(table).getAllByRole('row').find((row) => within(row).queryByRole('rowheader', { name: 'All tasks' }))!
+  expect(within(overall).getByText('86.2%')).toBeInTheDocument()
+  expect(within(overall).getByText('Best').closest('td')).toHaveTextContent('95.0%')
+  expect(within(table).getAllByText('Not in its pool').length).toBeGreaterThan(0)
+  expect(within(table).getByText('Router + flagships')).toBeInTheDocument()
+  expect(screen.getByRole('img', { name: /^Accuracy by task/ })).toBeInTheDocument()
+  await user.click(within(table).getByRole('button', { name: 'Remove GPT-6.1 Sol from the comparison' }))
+  await waitFor(() => expect(window.location.hash).toBe('#/compare?models=gemma-4-26b'))
+  expect(within(screen.getByRole('table', { name: 'Model comparison' })).queryByRole('columnheader', { name: /GPT-6.1 Sol/ })).toBeNull()
+})
+
+test('offers quick picks on an empty comparison and adds a model with the picker', async () => {
+  stub([], { flagships: flagshipReport })
+  renderAt('/compare')
+  const user = userEvent.setup()
+  await user.click(await screen.findByRole('button', { name: /The two most accurate/ }))
+  await waitFor(() => expect(window.location.hash).toBe('#/compare?models=gpt-6.1-sol,gemma-4-26b'))
+  expect(await screen.findByRole('table', { name: 'Model comparison' })).toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: /Add a model/ }))
+  await user.keyboard('merc{Enter}')
+  await waitFor(() => expect(window.location.hash).toBe('#/compare?models=gpt-6.1-sol,gemma-4-26b,mercury-3'))
+  expect(await screen.findByRole('columnheader', { name: /Mercury 3/ })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /Add a model/ })).toHaveFocus()
+})
+
+test('picks models in the table and opens them on the compare page', async () => {
+  stub([])
+  renderAt('/models')
+  const user = userEvent.setup()
+  await user.click(await screen.findByRole('checkbox', { name: 'Pick Gemma 4 26B to compare' }))
+  await user.click(screen.getByRole('checkbox', { name: 'Pick Mercury 3 to compare' }))
+  const bar = screen.getByRole('region', { name: 'Models picked to compare' })
+  expect(within(bar).getByText('2 of 4 picked')).toBeInTheDocument()
+  await user.click(within(bar).getByRole('button', { name: 'Compare 2 models' }))
+  await waitFor(() => expect(window.location.hash).toBe('#/compare?models=gemma-4-26b,mercury-3'))
+  expect(await screen.findByRole('table', { name: 'Model comparison' })).toBeInTheDocument()
+})
+
+test('filters the models by maker and downloads the rows shown as CSV', async () => {
+  stub([])
+  renderAt('/models')
+  const user = userEvent.setup()
+  const makers = await screen.findByRole('group', { name: 'Filter by maker' })
+  await user.click(within(makers).getByRole('button', { name: 'Inception' }))
+  expect(within(makers).getByRole('button', { name: 'Inception' })).toHaveAttribute('aria-pressed', 'true')
+  expect(screen.queryByRole('link', { name: /Gemma 4 26B/ })).toBeNull()
+  expect(screen.getByRole('link', { name: /Mercury 3/ })).toBeInTheDocument()
+  let saved: Blob | undefined
+  URL.createObjectURL = vi.fn((blob: Blob) => { saved = blob; return 'blob:models' })
+  URL.revokeObjectURL = vi.fn()
+  const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+  await user.click(screen.getByRole('button', { name: /Download CSV/ }))
+  expect(click).toHaveBeenCalledOnce()
+  const text = await new Promise<string>((resolve) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result))
+    reader.readAsText(saved!)
+  })
+  // trim() also drops the byte-order mark that tells spreadsheets the file is UTF-8.
+  const lines = text.trim().split('\r\n')
+  expect(lines).toHaveLength(2)
+  expect(lines[0]).toMatch(/^Model,Maker,Access,Added in study,"Accuracy, all tasks/)
+  expect(lines[1]).toBe('Mercury 3,Inception,Paid,,,,,,0.1,0.35,,,262144,Unavailable')
 })
 
 test('switches between light and dark themes', async () => {

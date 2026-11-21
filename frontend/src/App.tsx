@@ -1,5 +1,6 @@
-import { Menu, Moon, Sun, Waypoints, X } from 'lucide-react'
+import { Menu, Moon, Search, Sun, Waypoints, X } from 'lucide-react'
 import { lazy, Suspense, useEffect, useState } from 'react'
+import { CommandPalette } from './components/CommandPalette'
 import { useCatalog, useHealth } from './lib/data'
 import { shortTime } from './lib/format'
 import { Link } from './lib/Link'
@@ -9,6 +10,7 @@ import { Notice, Skeleton } from './ui'
 import styles from './App.module.css'
 
 // Each page loads its own code on first visit.
+const ComparePage = lazy(() => import('./pages/ComparePage').then((m) => ({ default: m.ComparePage })))
 const FaqPage = lazy(() => import('./pages/FaqPage').then((m) => ({ default: m.FaqPage })))
 const HomePage = lazy(() => import('./pages/HomePage').then((m) => ({ default: m.HomePage })))
 const LabPage = lazy(() => import('./pages/LabPage').then((m) => ({ default: m.LabPage })))
@@ -20,6 +22,7 @@ const RouterPage = lazy(() => import('./pages/RouterPage').then((m) => ({ defaul
 const links = [
   { to: '/router', label: 'Router' },
   { to: '/models', label: 'Models' },
+  { to: '/compare', label: 'Compare' },
   { to: '/research', label: 'Research' },
   { to: '/faq', label: 'FAQ' },
   { to: '/lab', label: 'Lab' },
@@ -41,11 +44,15 @@ function CatalogPill() {
   )
 }
 
+const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent)
+const searchKeys = isMac ? '⌘K' : 'Ctrl K'
+
 function Page({ segments }: { segments: string[] }) {
   switch (segments[0]) {
     case undefined: return <HomePage />
     case 'router': return <RouterPage />
     case 'models': return segments[1] ? <ModelPage id={decodeURIComponent(segments[1])} /> : <ModelsPage />
+    case 'compare': return <ComparePage />
     case 'research': return <ResearchPage />
     case 'faq': return <FaqPage />
     case 'lab': return <LabPage />
@@ -57,8 +64,23 @@ export default function App() {
   const { segments, path } = useRoute()
   const { theme, toggle } = useTheme()
   const [menu, setMenu] = useState(false)
+  const [search, setSearch] = useState(false)
   const health = useHealth()
-  useEffect(() => setMenu(false), [path])
+  useEffect(() => {
+    setMenu(false)
+    setSearch(false)
+  }, [path])
+  // Ctrl K (⌘K on a Mac) opens the search palette from anywhere, and closes it again.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === 'k') {
+        event.preventDefault()
+        setSearch((open) => !open)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
   const [scrolled, setScrolled] = useState(false)
   useEffect(() => {
     const update = () => setScrolled(window.scrollY > 8)
@@ -79,6 +101,11 @@ export default function App() {
             </nav>
           </div>
           <div className={styles.tools}>
+            <button type="button" className={styles.search} onClick={() => setSearch(true)} aria-label="Search" aria-haspopup="dialog" aria-keyshortcuts={isMac ? 'Meta+K' : 'Control+K'} title={`Search pages, models, and research (${searchKeys})`}>
+              <Search size={15} aria-hidden="true" />
+              <span className={styles.searchLabel}>Search</span>
+              <kbd className={styles.kbd} aria-hidden="true">{searchKeys}</kbd>
+            </button>
             <CatalogPill />
             <button type="button" className={styles.iconButton} onClick={toggle} aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'} title={theme === 'dark' ? 'Light theme' : 'Dark theme'}>
               {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
@@ -117,6 +144,7 @@ export default function App() {
           </div>
         </div>
       </footer>
+      <CommandPalette open={search} onClose={() => setSearch(false)} />
     </div>
   )
 }

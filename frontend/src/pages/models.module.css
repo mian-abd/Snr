@@ -1,4 +1,4 @@
-.stack { display: grid; gap: 1.1rem; }
+.stack { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.1rem; }
 .catalog { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; }
 .toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; margin-top: 0.5rem; }
 .search { max-width: 22rem; }
@@ -35,3 +35,38 @@
 .dim .modelName, .dim .center { color: var(--text-3) !important; }
 .note { color: var(--text-3); font-size: 0.8rem; line-height: 1.6; }
 .more { display: inline-flex; align-items: center; gap: 0.2rem; color: var(--text); }
+
+/* Maker filter: one chip per maker, with its logo; several can be on at once. */
+.makers { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; min-width: 0; }
+.makerChip { display: inline-flex; align-items: center; gap: 0.45rem; height: 2rem; padding: 0 0.75rem 0 0.6rem; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text-2); font-size: 0.8rem; white-space: nowrap; cursor: pointer; transition: border-color 120ms ease, background 120ms ease, color 120ms ease; }
+.chipLogo { display: inline-flex; }
+.makerChip:hover { border-color: var(--border-strong); color: var(--text); }
+.makerChip[aria-pressed='true'] { border-color: var(--ink); background: var(--surface-2); color: var(--text); box-shadow: inset 0 0 0 1px var(--ink); }
+.clearMakers { height: 2rem; padding: 0 0.6rem; border: 0; border-radius: 999px; background: transparent; color: var(--text-2); font-size: 0.8rem; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; cursor: pointer; }
+.clearMakers:hover { color: var(--text); }
+
+/* Picking models to compare */
+.pickCol { width: 2.6rem; padding-right: 0 !important; padding-left: 0.85rem !important; }
+.check { display: block; width: 1rem; height: 1rem; margin: 0; accent-color: var(--ink); cursor: pointer; }
+.check:disabled { cursor: not-allowed; opacity: 0.4; }
+.picked td { background: var(--surface-2); }
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+.compareBar { position: sticky; bottom: 1rem; z-index: 10; display: flex; align-items: center; gap: 0.85rem; padding: 0.65rem 0.7rem 0.65rem 0.9rem; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--shadow-md); }
+.compareLogos { display: flex; flex: 0 0 auto; }
+.compareLogos > span { width: 2rem !important; height: 2rem !important; border-radius: 50%; }
+.compareLogos > span + span { margin-left: -0.45rem; }
+.compareText { display: grid; flex: 1; min-width: 0; font-size: 0.82rem; line-height: 1.35; }
+.compareText strong { color: var(--text); font-weight: 600; }
+.compareText span { overflow: hidden; color: var(--text-3); text-overflow: ellipsis; white-space: nowrap; }
+.compareActions { display: flex; flex: 0 0 auto; gap: 0.4rem; }
+
+@media (max-width: 640px) {
+  .makers { flex-wrap: nowrap; width: 100%; overflow-x: auto; padding-bottom: 0.2rem; scrollbar-width: thin; }
+  .search { max-width: none; }
+  .compareBar { gap: 0.6rem; padding: 0.55rem 0.55rem 0.55rem 0.7rem; }
+  .compareText span { display: none; }
+  .compareActions { margin-left: auto; }
+}
+@media (max-width: 480px) {
+  .compareText { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}

@@ -1,0 +1,11 @@
+.picker { position: relative; }
+.popover { position: absolute; top: calc(100% + 0.4rem); left: 0; z-index: 20; display: flex; flex-direction: column; width: min(26rem, calc(100vw - 2rem)); max-height: 24rem; overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--shadow-md); }
+.searchRow { display: flex; align-items: center; gap: 0.55rem; padding: 0 0.85rem; border-bottom: 1px solid var(--border); color: var(--text-3); }
+.searchRow svg { flex: 0 0 auto; }
+.input { flex: 1; min-width: 0; height: 2.9rem; border: 0; background: transparent; color: var(--text); font-size: 0.92rem; outline: none; }
+.input::placeholder { color: var(--text-3); }
+.input:focus-visible { outline: none; }
+.list { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0.35rem; }
+@media (max-width: 640px) {
+  .input { font-size: 1rem; }
+}

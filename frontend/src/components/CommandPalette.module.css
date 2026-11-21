@@ -1,0 +1,22 @@
+.backdrop { position: fixed; inset: 0; z-index: 100; display: flex; justify-content: center; align-items: flex-start; padding: min(12vh, 7rem) 1rem 1rem; background: color-mix(in srgb, var(--band) 72%, transparent); backdrop-filter: blur(2px); animation: fade 120ms ease; }
+.dialog { display: flex; flex-direction: column; width: min(100%, 40rem); max-height: min(36rem, 100%); overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--shadow-md), 0 0 0 1px color-mix(in srgb, var(--border) 40%, transparent); animation: rise 140ms ease; }
+.searchRow { display: flex; align-items: center; gap: 0.65rem; padding: 0 0.9rem 0 1.05rem; border-bottom: 1px solid var(--border); }
+.searchIcon { flex: 0 0 auto; color: var(--text-3); }
+.input { flex: 1; min-width: 0; height: 3.5rem; border: 0; background: transparent; color: var(--text); font-size: 1rem; outline: none; }
+.input::placeholder { color: var(--text-3); }
+.input:focus-visible { outline: none; }
+.close { flex: 0 0 auto; height: 1.6rem; padding: 0 0.5rem; border: 1px solid var(--border); border-radius: var(--radius-xs); background: var(--surface-2); color: var(--text-2); font: 500 0.7rem var(--font-sans); cursor: pointer; }
+.close:hover { color: var(--text); border-color: var(--border-strong); }
+.results { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0.35rem 0.45rem 0.55rem; }
+.footer { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 1rem; padding: 0.6rem 1rem; border-top: 1px solid var(--border); background: var(--surface-2); color: var(--text-3); font-size: 0.74rem; }
+.keys { display: inline-flex; align-items: center; gap: 0.25rem; }
+.keys kbd { display: inline-grid; min-width: 1.3rem; height: 1.3rem; padding: 0 0.3rem; place-items: center; border: 1px solid var(--border); border-radius: var(--radius-xs); background: var(--surface); color: var(--text-2); font: 500 0.68rem var(--font-sans); }
+.count { margin-left: auto; }
+@keyframes fade { from { opacity: 0; } }
+@keyframes rise { from { opacity: 0; transform: translateY(-6px) scale(0.99); } }
+@media (max-width: 640px) {
+  .backdrop { padding: 0.75rem 0.75rem 0.75rem; }
+  .dialog { max-height: 100%; }
+  .keys { display: none; }
+  .count { margin-left: 0; }
+}

@@ -15,6 +15,11 @@
 .status i { width: 7px; height: 7px; border-radius: 50%; background: var(--good); }
 .status[data-tone='warn'] i { background: var(--warn); }
 .status[data-tone='off'] i { background: var(--text-3); }
+.search { display: inline-flex; align-items: center; gap: 0.5rem; height: 2.25rem; padding: 0 0.45rem 0 0.85rem; border: 0; border-radius: 999px; background: var(--surface-3); color: var(--text-2); font-size: 0.8rem; white-space: nowrap; cursor: pointer; }
+.search:hover { color: var(--text); }
+.search svg { flex: 0 0 auto; }
+.searchLabel { margin-right: 0.15rem; }
+.kbd { display: inline-flex; align-items: center; height: 1.45rem; padding: 0 0.45rem; border-radius: 999px; background: var(--surface); color: var(--text-3); font: 500 0.7rem var(--font-sans); letter-spacing: 0.02em; box-shadow: var(--shadow-sm); }
 .iconButton { display: grid; width: 2.25rem; height: 2.25rem; place-items: center; border: 0; border-radius: 999px; background: var(--surface-3); color: var(--text-2); cursor: pointer; }
 .iconButton:hover { color: var(--text); }
 .menuButton { display: none; }
@@ -29,7 +34,17 @@
 .footerCol a { color: var(--text-2); text-decoration: none; }
 .footerCol a:hover { color: var(--text); text-decoration: underline; }
 .error { margin: 4rem auto; max-width: 32rem; }
+@media (max-width: 1200px) {
+  .status span { display: none; }
+  .status { padding: 0 0.7rem; }
+}
+@media (max-width: 1060px) {
+  .kbd { display: none; }
+  .search { padding: 0 0.85rem; }
+}
 @media (max-width: 960px) {
+  .search { width: 2.25rem; padding: 0; justify-content: center; }
+  .searchLabel { display: none; }
   .navWrap, .status span { display: none; }
   .tools { margin-left: auto; }
   .status { padding: 0 0.7rem; }
@@ -38,4 +53,11 @@
   .mobileNav a { padding: 0.7rem 0.8rem; border-radius: var(--radius-md); color: var(--text-2); text-decoration: none; }
   .mobileNav a[aria-current='page'] { background: var(--surface-3); color: var(--text); }
   .footerInner { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 420px) {
+  .headerInner { gap: 0.6rem; }
+  .tools { gap: 0.3rem; }
+}
+@media (max-width: 370px) {
+  .status { display: none; }
 }
