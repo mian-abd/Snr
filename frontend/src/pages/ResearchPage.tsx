@@ -44,6 +44,10 @@ const exportTables: Array<{ id: ExportTable; label: string; about: string }> = [
   { id: 'sweep', label: 'Priority sweep', about: 'Accuracy, cost, and time as one weight varies' },
   { id: 'decisions', label: 'Every decision', about: 'Which model each strategy chose on every prompt, and how it went' },
   { id: 'cells', label: 'Every model answer', about: 'Each model\'s graded outcome on every prompt (no response text)' },
+  { id: 'study_strategies', label: 'Pool studies: leaderboard', about: 'Every strategy in the flagship and wide studies, with 95% intervals' },
+  { id: 'study_comparisons', label: 'Pool studies: significance tests', about: 'Each study\'s fixed questions, with McNemar and Holm-adjusted p-values' },
+  { id: 'study_models', label: 'Pool studies: models', about: 'Every model in each study, per prompt set and task, with cost and time' },
+  { id: 'added_cells', label: 'Added models: every answer', about: 'Each added model\'s graded outcome on every prompt (no response text)' },
 ]
 const groups: Array<{ title: string; match: (id: string) => boolean }> = [
   { title: 'Adaptive router', match: (id) => strategyFamily(id) === 'learned' },
