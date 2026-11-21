@@ -1,0 +1,135 @@
+/* The prompt explorer: a filterable list of prompts, each with every model's outcome as a strip
+   of small marks, and a page per prompt. Tokens only, so both themes work; right, wrong, and a
+   failed call each carry their own icon as well as their status color. */
+
+/* ---------- Filters ---------- */
+.toolbar { display: grid; grid-template-columns: minmax(0, 1fr) minmax(9rem, 12rem) minmax(9rem, 12rem); align-items: end; gap: 0.75rem; margin-top: 1.25rem; }
+.field { display: grid; gap: 0.35rem; min-width: 0; color: var(--text-2); font-size: 0.78rem; font-weight: 500; }
+.searchBox { position: relative; display: block; }
+.searchBox svg { position: absolute; top: 50%; left: 0.8rem; color: var(--text-3); transform: translateY(-50%); pointer-events: none; }
+.searchBox input { padding-left: 2.25rem; }
+.quick { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.9rem; }
+.quick button { display: inline-flex; align-items: center; gap: 0.45rem; height: 2rem; padding: 0 0.75rem; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text-2); font-size: 0.8rem; white-space: nowrap; cursor: pointer; transition: border-color 120ms ease, background 120ms ease, color 120ms ease; }
+.quick button:hover { border-color: var(--border-strong); color: var(--text); }
+.quick button[aria-pressed='true'] { border-color: var(--ink); background: var(--surface-2); color: var(--text); box-shadow: inset 0 0 0 1px var(--ink); }
+.quick b { color: var(--text-3); font-weight: 500; font-variant-numeric: tabular-nums; }
+.quick button[aria-pressed='true'] b { color: var(--text); }
+
+/* ---------- Count and key ---------- */
+.summary { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1.5rem; margin: 1.5rem 0 0.75rem; color: var(--text-2); font-size: 0.84rem; line-height: 1.5; }
+.summary b { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.legend { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 1rem; margin: 0; padding: 0; color: var(--text-3); font-size: 0.76rem; list-style: none; }
+.legend li { display: inline-flex; align-items: center; gap: 0.4rem; }
+.legend .cell[data-pick] { background: var(--surface-3); }
+
+/* ---------- The list ---------- */
+.listBox { border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
+.list { margin: 0; padding: 0; list-style: none; }
+.listHead, .row { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(11rem, 13.5rem); align-items: center; gap: 0.5rem 1.5rem; padding: 0.85rem 1.1rem; }
+.listHead { padding-top: 0.6rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); border-radius: var(--radius-lg) var(--radius-lg) 0 0; background: var(--surface-2); color: var(--text-2); font-size: 0.76rem; font-weight: 500; }
+.row { position: relative; border-bottom: 1px solid var(--border); }
+.row:last-child { border-bottom: 0; border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
+.row:hover { background: var(--surface-2); }
+.rowMain { display: grid; gap: 0.3rem; min-width: 0; }
+.rowMeta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.15rem 0.6rem; min-width: 0; color: var(--text-3); font-size: 0.74rem; }
+.rowMeta code { font-size: 0.72rem; overflow-wrap: anywhere; }
+.bench { color: var(--text-2); font-weight: 600; }
+/* The prompt's preview is the row's link; its hit area covers the row, under the strip. */
+.rowLink { display: -webkit-box; overflow: hidden; color: var(--text); font-size: 0.9rem; line-height: 1.45; text-decoration: none; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
+.rowLink::after { content: ''; position: absolute; inset: 0; border-radius: inherit; }
+.rowLink:hover { text-decoration: underline; text-underline-offset: 3px; }
+.rowLink:focus-visible { outline: none; }
+.rowLink:focus-visible::after { box-shadow: inset 0 0 0 2px var(--focus); }
+
+/* ---------- The outcome strip: one mark per model ---------- */
+.strip, .stripHead { display: flex; align-items: center; gap: 3px; }
+.strip { position: relative; z-index: 1; padding: 4px 4px 7px; border-radius: var(--radius-sm); cursor: default; }
+.strip:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
+.stripHead { padding: 0 4px; }
+.cell, .headCell { position: relative; display: inline-grid; flex: 0 0 auto; width: 16px; height: 16px; place-items: center; }
+.cell { border-radius: 3px; transition: transform 100ms ease; }
+.cell[data-verdict='right'] { background: var(--good-soft); color: var(--good); }
+.cell[data-verdict='wrong'] { background: var(--bad-soft); color: var(--bad); }
+.cell[data-verdict='failed'] { background: var(--warn-soft); color: var(--warn); }
+/* The router's pick wears a bar under its mark, so it reads without color. */
+.cell[data-pick]::after { content: ''; position: absolute; right: 1px; bottom: -5px; left: 1px; height: 2px; border-radius: 1px; background: var(--ink); }
+.cell[data-active] { transform: translateY(-2px) scale(1.18); box-shadow: 0 0 0 1px var(--text-2); }
+.cell[data-split], .headCell[data-split] { margin-left: 7px; }
+.headCell > * { pointer-events: none; }
+.stripTip { top: 0; width: max-content; min-width: 10rem; max-width: min(17rem, 80vw); }
+.tipHint { margin-top: 0.15rem; color: var(--text-3); font-size: 0.72rem; }
+
+/* ---------- Router pick and verdicts ---------- */
+.pick { display: grid; justify-items: start; gap: 0.2rem; min-width: 0; }
+/* Said to screen readers on every row; shown only where the column header is hidden. */
+.pickLabel { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.pickModel { display: inline-flex; align-items: center; gap: 0.45rem; max-width: 100%; min-width: 0; color: var(--text); font-size: 0.84rem; font-weight: 500; }
+.pickName { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.verdict { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.78rem; font-weight: 500; white-space: nowrap; }
+.verdict svg { flex: 0 0 auto; }
+.verdict[data-verdict='right'] { color: var(--good); }
+.verdict[data-verdict='wrong'] { color: var(--bad); }
+.verdict[data-verdict='failed'] { color: var(--warn); }
+.verdict small { margin-left: 0.25rem; color: var(--text-3); font-size: 0.76rem; font-weight: 400; }
+
+.pager { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.75rem; margin-top: 1rem; color: var(--text-2); font-size: 0.84rem; font-variant-numeric: tabular-nums; }
+.note { max-width: 60rem; margin-top: 1rem; color: var(--text-3); font-size: 0.8rem; line-height: 1.6; }
+.more { color: var(--text); text-underline-offset: 3px; }
+
+/* ---------- One prompt ---------- */
+.hero { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1rem 2rem; padding: 1.4rem 0 1.6rem; }
+.heroText { min-width: 0; }
+.hero h1 { margin-top: 0.85rem; font-size: clamp(2rem, 3.6vw, 2.75rem); line-height: 1.1; letter-spacing: -0.02em; }
+.heroMeta { margin-top: 0.55rem; color: var(--text-3); font-size: 0.84rem; overflow-wrap: anywhere; }
+.stepper { display: flex; align-items: center; gap: 0.5rem; color: var(--text-2); font-size: 0.82rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.detailGrid { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); align-items: start; gap: 1.25rem; }
+.facts { display: grid; gap: 0.75rem; min-width: 0; }
+.promptCard { display: grid; gap: 1.1rem; min-width: 0; padding: 1.5rem; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
+.cardLabel { color: var(--text-3); font: 500 0.76rem var(--font-sans); letter-spacing: 0.02em; }
+.question { color: var(--text); font: 400 1.1rem/1.65 var(--font-serif); white-space: pre-wrap; overflow-wrap: anywhere; }
+.code { max-width: 100%; margin: 0; padding: 1rem 1.1rem; overflow-x: auto; border-radius: var(--radius-md); background: var(--surface-2); color: var(--text); font: 400 0.82rem/1.6 var(--font-mono); white-space: pre; tab-size: 4; }
+.code code { font-size: inherit; }
+.options { display: grid; gap: 0.35rem; margin: 0; padding: 0; list-style: none; }
+.option { display: grid; grid-template-columns: 1.4rem minmax(0, 1fr) auto; align-items: baseline; gap: 0.6rem; padding: 0.5rem 0.75rem; border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-2); font-size: 0.88rem; line-height: 1.5; overflow-wrap: anywhere; }
+.option b { color: var(--text); font-weight: 600; }
+.option[data-expected] { border-color: color-mix(in srgb, var(--good) 35%, var(--border)); background: var(--good-soft); color: var(--text); }
+.expected { display: grid; gap: 0.35rem; padding-top: 1.1rem; border-top: 1px solid var(--border); }
+.expected strong { color: var(--text); font: 400 1.6rem/1.2 var(--font-serif); overflow-wrap: anywhere; }
+.expected strong small { display: block; margin-top: 0.3rem; color: var(--text-2); font: 400 0.9rem/1.5 var(--font-sans); }
+.expected p { color: var(--text-2); font-size: 0.88rem; line-height: 1.6; }
+.picks { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.85rem; }
+.pickCard { display: grid; align-content: start; gap: 0.55rem; min-width: 0; padding: 1rem 1.1rem 1.1rem; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
+.pickPriority { color: var(--text-3); font-size: 0.78rem; }
+.pickCardModel { display: flex; align-items: center; gap: 0.55rem; min-width: 0; color: var(--text); font: 400 1.12rem/1.25 var(--font-serif); text-decoration: none; }
+.pickCardModel span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pickCardModel:hover span:last-child { text-decoration: underline; text-underline-offset: 3px; }
+.pickFacts { color: var(--text-3); font-size: 0.78rem; font-variant-numeric: tabular-nums; }
+.modelLink { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 0.55rem; min-width: 12rem; color: inherit; text-decoration: none; }
+.modelLink > span:first-child { grid-row: span 2; }
+.modelName { color: var(--text); font-weight: 600; }
+.modelLink:hover .modelName { text-decoration: underline; text-underline-offset: 3px; }
+.modelSub { color: var(--text-3); font-size: 0.76rem; }
+.badges { display: flex; flex-wrap: wrap; gap: 0.3rem; min-width: 15rem; max-width: 28rem; }
+
+@media (max-width: 980px) {
+  .detailGrid { grid-template-columns: minmax(0, 1fr); }
+  .facts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .picks { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 860px) {
+  .toolbar { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .searchField { grid-column: 1 / -1; }
+  .listHead { display: none; }
+  .row { grid-template-columns: minmax(0, 1fr); gap: 0.55rem; padding: 0.85rem 0.9rem; }
+  .row:first-child { border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+  .row:only-child { border-radius: var(--radius-lg); }
+  .strip { justify-self: start; flex-wrap: wrap; margin-left: -4px; }
+  .pick { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.75rem; }
+  .pickLabel { position: static; flex-basis: 100%; width: auto; height: auto; overflow: visible; clip-path: none; color: var(--text-3); font-size: 0.72rem; white-space: normal; }
+}
+@media (max-width: 640px) {
+  .facts, .picks { grid-template-columns: minmax(0, 1fr); }
+  .promptCard { padding: 1.1rem; }
+  .hero { padding-bottom: 1.2rem; }
+  .summary { margin-top: 1.2rem; }
+}

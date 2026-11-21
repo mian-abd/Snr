@@ -644,3 +644,43 @@ export type PoolStudyReport = {
 export type StudySummary = { study_id: string; title: string; question: string; added: number; pool: LearnedPool }
 
 export type ExportTable = 'strategies' | 'comparisons' | 'errors' | 'robustness' | 'sweep' | 'decisions' | 'cells' | 'study_strategies' | 'study_comparisons' | 'study_models' | 'added_cells'
+
+/** The prompt explorer (GET /api/v1/learned/prompts): every prompt, every model, every choice. */
+export type ExplorerEvaluation = 'cp3_test' | 'final'
+
+export type PromptOutcome = {
+  status: 'success' | 'provider_error' | 'timeout' | 'rate_limited' | 'invalid_response' | 'model_mismatch'
+  correct: boolean
+  latency_ms: number
+  cost_usd: number
+}
+
+export type ExplorerModel = {
+  model_id: string
+  display_name: string
+  access: string | null
+  added_from: string | null
+}
+
+export type ExplorerPrompt = {
+  sample_id: string
+  benchmark: string
+  task_group: TaskGroup
+  category: string | null
+  dataset: string
+  source_id: string
+  question: string
+  options: string[]
+  expected_answer: string | null
+  answer_note: string | null
+  outcomes: Record<string, PromptOutcome>
+  choices: Record<string, string>
+}
+
+export type PromptExplorer = {
+  evaluation: ExplorerEvaluation
+  models: ExplorerModel[]
+  excluded: ExplorerModel[]
+  strategies: string[]
+  prompts: ExplorerPrompt[]
+}

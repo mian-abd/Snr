@@ -71,6 +71,7 @@ export const sitePages = [
   { path: '/models', label: 'Models', about: 'Every model with accuracy, price, speed, and live status', keywords: 'catalog prices table leaderboard availability' },
   { path: '/compare', label: 'Compare', about: 'Up to four models side by side', keywords: 'versus vs side by side comparison' },
   { path: '/research', label: 'Research', about: 'Leaderboard, significance, errors, robustness, and method', keywords: 'paper results evaluation study' },
+  { path: '/prompts', label: 'Prompts', about: 'Every prompt, how each model did, and where the router sent it', keywords: 'prompt explorer questions examples answers per prompt browse mistakes' },
   { path: '/faq', label: 'FAQ', about: 'Questions answered from the data', keywords: 'questions answers help' },
   { path: '/lab', label: 'Lab', about: 'The rule-based router and the early pilots', keywords: 'rule based pilot gsm8k benchmark eligibility' },
 ] as const

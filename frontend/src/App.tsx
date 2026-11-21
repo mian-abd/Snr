@@ -16,6 +16,8 @@ const HomePage = lazy(() => import('./pages/HomePage').then((m) => ({ default: m
 const LabPage = lazy(() => import('./pages/LabPage').then((m) => ({ default: m.LabPage })))
 const ModelPage = lazy(() => import('./pages/ModelPage').then((m) => ({ default: m.ModelPage })))
 const ModelsPage = lazy(() => import('./pages/ModelsPage').then((m) => ({ default: m.ModelsPage })))
+const PromptPage = lazy(() => import('./pages/PromptsPage').then((m) => ({ default: m.PromptPage })))
+const PromptsPage = lazy(() => import('./pages/PromptsPage').then((m) => ({ default: m.PromptsPage })))
 const ResearchPage = lazy(() => import('./pages/ResearchPage').then((m) => ({ default: m.ResearchPage })))
 const RouterPage = lazy(() => import('./pages/RouterPage').then((m) => ({ default: m.RouterPage })))
 
@@ -24,6 +26,7 @@ const links = [
   { to: '/models', label: 'Models' },
   { to: '/compare', label: 'Compare' },
   { to: '/research', label: 'Research' },
+  { to: '/prompts', label: 'Prompts' },
   { to: '/faq', label: 'FAQ' },
   { to: '/lab', label: 'Lab' },
 ]
@@ -54,6 +57,7 @@ function Page({ segments }: { segments: string[] }) {
     case 'models': return segments[1] ? <ModelPage id={decodeURIComponent(segments[1])} /> : <ModelsPage />
     case 'compare': return <ComparePage />
     case 'research': return <ResearchPage />
+    case 'prompts': return segments[1] ? <PromptPage id={decodeURIComponent(segments[1])} /> : <PromptsPage />
     case 'faq': return <FaqPage />
     case 'lab': return <LabPage />
     default: return <HomePage />

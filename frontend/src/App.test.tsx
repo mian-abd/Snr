@@ -146,6 +146,36 @@ const flagshipReport = {
   spend_usd: { cp3: 0.95, final: 0.5 }, spend_by_model_usd: { 'gpt-6.1-sol': 1.45, 'grok-4.7': 2.9 },
 }
 const whatIf = { before: learnedDecision, after: { ...learnedDecision, selected_model_id: 'gemma-4-26b', reason: 'Gemma wins after the change.' }, changed: true }
+const call = (correct: boolean, latency = 3000, cost = 0.0001, state = 'success') => ({ status: state, correct, latency_ms: latency, cost_usd: cost })
+const failed = call(false, 200, 0, 'provider_error')
+const explorerModel = (id: string, name: string, added: string | null = null) => ({ model_id: id, display_name: name, access: 'paid', added_from: added })
+const picks = (quality: string, cost: string) => ({
+  'learned:quality': quality, 'learned:cost': cost, 'learned:latency': cost, 'learned:balanced': quality,
+  fixed_cheapest: 'gemma-4-26b', fixed_strongest: 'gemini-4-argon', 'oracle:quality': quality,
+})
+const explorerPrompt = (id: string, benchmark: string, task: string, question: string, outcomes: Record<string, ReturnType<typeof call>>, choices: Record<string, string>, extra = {}) => ({
+  sample_id: id, benchmark, task_group: task, category: null, dataset: 'source/dataset', source_id: id.split('-').pop(), question, options: [], expected_answer: null, answer_note: null, outcomes, choices, ...extra,
+})
+const explorer = {
+  evaluation: 'final',
+  models: [explorerModel('gemma-4-26b', 'Gemma 4 26B'), explorerModel('gemini-4-argon', 'Gemini 4 Argon'), explorerModel('mercury-3', 'Mercury 3'), explorerModel('gpt-6.1-sol', 'GPT-6.1 Sol', 'flagship')],
+  excluded: [explorerModel('grok-4.7', 'Grok 4.7', 'flagship')],
+  strategies: ['fixed_cheapest', 'fixed_strongest', 'learned:balanced', 'learned:cost', 'learned:latency', 'learned:quality', 'oracle:quality'],
+  prompts: [
+    explorerPrompt('gsm8k-test-0008', 'gsm8k', 'math', 'John drives for 3 hours at 60 mph, then turns around. How far is he from home?',
+      { 'gemma-4-26b': call(true), 'gemini-4-argon': call(true, 6000, 0.002), 'mercury-3': failed, 'gpt-6.1-sol': call(true, 2000, 0.001) },
+      picks('gemini-4-argon', 'gemma-4-26b'), { expected_answer: '45' }),
+    explorerPrompt('mmlu_pro-test-00124', 'mmlu_pro', 'qa', '_______ economy is the term used to describe individuals hired for a specific task.',
+      { 'gemma-4-26b': call(false), 'gemini-4-argon': call(false, 9000, 0.0036), 'mercury-3': failed, 'gpt-6.1-sol': call(true, 2000, 0.0011) },
+      picks('gemma-4-26b', 'gemma-4-26b'), { category: 'business', options: ['Gig, Flexibility, Risk', 'Sharing, Risk, Autonomy'], expected_answer: 'A' }),
+    explorerPrompt('humaneval_plus-001', 'humaneval_plus', 'code', 'def separate_paren_groups(text):\n    """ Split nested parentheses into separate groups. """\n',
+      { 'gemma-4-26b': call(false), 'gemini-4-argon': call(true, 7000, 0.003), 'mercury-3': failed, 'gpt-6.1-sol': call(true) },
+      picks('gemma-4-26b', 'gemma-4-26b'), { answer_note: 'No single right answer: a solution is right when it passes every HumanEval+ test.' }),
+    explorerPrompt('mbpp_plus-017', 'mbpp_plus', 'code', '"""\nWrite a function that returns the perimeter of a square.\n"""\n',
+      { 'gemma-4-26b': call(false), 'gemini-4-argon': call(false), 'mercury-3': failed, 'gpt-6.1-sol': call(false) },
+      picks('gemini-4-argon', 'gemma-4-26b')),
+  ],
+}
 
 type Requested = Array<{ url: string; body?: string }>
 
@@ -161,6 +191,7 @@ function stub(requested: Requested, { trained = true, keyed = false, final = fin
           ? json({ detail: 'No report has been generated yet' }, 404)
           : json({ detail: 'The learned router has not been trained yet' }, 503)
       }
+      if (url.includes('/learned/prompts')) return json(url.endsWith('evaluation=final') ? explorer : { ...explorer, evaluation: 'cp3_test', prompts: explorer.prompts.slice(0, 1) })
       if (url.endsWith('/learned/report')) return json(report)
       if (url.endsWith('/learned/final')) return json(final)
       if (url.endsWith('/learned/studies')) return json(flagships ? [{ study_id: 'flagship', title: 'With flagship models', question: 'Q', added: 1, pool: 'flagships' }] : [])
@@ -528,6 +559,95 @@ test('picks a weight in the priority sweep and shows where its prompts went', as
   expect(screen.getByRole('slider', { name: 'Speed weight' })).toHaveAttribute('aria-valuetext', '2')
   expect(screen.getByRole('listitem', { name: 'Speed weight 2: Mercury 3 75%, Gemini 4 Argon 25%' })).toBeInTheDocument()
   expect(screen.getByRole('table', { name: 'Priority sweep: speed weight' })).toBeInTheDocument()
+})
+
+test('finds the prompt explorer from search, filters the prompts, and opens one', async () => {
+  stub([])
+  renderAt('/')
+  const user = userEvent.setup()
+  await screen.findByRole('heading', { name: /good enough/i })
+  await user.click(screen.getByRole('button', { name: 'Search' }))
+  await user.keyboard('prompts')
+  await waitFor(() => expect(screen.getAllByRole('option')[0]).toHaveTextContent(/^Prompts/))
+  await user.keyboard('{Enter}')
+  expect(await screen.findByRole('heading', { name: 'Every prompt, every answer' })).toBeInTheDocument()
+  expect(window.location.hash).toBe('#/prompts')
+  const rowsOf = () => within(screen.getByRole('list', { name: 'Prompts' })).getAllByRole('listitem')
+  await screen.findByRole('list', { name: 'Prompts' })
+  expect(rowsOf()).toHaveLength(4)
+  expect(screen.getByText(/^Showing/)).toHaveTextContent('Showing 1–4 of 4 prompts. The router (best quality) got 1 of them right.')
+
+  // Each row: a strip with a text alternative, and the router's pick for the chosen priority.
+  const first = rowsOf()[0]
+  expect(within(first).getByRole('img', { name: 'How each model did: 3 of 4 right. Right: Gemma 4 26B, Gemini 4 Argon, GPT-6.1 Sol. Failed call: Mercury 3.' })).toBeInTheDocument()
+  expect(within(first).getByText('Gemini 4 Argon')).toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'Lowest cost' }))
+  expect(within(rowsOf()[0]).getByText('Gemma 4 26B')).toBeInTheDocument()
+  // From the keyboard, the arrow keys name one model at a time.
+  const strip = within(rowsOf()[0]).getByRole('img')
+  fireEvent.focus(strip)
+  fireEvent.keyDown(strip, { key: 'ArrowRight' })
+  expect(within(strip).getByText('Arrow keys for the other models')).toBeInTheDocument()
+  expect(within(strip).getByText('Gemini 4 Argon')).toBeInTheDocument()
+  fireEvent.blur(strip)
+  await user.click(screen.getByRole('button', { name: 'Best quality' }))
+
+  const quick = screen.getByRole('group', { name: 'Show' })
+  expect(within(quick).getByRole('button', { name: 'No model right 1' })).toBeInTheDocument()
+  expect(within(quick).getByRole('button', { name: 'Only one model right 1' })).toBeInTheDocument()
+  await user.click(within(quick).getByRole('button', { name: 'Router wrong 3' }))
+  expect(within(quick).getByRole('button', { name: 'Router wrong 3' })).toHaveAttribute('aria-pressed', 'true')
+  expect(rowsOf()).toHaveLength(3)
+  expect(window.location.hash).toBe('#/prompts?show=router-wrong')
+  await user.selectOptions(screen.getByRole('combobox', { name: 'Task' }), 'code')
+  expect(rowsOf()).toHaveLength(2)
+  // Only a model the router could have chosen makes a miss avoidable.
+  expect(within(quick).getByRole('button', { name: 'Router wrong, another model right 1' })).toBeInTheDocument()
+  await user.type(screen.getByRole('searchbox', { name: 'Search' }), 'parentheses')
+  expect(rowsOf()).toHaveLength(1)
+  expect(rowsOf()[0]).toHaveTextContent('Split nested parentheses into separate groups.')
+  expect(window.location.hash).toBe('#/prompts?task=code&show=router-wrong&q=parentheses')
+
+  await user.click(within(rowsOf()[0]).getByRole('link'))
+  expect(await screen.findByRole('heading', { name: 'Code prompt from HumanEval+', level: 1 })).toBeInTheDocument()
+  expect(window.location.hash).toBe('#/prompts/humaneval_plus-001?task=code&show=router-wrong&q=parentheses')
+  expect(screen.getByText(/passes every HumanEval\+ test/)).toBeInTheDocument()
+  expect(screen.getByText('1 of 1')).toBeInTheDocument()
+  const crumbs = screen.getByRole('navigation', { name: 'Breadcrumb' })
+  expect(within(crumbs).getByRole('link', { name: 'Prompts' })).toHaveAttribute('href', '#/prompts?task=code&show=router-wrong&q=parentheses')
+})
+
+test('shows one prompt: the expected answer, every model, and which strategies chose each', async () => {
+  stub([])
+  renderAt('/prompts/mmlu_pro-test-00124')
+  const user = userEvent.setup()
+  expect(await screen.findByRole('heading', { name: 'Knowledge prompt from MMLU-Pro', level: 1 })).toBeInTheDocument()
+  expect(within(screen.getByRole('list', { name: 'Options' })).getAllByRole('listitem')[0]).toHaveTextContent('Expected')
+  expect(screen.getByText('2 of 4')).toBeInTheDocument()
+
+  const router = screen.getByRole('region', { name: 'Where the router sent it' })
+  expect(within(router).getAllByText('Gemma 4 26B')).toHaveLength(4)
+  expect(within(router).getAllByText('Wrong')).toHaveLength(4)
+
+  const table = screen.getByRole('table', { name: 'Every model on this prompt' })
+  const rows = within(table).getAllByRole('row').slice(1)
+  expect(rows[0]).toHaveTextContent(/GPT-6\.1 Sol.*Flagship.*Right/)
+  const gemma = rows.find((row) => within(row).queryByRole('link', { name: /Gemma 4 26B/ }))!
+  expect(within(gemma).getByText('Wrong')).toBeInTheDocument()
+  expect(within(gemma).getByText('Router · Best quality')).toBeInTheDocument()
+  expect(within(gemma).getByText('Always cheapest')).toHaveAttribute('title', 'Always the cheapest paid model')
+  expect(within(gemma).getByRole('link', { name: /Gemma 4 26B/ })).toHaveAttribute('href', '#/models/gemma-4-26b')
+  const mercury = rows.find((row) => within(row).queryByRole('link', { name: /Mercury 3/ }))!
+  expect(within(mercury).getByText('Failed call')).toBeInTheDocument()
+  expect(within(mercury).getByText('Provider error')).toBeInTheDocument()
+  expect(screen.getAllByText(/Grok 4\.7 answered only some of these prompts/).length).toBeGreaterThan(0)
+
+  await user.click(screen.getByRole('link', { name: 'Next' }))
+  expect(await screen.findByRole('heading', { name: 'Code prompt from HumanEval+', level: 1 })).toBeInTheDocument()
+  expect(window.location.hash).toBe('#/prompts/humaneval_plus-001')
+  cleanup()
+  renderAt('/prompts/no-such-prompt')
+  expect(await screen.findByText('Prompt not found')).toBeInTheDocument()
 })
 
 test('shows each candidate score as a bar with its penalties cut off', async () => {

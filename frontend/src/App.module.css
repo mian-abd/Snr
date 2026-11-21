@@ -41,6 +41,7 @@
 @media (max-width: 1060px) {
   .kbd { display: none; }
   .search { padding: 0 0.85rem; }
+  .nav a { padding: 0.42rem 0.68rem; }
 }
 @media (max-width: 960px) {
   .search { width: 2.25rem; padding: 0; justify-content: center; }

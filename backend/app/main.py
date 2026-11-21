@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
@@ -38,6 +39,8 @@ def create_app(
         allow_methods=["GET", "POST"],
         allow_headers=["Content-Type"],
     )
+    # The reports and the prompt explorer are repetitive JSON; compressed, they shrink tenfold.
+    app.add_middleware(GZipMiddleware, minimum_size=1024)
     app.include_router(router)
 
     dist = resolved_settings.frontend_dist_dir

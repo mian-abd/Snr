@@ -11,6 +11,7 @@ from app import __version__
 from app.benchmarks.costs import PAID_DEMO_NAME, SPEND_CAP_USD, estimate_worst_case_usd
 from app.benchmarks.gsm8k import load_samples
 from app.benchmarks.tasks import MAX_TOKENS
+from app.domain.explorer import ExplorerEvaluation, PromptExplorer
 from app.domain.models import (
     BenchmarkEstimate,
     BenchmarkMode,
@@ -45,6 +46,7 @@ from app.domain.models import (
     WhatIfResponse,
 )
 from app.domain.study import PoolStudyReport, StudySummary
+from app.learned.explorer import ExplorerError, build_explorer
 from app.learned.export import TABLES, ExportError, load_report, render
 from app.learned.router import LearnedRouter, NoEligibleModelError
 from app.learned.studies import POOL_STUDY, STUDIES
@@ -397,6 +399,21 @@ async def pool_study(study_id: str, services: Services) -> PoolStudyReport:
             detail=f"No study {study_id!r} has been run",
         )
     return report
+
+
+# A plain function, so the first read of the files runs off the event loop; later reads are cached.
+@router.get("/learned/prompts", response_model=PromptExplorer)
+def prompt_explorer(
+    services: Services, evaluation: ExplorerEvaluation = ExplorerEvaluation.FINAL
+) -> PromptExplorer:
+    """Every prompt of an evaluation: each model's outcome and each strategy's choice.
+
+    Built from the committed prompt sets, cell tables, and decisions (no provider call).
+    """
+    try:
+        return build_explorer(services.settings.data_dir, evaluation)
+    except (ExplorerError, FileNotFoundError) as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 
 
 @router.get("/learned/pool", response_model=PoolSnapshot)

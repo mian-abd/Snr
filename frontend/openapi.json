@@ -1041,6 +1041,155 @@
         "title": "ExcludedModel",
         "type": "object"
       },
+      "ExplorerEvaluation": {
+        "enum": [
+          "cp3_test",
+          "final"
+        ],
+        "title": "ExplorerEvaluation",
+        "type": "string"
+      },
+      "ExplorerModel": {
+        "additionalProperties": false,
+        "properties": {
+          "access": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Access"
+          },
+          "added_from": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Added From"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "model_id": {
+            "title": "Model Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "model_id",
+          "display_name",
+          "access",
+          "added_from"
+        ],
+        "title": "ExplorerModel",
+        "type": "object"
+      },
+      "ExplorerPrompt": {
+        "additionalProperties": false,
+        "properties": {
+          "answer_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer Note"
+          },
+          "benchmark": {
+            "title": "Benchmark",
+            "type": "string"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "choices": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Choices",
+            "type": "object"
+          },
+          "dataset": {
+            "title": "Dataset",
+            "type": "string"
+          },
+          "expected_answer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Answer"
+          },
+          "options": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Options",
+            "type": "array"
+          },
+          "outcomes": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/PromptOutcome"
+            },
+            "title": "Outcomes",
+            "type": "object"
+          },
+          "question": {
+            "title": "Question",
+            "type": "string"
+          },
+          "sample_id": {
+            "title": "Sample Id",
+            "type": "string"
+          },
+          "source_id": {
+            "title": "Source Id",
+            "type": "string"
+          },
+          "task_group": {
+            "$ref": "#/components/schemas/TaskGroup"
+          }
+        },
+        "required": [
+          "sample_id",
+          "benchmark",
+          "task_group",
+          "category",
+          "dataset",
+          "source_id",
+          "question",
+          "options",
+          "expected_answer",
+          "answer_note",
+          "outcomes",
+          "choices"
+        ],
+        "title": "ExplorerPrompt",
+        "type": "object"
+      },
       "FinalEvaluationReport": {
         "additionalProperties": false,
         "description": "Week of Nov 19: the held-out evaluation, oracle and error analysis, and robustness.",
@@ -2867,6 +3016,81 @@
         "title": "PrioritySweepPoint",
         "type": "object"
       },
+      "PromptExplorer": {
+        "additionalProperties": false,
+        "description": "Every prompt of one evaluation, with each model's outcome and each strategy's choice.",
+        "properties": {
+          "evaluation": {
+            "$ref": "#/components/schemas/ExplorerEvaluation"
+          },
+          "excluded": {
+            "items": {
+              "$ref": "#/components/schemas/ExplorerModel"
+            },
+            "title": "Excluded",
+            "type": "array"
+          },
+          "models": {
+            "items": {
+              "$ref": "#/components/schemas/ExplorerModel"
+            },
+            "title": "Models",
+            "type": "array"
+          },
+          "prompts": {
+            "items": {
+              "$ref": "#/components/schemas/ExplorerPrompt"
+            },
+            "title": "Prompts",
+            "type": "array"
+          },
+          "strategies": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Strategies",
+            "type": "array"
+          }
+        },
+        "required": [
+          "evaluation",
+          "models",
+          "excluded",
+          "strategies",
+          "prompts"
+        ],
+        "title": "PromptExplorer",
+        "type": "object"
+      },
+      "PromptOutcome": {
+        "additionalProperties": false,
+        "description": "One model's scored call on one prompt. A failed call counts as wrong.",
+        "properties": {
+          "correct": {
+            "title": "Correct",
+            "type": "boolean"
+          },
+          "cost_usd": {
+            "title": "Cost Usd",
+            "type": "number"
+          },
+          "latency_ms": {
+            "title": "Latency Ms",
+            "type": "integer"
+          },
+          "status": {
+            "$ref": "#/components/schemas/GenerationStatus"
+          }
+        },
+        "required": [
+          "status",
+          "correct",
+          "latency_ms",
+          "cost_usd"
+        ],
+        "title": "PromptOutcome",
+        "type": "object"
+      },
       "RegistrySnapshot": {
         "additionalProperties": false,
         "properties": {
@@ -4652,6 +4876,46 @@
           }
         },
         "summary": "Learned Pool"
+      }
+    },
+    "/api/v1/learned/prompts": {
+      "get": {
+        "description": "Every prompt of an evaluation: each model's outcome and each strategy's choice.\n\nBuilt from the committed prompt sets, cell tables, and decisions (no provider call).",
+        "operationId": "prompt_explorer_api_v1_learned_prompts_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "evaluation",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ExplorerEvaluation",
+              "default": "final"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptExplorer"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Prompt Explorer"
       }
     },
     "/api/v1/learned/report": {

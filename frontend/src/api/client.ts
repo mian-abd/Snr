@@ -3,8 +3,10 @@ import type {
   BenchmarkView,
   ComparisonResponse,
   EligibilityResult,
+  ExplorerEvaluation,
   ExportTable,
   FinalEvaluationReport,
+  PromptExplorer,
   PoolStudyReport,
   StudySummary,
   Health,
@@ -138,6 +140,14 @@ export const client = {
   study: async (id: string) => {
     try {
       return await api<PoolStudyReport>(`/api/v1/learned/studies/${encodeURIComponent(id)}`)
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 404) return null
+      throw error
+    }
+  },
+  prompts: async (evaluation: ExplorerEvaluation) => {
+    try {
+      return await api<PromptExplorer>(`/api/v1/learned/prompts?evaluation=${evaluation}`)
     } catch (error) {
       if (error instanceof ApiError && error.status === 404) return null
       throw error

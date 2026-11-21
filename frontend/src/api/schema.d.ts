@@ -263,6 +263,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/learned/prompts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Prompt Explorer
+         * @description Every prompt of an evaluation: each model's outcome and each strategy's choice.
+         *
+         *     Built from the committed prompt sets, cell tables, and decisions (no provider call).
+         */
+        get: operations["prompt_explorer_api_v1_learned_prompts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/learned/report": {
         parameters: {
             query?: never;
@@ -880,6 +902,52 @@ export interface components {
             reason: string;
             /** Spend Usd */
             spend_usd: number;
+        };
+        /**
+         * ExplorerEvaluation
+         * @enum {string}
+         */
+        ExplorerEvaluation: "cp3_test" | "final";
+        /** ExplorerModel */
+        ExplorerModel: {
+            /** Access */
+            access: string | null;
+            /** Added From */
+            added_from: string | null;
+            /** Display Name */
+            display_name: string;
+            /** Model Id */
+            model_id: string;
+        };
+        /** ExplorerPrompt */
+        ExplorerPrompt: {
+            /** Answer Note */
+            answer_note: string | null;
+            /** Benchmark */
+            benchmark: string;
+            /** Category */
+            category: string | null;
+            /** Choices */
+            choices: {
+                [key: string]: string;
+            };
+            /** Dataset */
+            dataset: string;
+            /** Expected Answer */
+            expected_answer: string | null;
+            /** Options */
+            options: string[];
+            /** Outcomes */
+            outcomes: {
+                [key: string]: components["schemas"]["PromptOutcome"];
+            };
+            /** Question */
+            question: string;
+            /** Sample Id */
+            sample_id: string;
+            /** Source Id */
+            source_id: string;
+            task_group: components["schemas"]["TaskGroup"];
         };
         /**
          * FinalEvaluationReport
@@ -1503,6 +1571,34 @@ export interface components {
             total_cost_usd: number;
             /** Weight */
             weight: number;
+        };
+        /**
+         * PromptExplorer
+         * @description Every prompt of one evaluation, with each model's outcome and each strategy's choice.
+         */
+        PromptExplorer: {
+            evaluation: components["schemas"]["ExplorerEvaluation"];
+            /** Excluded */
+            excluded: components["schemas"]["ExplorerModel"][];
+            /** Models */
+            models: components["schemas"]["ExplorerModel"][];
+            /** Prompts */
+            prompts: components["schemas"]["ExplorerPrompt"][];
+            /** Strategies */
+            strategies: string[];
+        };
+        /**
+         * PromptOutcome
+         * @description One model's scored call on one prompt. A failed call counts as wrong.
+         */
+        PromptOutcome: {
+            /** Correct */
+            correct: boolean;
+            /** Cost Usd */
+            cost_usd: number;
+            /** Latency Ms */
+            latency_ms: number;
+            status: components["schemas"]["GenerationStatus"];
         };
         /** RegistrySnapshot */
         RegistrySnapshot: {
@@ -2379,6 +2475,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PoolSnapshot"];
+                };
+            };
+        };
+    };
+    prompt_explorer_api_v1_learned_prompts_get: {
+        parameters: {
+            query?: {
+                evaluation?: components["schemas"]["ExplorerEvaluation"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromptExplorer"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

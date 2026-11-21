@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { client } from '../api/client'
 import type {
   EvaluationSet,
+  ExplorerEvaluation,
   FinalEvaluationReport,
   PoolStudyReport,
   LearnedMatrixRow,
@@ -35,6 +36,9 @@ export const widest = (studies: PoolStudyReport[]) => studies[studies.length - 1
 export const addedLabel: Record<string, string> = { flagship: 'Flagship', budget: 'Budget' }
 export const studyRouterName: Record<string, string> = { flagship: 'Router + flagships', wide: 'Router · every model' }
 export const usePool = () => useQuery({ queryKey: ['learned-pool'], queryFn: client.learnedPool, staleTime: Infinity })
+/** Every prompt of an evaluation, with each model's outcome and each strategy's choice. */
+export const usePrompts = (evaluation: ExplorerEvaluation, enabled = true) =>
+  useQuery({ queryKey: ['prompts', evaluation], queryFn: () => client.prompts(evaluation), staleTime: Infinity, enabled })
 export const useCatalog = () => useQuery({ queryKey: catalogKey, queryFn: client.learnedCatalog })
 
 export const priorityOrder: RoutingPriority[] = ['quality', 'cost', 'latency', 'balanced']

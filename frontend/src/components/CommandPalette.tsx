@@ -1,4 +1,4 @@
-import { BookOpen, CircleHelp, Columns3, CornerDownLeft, FlaskConical, Hash, House, Rows3, Search, Waypoints } from 'lucide-react'
+import { BookOpen, CircleHelp, Columns3, CornerDownLeft, FlaskConical, Hash, House, MessageSquareText, Rows3, Search, Waypoints } from 'lucide-react'
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { accessLabel, addedLabel, modelViews, useFinalReport, useLearnedReport, usePool, useStudyReports } from '../lib/data'
@@ -31,6 +31,7 @@ const pageIcons: Record<string, ReactNode> = {
   '/models': <Rows3 size={16} />,
   '/compare': <Columns3 size={16} />,
   '/research': <BookOpen size={16} />,
+  '/prompts': <MessageSquareText size={16} />,
   '/faq': <CircleHelp size={16} />,
   '/lab': <FlaskConical size={16} />,
 }
