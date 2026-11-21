@@ -101,9 +101,11 @@ def test_a_study_finds_its_cell_tables_by_prefix_or_by_its_list(data_copy: Path)
     (learned / "flagship-study.json").rename(learned / "frontier-study.json")
     for suffix in (".jsonl", ".meta.json"):
         (learned / f"flagship-cells{suffix}").rename(learned / f"frontier-cells{suffix}")
-    assert _failed(data_copy) == []
     study = learned / "frontier-study.json"
     report = json.loads(study.read_text(encoding="utf-8"))
+    report.pop("cell_tables", None)  # without a list, the tables are found by the file prefix
+    study.write_text(json.dumps(report), encoding="utf-8")
+    assert _failed(data_copy) == []
     report["cell_tables"] = ["cells.jsonl", "frontier-cells.jsonl"]
     study.write_text(json.dumps(report), encoding="utf-8")
     assert _failed(data_copy) == []
