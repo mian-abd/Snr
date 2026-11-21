@@ -4,7 +4,7 @@ The current site (since 2026-11-14) comes first. The Checkpoint 2 and 3 walkthro
 
 ## The current site (rehearsal for Checkpoint 4)
 
-Start it as before (`./scripts/demo.ps1`, then `http://127.0.0.1:8000`). The pages are **Router**, **Models**, **Research**, **FAQ**, and **Lab**; the sun / moon button switches between light and dark. The pill at the top right shows the live catalog check ("1 model unavailable": Mercury 3).
+Start it as before (`./scripts/demo.ps1`, then `http://127.0.0.1:8000`). The pages are **Router**, **Models**, **Compare**, **Research**, **Prompts**, **FAQ**, and **Lab**, and **Ctrl+K** searches all of them; the sun / moon button switches between light and dark. The pill at the top right shows the live catalog check ("1 model unavailable": Mercury 3).
 
 ### Robustness, live (about two minutes; no provider call)
 
@@ -20,6 +20,17 @@ Keep **Fastest** and press **Run prompt** only if Gemma is chosen and the OpenRo
 ### Results
 
 Open **Research**: the highlights, the leaderboard (press **Show** under References for the hindsight oracle), **Is the difference real?**, **Where the router goes wrong** (worked examples), and **When prices, speed, or providers change** (pick **Fastest** to see 'Router, old estimates' collapse when Mercury was retired). **Download the data** offers every table as CSV or JSON.
+
+### What is new since November 19 (about three minutes; no provider call)
+
+1. Press **Ctrl+K**, type `robust`, and press Enter: the search palette opens **When prices, speed, or providers change** on Research.
+2. Pick **Fastest**. In the observed-drift row, the router told about the change keeps 276 right; the same router with its old estimates gets 83, because it kept choosing the retired Mercury 3. **Billed cost** switches the measure.
+3. Scroll to **What your priority costs you** and move the slider to a cost weight of 0.2: 265 right for $0.0176 instead of 284 for $1.17 at weight 0. Most of the saving arrives by then; the bar shows where the prompts went.
+4. Open **Models**, tick **GPT-6.1 Sol** and **Gemini 4 Argon**, and press **Compare**: same accuracy on the fresh prompts, for less than half the cost and a third of the time.
+5. Open **Router** and switch **Model pool** to **Every model**. The router now scores 16 models. With **Fastest**, the demo prompt goes to **Muse Ember**, a budget model; with **Best quality**, to **MiMo-V2.6 Flash**. Say: "More models did not make it more accurate. On the fresh prompts, the fastest setting in this pool got 278 right, against 284 with only the flagships added, for about half the cost. None of these differences is significant."
+6. Open **Prompts** and pick **Router wrong, another model right**: the 4 fresh prompts where the router's best-quality pick was wrong but a model it could have chosen was right. Open one to show the expected answer and every model's result, time, and cost.
+
+If someone asks what happens when a provider fails mid-demo: the chosen model gets one retry, then the next-best eligible model answers once, and the page says which model failed and which answered. The tests cover this; it cannot be shown on demand.
 
 ### If something fails
 

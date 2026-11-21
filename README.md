@@ -51,7 +51,7 @@ Run each command with `uv run --project backend` from the repository root. See [
 - Export of seven result tables as CSV or JSON, from the console or `python -m app.learned.export`.
 - Flagship models (2026-11-14): GPT-6.1 Sol, Gemini 4 Carbon, and Kimi K3.1 Pro answered all 900 prompts; Grok 4.7 was stopped because its reasoning ran past the token limit and the $25 budget.
   - **Command:** `python -m app.benchmarks.suite_runner --pool flagship --spend-cap N --confirm` runs them.
-  - **Study:** `python -m app.learned.flagship_study` fits a second router with the same recipe and compares it with the frozen one. Report: `data/learned/flagship-study.json`.
+  - **Study:** `python -m app.learned.pool_study --study flagship` fits a second router with the same recipe and compares it with the frozen one. Report: `data/learned/flagship-study.json`.
   - **Results:** GPT-6.1 Sol matches Gemini 4 Argon (284 of 300) for less than half the cost at a third of the time. With it, the fastest setting gets 284 right instead of 276 and is 1.3 s quicker (not significant after the Holm correction). Best quality does not improve (283 vs 282), and the expensive flagships are never chosen.
 - The app is a public research site, redesigned on 2026-11-14 as a data-first leaderboard. It has light and dark themes and these pages:
   - **Home:** highlights and charts of accuracy, cost, and time per model;
@@ -62,6 +62,19 @@ Run each command with `uv run --project backend` from the repository root. See [
   - **Lab:** the earlier rule-based tools.
 
 See the [week of November 19](docs/checkpoint-4-progress.md).
+
+## Toward Checkpoint 4 (week of Nov 26, done Nov 20 and 21)
+
+- Five more models on all 900 prompts: GPT-6 Luna, MiMo-V2.6 Flash, Muse Ember, Ministral 8B, and the free ERNIE 5.5 Flash (`data/registry/budget-pool-2026-11-20.json`, run with `--pool budget`).
+- Pool studies: `python -m app.learned.pool_study --study flagship|wide --from-runs` adds dated registries to the frozen pool, refits the Checkpoint 3 recipe, and evaluates the new router against fixed questions. The wide study fits a third router on every model. Reports: `data/learned/flagship-study.json` and `data/learned/wide-study.json`.
+- Results on the fresh prompts: GPT-6 Luna got 274 of 300 right for $0.047, the best of the budget models. A router fit on all 16 models got 270 right at lowest cost for $0.022 (the frozen router: 265 for $0.0034), 282 at best quality (the same), and 278 at fastest for $0.26 (the flagship router: 284 for $0.50). No fixed comparison is significant after the Holm correction. ERNIE 5.5 Flash is excluded: the free daily quota ran out 16 prompts short.
+- Robustness and priority figures: `python -m app.learned.plots` (add `--slides` for dark versions).
+- Data validation: `python -m app.learned.validate` checks every committed table, report, and router offline, and runs in CI. Column meanings and units are in the [data dictionary](docs/data-dictionary.md).
+- Export of eleven tables, including four for the pool studies.
+- Failure handling: when the chosen model still fails after its retry, the next-best eligible model answers once, and the page says so. One spend cap can now cover related runs (`--count-spend-from`).
+- Site: a search palette (Ctrl+K), a model comparison page, interactive robustness and priority charts, score bars on Router, a pool switch with every model, a prompt explorer (`#/prompts`) showing every model's result on every prompt, and a restyled Lab.
+
+See the [week of November 26](docs/checkpoint-4-progress.md#week-of-november-26-robustness-figures-data-validation-failure-handling-more-models-interface).
 
 ## Prerequisites
 

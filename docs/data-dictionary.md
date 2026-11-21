@@ -1,6 +1,6 @@
 # Data dictionary
 
-This describes the committed data files under `data/benchmarks/` and `data/learned/`, and the seven export tables served by `GET /api/v1/learned/export/{table}` and `python -m app.learned.export` (`backend/app/learned/export.py`).
+This describes the committed data files under `data/benchmarks/` and `data/learned/`, and the eleven export tables served by `GET /api/v1/learned/export/{table}` and `python -m app.learned.export` (`backend/app/learned/export.py`).
 
 `uv run --project backend python -m app.learned.validate` checks the cell tables against their metadata and suite files, recomputes the reports' model matrices from the cells, and scans `data/learned/` and `data/registry/` for anything that looks like a key. It runs in CI after the tests.
 
@@ -82,9 +82,9 @@ The 12 GSM8K test questions of the Checkpoint 1 pilot. Columns: `dataset`, `conf
 
 ## data/learned
 
-### cells.jsonl and flagship-cells.jsonl
+### cells.jsonl, flagship-cells.jsonl, and budget-cells.jsonl
 
-One scored call per line: one model's outcome on one prompt. Sorted by `suite`, `sample_id`, `model_id`; each (suite, sample_id, model_id) appears once. `cells.jsonl` holds the 9 pool models on all 900 prompts (8,100 rows); `flagship-cells.jsonl` holds the flagship models (3,075 rows: three complete flagships, and the 375 prompts Grok 4.7 answered before it was stopped). No prompt text, response text, or request id is stored. The `cells` export table serves `cells.jsonl`.
+One scored call per line: one model's outcome on one prompt. Sorted by `suite`, `sample_id`, `model_id`; each (suite, sample_id, model_id) appears once. `cells.jsonl` holds the 9 pool models on all 900 prompts (8,100 rows); `flagship-cells.jsonl` holds the flagship models (3,075 rows: three complete flagships, and the 375 prompts Grok 4.7 answered before it was stopped); `budget-cells.jsonl` holds the five budget models added on 2026-11-20 (4,484 rows: four complete models, and the 884 prompts ERNIE 5.5 Flash answered before the runner's free-request ceiling stopped it). No prompt text, response text, or request id is stored. The `cells` export table serves `cells.jsonl`.
 
 | Column | Meaning | Units |
 | --- | --- | --- |
@@ -100,15 +100,15 @@ One scored call per line: one model's outcome on one prompt. Sorted by `suite`, 
 | `cost_usd` | Billed cost of the scored call. A first attempt that was retried is not included here; it is in the meta's spend. | USD |
 | `completion_tokens` | Output tokens the provider reported for the scored call; `null` if none were reported. | tokens |
 
-`cells.meta.json` and `flagship-cells.meta.json`:
+`cells.meta.json`, `flagship-cells.meta.json`, and `budget-cells.meta.json`:
 
 | Key | Meaning | Units |
 | --- | --- | --- |
 | `rows` | Rows in the table. | count |
 | `rows_by_suite` | Rows per suite. | count |
-| `rows_by_model` | Flagship table only: rows per model. | count |
+| `rows_by_model` | Added-model tables only: rows per model. | count |
 | `provider_billed_spend_usd` | Everything billed per suite, every attempt included. | USD |
-| `provider_billed_spend_by_model_usd` | Flagship table only: the same per model, both suites together. | USD |
+| `provider_billed_spend_by_model_usd` | Added-model tables only: the same per model, both suites together. | USD |
 | `cells_sha256` | Checksum of the `.jsonl` file. | hex |
 | `note` | What the table holds. | text |
 
@@ -129,9 +129,9 @@ Every strategy's choice on every prompt of both evaluations (15 strategies on `c
 | `cost_usd` | Billed cost of that call. | USD |
 | `latency_ms` | Wall-clock time of that call. | ms |
 
-### cp3-router-model.json and flagship-router-model.json
+### cp3-router-model.json, flagship-router-model.json, and wide-router-model.json
 
-The exported linear routers (`RouterArtifact` in `backend/app/learned/router.py`). `cp3-router-model.json` is the frozen router evaluated in `final-evaluation.json`; its checksum is the report's `artifact_sha256`. `flagship-router-model.json` is the second router of the flagship study, fit with the same recipe on the pool plus the flagships.
+The exported linear routers (`RouterArtifact` in `backend/app/learned/router.py`). `cp3-router-model.json` is the frozen router evaluated in `final-evaluation.json`; its checksum is the report's `artifact_sha256`. `flagship-router-model.json` and `wide-router-model.json` are the routers of the two pool studies, fit with the same recipe on the pool plus the flagships, and on the pool plus the flagships and the budget models.
 
 | Key | Meaning |
 | --- | --- |
@@ -164,9 +164,25 @@ The final evaluation of the frozen router (`FinalEvaluationReport`).
 
 The validator recomputes each `matrix` from `cells.jsonl`: `cp3_test` over the suite's test split, `final` over every fresh prompt, for the models in `models`.
 
-### flagship-study.json
+### flagship-study.json and wide-study.json
 
-The flagship extension (`FlagshipStudyReport` in `backend/app/domain/flagship.py`): `flagships` (the flagships that answered every prompt, with prices and hosts), `excluded_flagships` (with prompts scored, spend in USD, and the reason), `strongest_flagship_id`, `router` (the second router's selection, classifier metrics, and tuned presets), `protocol`, `evaluations` (same shape as in `final-evaluation.json`, over the pool plus the complete flagships), `suite_matrix` (every model over the 600 suite prompts), `spend_usd` (billed per prompt set, USD), and `spend_by_model_usd` (billed per flagship, USD). It is computed from `cells.jsonl` and `flagship-cells.jsonl`; a report with a `cell_tables` list is checked against exactly those tables instead.
+The two pool studies (`PoolStudyReport` in `backend/app/domain/study.py`; their questions are fixed in `backend/app/learned/studies.py`). Each adds dated registries to the frozen pool and refits the Checkpoint 3 recipe.
+
+| Key | Meaning |
+| --- | --- |
+| `study_id`, `title`, `question` | The study and the question it asks. |
+| `base_snapshot_id`, `added_snapshot_ids` | The frozen pool's snapshot and the added registries. |
+| `added`, `added_from` | The added models that answered every prompt (with prices and hosts), and which added pool each came from (`flagship` or `budget`). |
+| `excluded` | Listed models left out, with prompts scored, spend (USD), and the reason. |
+| `strongest_added_id` | The added model with the most right answers on the suite; `fixed_top_added` always uses it. |
+| `router` | The study router's classifier selection, metrics, and tuned presets. |
+| `protocol` | What was fixed before the results were read, in sentences. |
+| `evaluations` | Same shape as in `final-evaluation.json`, over the pool plus the added models. |
+| `suite_matrix` | Every model over the 600 suite prompts. |
+| `cell_tables` | The cell tables the report was built from; the validator checks the report against exactly these. |
+| `spend_usd`, `spend_by_model_usd` | Billed cost of the added models' runs per prompt set, and per added model (USD). |
+
+Strategy ids in a study: `learned:<priority>` is the study's router; `previous_router:<priority>` is the frozen router on the same prompts; `flagship_router:<priority>` (wide study only) is the flagship study's router; `fixed_top_added` always uses the strongest added model. Command: `python -m app.learned.pool_study --study flagship|wide --from-runs`.
 
 ## Export tables
 
@@ -279,4 +295,33 @@ The rows of `data/learned/final-decisions.jsonl`; columns as described there.
 
 ### cells
 
-The rows of `data/learned/cells.jsonl` (the 9 pool models only; the flagships are in `flagship-cells.jsonl`); columns as described there.
+The rows of `data/learned/cells.jsonl` (the 9 pool models only; the added models are in `added_cells`); columns as described there.
+
+### study_strategies
+
+The `strategies` table for each pool study: the same columns, with a leading `study` column (`flagship` or `wide`).
+
+### study_comparisons
+
+The `comparisons` table for each pool study's fixed questions: the same columns, with a leading `study` column. Holm adjustment is within each study and evaluation.
+
+### study_models
+
+Every model in each pool study, per prompt set (one row per study, prompt set, and model).
+
+| Column | Meaning | Units |
+| --- | --- | --- |
+| `study` | Pool study. | `flagship` or `wide` |
+| `prompt_set` | `suite` (all 600 suite prompts), `cp3_test`, or `final`. | text |
+| `model` | Model id. | text |
+| `added_from` | `base` for the frozen pool, else the added pool (`flagship`, `budget`). | text |
+| `access` | How the model is reached (`paid`, `free`, `local`). | text |
+| `prompts`, `correct` | Prompts answered and right answers. | count |
+| `failed_calls` | Calls that failed after the retry. | count |
+| `cost_usd` | Billed cost of its calls. | USD |
+| `median_latency_ms` | Median latency of its served calls. | ms |
+| `math_correct`, `qa_correct`, `code_correct`, `math_prompts`, `qa_prompts`, `code_prompts` | Right answers and prompts per task group. | count |
+
+### added_cells
+
+The rows of every added-model cell table (`flagship-cells.jsonl`, `budget-cells.jsonl`), with a leading `pool` column naming the added pool (`flagship` or `budget`); other columns as in `cells.jsonl`.

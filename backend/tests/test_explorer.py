@@ -11,6 +11,7 @@ from app.storage import read_jsonl
 
 BASE_MODELS = 9
 FLAGSHIPS = {"gpt-6.1-sol", "gemini-4-carbon", "kimi-k3.1-pro"}
+BUDGET = {"gpt-6-luna", "mimo-v2.6-flash", "muse-ember", "ministral-8b"}
 
 
 def _copy_data(data_dir) -> None:
@@ -38,14 +39,17 @@ def test_explorer_joins_each_prompt_with_every_model_and_choice(registry, tmp_pa
         assert body["evaluation"] == "final"
         assert len(body["prompts"]) == 300
         models = {model["model_id"]: model for model in body["models"]}
-        assert len(models) == BASE_MODELS + len(FLAGSHIPS)
-        assert {key for key, model in models.items() if model["added_from"] == "flagship"} == (
-            FLAGSHIPS
-        )
+        assert len(models) == BASE_MODELS + len(FLAGSHIPS) + len(BUDGET)
+        added = {key: model["added_from"] for key, model in models.items() if model["added_from"]}
+        assert added == {
+            **dict.fromkeys(FLAGSHIPS, "flagship"), **dict.fromkeys(BUDGET, "budget"),
+        }
         assert models["qwen-3.5-9b-local"]["access"] == "local"
         assert models["gemini-4-argon"]["display_name"] == "Gemini 4 Argon"
-        # Grok 4.7 was stopped part-way, so it is listed as left out, never as a column.
-        assert [model["model_id"] for model in body["excluded"]] == ["grok-4.7"]
+        # Models stopped part-way are listed as left out, never as a column.
+        assert [model["model_id"] for model in body["excluded"]] == [
+            "grok-4.7", "ernie-5.5-flash-free",
+        ]
         assert len(body["strategies"]) == 20 and "learned:quality" in body["strategies"]
 
         decisions = {
@@ -86,6 +90,7 @@ def test_explorer_skips_a_missing_table_and_rebuilds_when_it_lands(tmp_path) -> 
     flagship_cells = tmp_path / "learned" / "flagship-cells.jsonl"
     held = tmp_path / "flagship-cells.jsonl"
     flagship_cells.rename(held)
+    (tmp_path / "learned" / "budget-cells.jsonl").unlink()
     before = build_explorer(tmp_path, ExplorerEvaluation.FINAL)
     assert len(before.models) == BASE_MODELS and before.excluded == []
     assert build_explorer(tmp_path, ExplorerEvaluation.FINAL) is before  # served from the cache

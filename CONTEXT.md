@@ -1095,17 +1095,29 @@ The full record is `docs/checkpoint-3-progress.md`. Key facts:
 - **Flagship registry:** `data/registry/flagship-pool-2026-11-14.json`, each model pinned to its maker's standard tier. The runner takes `--pool flagship` and `--spend-cap` (at most $25).
 - **Grok 4.7 was stopped after 375 prompts ($3.33).** Its reasoning ignored the 4,096-token limit on knowledge questions, and finishing would have exceeded the budget. It is reported as excluded.
 - **Spend:** $18.34 recorded and $18.46 billed in all.
-- **Study:** `python -m app.learned.flagship_study --from-runs` builds `data/learned/flagship-cells.jsonl`, the second router `data/learned/flagship-router-model.json` (12 models), and `data/learned/flagship-study.json`. It checks that the frozen router's picks reproduce its published results, and it rebuilds byte for byte from committed files.
+- **Study:** `python -m app.learned.pool_study --study flagship --from-runs` (named `flagship_study` until 2026-11-20) builds `data/learned/flagship-cells.jsonl`, the second router `data/learned/flagship-router-model.json` (12 models), and `data/learned/flagship-study.json`. It checks that the frozen router's picks reproduce its published results, and it rebuilds byte for byte from committed files.
 - **Results on the 300 fresh prompts:**
   - GPT-6.1 Sol 284 for $0.50 (2.6 s), Gemini 4 Argon 284 for $1.16 (8.1 s), Gemini 4 Carbon 284 for $2.16, Kimi K3.1 Pro 278 for $2.33;
   - second router against the frozen one: best quality 283 vs 282, fastest 284 vs 276 (1.3 s quicker), balanced 283 vs 276; Holm p 1.00, 0.23 and 0.33, so not significant;
   - hindsight oracle 289 instead of 286; Gemini 4 Carbon and Kimi are never chosen.
-- **Serving:** route, preview, and what-if requests take `pool: "flagships"` to use the second router; the live catalog check covers the flagships. API: `GET /learned/flagships`.
+- **Serving:** route, preview, and what-if requests take `pool: "flagships"` to use the second router; the live catalog check covers the flagships. API: `GET /learned/studies/flagship` (it was `GET /learned/flagships` until 2026-11-20).
 - **Site:**
   - white editorial layout: Source Serif 4 and Inter, one color and logo per model maker;
   - Recharts 3.10.1 and the LobeHub icons (MIT, license in `frontend/src/assets/makers`);
   - a leaderboard table on Models, chart cards on Home and Research, and a pool switch on Router;
   - pages are lazy-loaded.
+
+**Budget models, the wide study, and the week of November 26 (done 2026-11-20 and 21).**
+- **Owner request:** build everything planned for the week of November 26 except the final report, add more models, and do much more interface work.
+- **Budget registry:** `data/registry/budget-pool-2026-11-20.json`: GPT-6 Luna, MiMo-V2.6 Flash, Muse Ember, and Ministral 8B (paid, each pinned to its maker's host), and ERNIE 5.5 Flash and Nemotron 3.5 Lightning (free). The runner takes `--pool budget`; `--count-spend-from` makes one cap cover related runs. $1.00 was billed; $1.80 of credit is left.
+- **Pool studies:** `app/learned/studies.py` names each added pool (dated registry, run IDs, reasons for excluded models) and each study's fixed questions; `python -m app.learned.pool_study --study flagship|wide --from-runs` builds the cells, the router, and the report. The flagship study regenerated with identical numbers.
+- **Wide study:** 16 models (the pool, three flagships, four budget models); Grok 4.7, ERNIE 5.5 Flash (16 fresh prompts short: the free daily quota), and Nemotron 3.5 Lightning (smoke test only) are excluded. Fresh prompts: lowest cost 270 right for $0.022 (frozen 265 for $0.0034), best quality 282 (same), fastest 278 for $0.26 (flagship router 284 for $0.50); nothing significant after Holm. GPT-6 Luna, 274 for $0.047, is the best budget model. Files: `budget-cells.jsonl`, `wide-router-model.json`, `wide-study.json`.
+- **Serving:** `pool: "wide"` on route, preview, and what-if requests; `GET /learned/studies` and `GET /learned/studies/{id}`; `GET /learned/prompts?evaluation=final|cp3_test` for the prompt explorer; gzip on every response.
+- **Failure handling:** a live route whose chosen model still fails after its retry calls the next-best eligible model once and reports both (`fallback` in the response).
+- **Data:** `python -m app.learned.validate` (29 checks, in CI and `scripts/check.ps1`), eleven export tables, `docs/data-dictionary.md`, and `.gitattributes` keeping data files LF so checksums hold on Windows.
+- **Figures:** `final-robustness`, `final-robustness-cost`, and `final-priority-sweep` from `python -m app.learned.plots`.
+- **Site:** a search palette (Ctrl+K), a comparison page, a prompt explorer, interactive robustness and priority charts, score bars on Router, a three-way pool switch, three new makers, and a restyled Lab; checked in both themes at 1,440 and 390 pixels.
+- **Details:** [docs/checkpoint-4-progress.md](docs/checkpoint-4-progress.md), "Week of November 26".
 
 **Local environment.**
 - mypy must run as `python -m mypy --config-file backend/pyproject.toml`: Application Control blocks `mypy.exe`, and without `--config-file` strict mode was silently not applied. The check script and CI are fixed.

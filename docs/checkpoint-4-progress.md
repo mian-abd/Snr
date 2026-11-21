@@ -611,17 +611,163 @@ Backend tests went from 75 to 108, all offline: provider catalogs and calls are 
 
 Frontend: 11 unit tests cover the home page and its findings, the flagship study on the research, models, and router pages, the routing preview with its third-party notice and the stress test, the model catalog and a model page, the research page and its task filters, the FAQ, the lab (rule router without a key, and a paid pilot that starts only after the estimate is confirmed), and the theme toggle. 2 Playwright tests run the site in Chrome with the API stubbed as a fresh install (no key, no reports): the home page and the router's missing-key notice, and the home page at phone width without sideways scrolling.
 
-## Left for the week of November 26
+## Week of November 26: robustness figures, data validation, failure handling, more models, interface
 
-The proposal's last week: final robustness runs and plots, finishing export and data validation, and starting the final report. From this week's results, the open points are:
+This records the proposal's work-plan items for the week of November 26, done on 2026-11-20 and 21. The final report is left for the week of December 3, as the owner asked.
 
-- **Robustness plots:** the scenarios above as figures (accuracy and cost per scenario, told against old estimates), next to the held-out figures.
-- **Data validation:** a script that checks every committed table against the raw runs and the published hashes, and a short data dictionary for the seven export tables.
-- **Two design fixes, to report rather than evaluate:** score cost and time against fixed reference values (for example the snapshot's own maximum) instead of the current maximum, and give reliability a small default weight. Both change the router, so they cannot be tested on the fresh prompts without spending them; the report should describe them as recommendations, backed by the scenarios above.
+| Proposal item (week of Nov 26) | Status |
+| --- | --- |
+| Run the robustness experiments and verify final plots | Done: the scenarios and the priority sweep rebuilt from committed data, with new figures and interactive charts on the site ([details](#robustness-figures)) |
+| Finish experiment export, data validation, and failure handling | Done: four new export tables, an offline validation command that runs in CI, a data dictionary, a one-step fallback for live calls, and a spend cap that spans related runs ([details](#export-validation-and-failure-handling)) |
+| Fix remaining interface and backend bugs | Done: the reviewer's open points, the Lab restyle, and a check of every page in both themes and at phone width ([details](#interface)) |
+| Begin the final report and organize final results | Results organized (pool studies, figures, data dictionary); writing the report itself is left for the week of December 3 |
+| Owner request (2026-11-20): more models and more interface work | Five more models on all 900 prompts and a third router fit on every model ([details](#more-models-the-wide-study)); a search palette, a comparison page, and interactive charts ([details](#interface)) |
+
+### Results in brief
+
+- **Best budget model:** GPT-6 Luna got 274 of the 300 fresh prompts right for $0.047. Gemma 4 26B, the cheapest paid model before, got 268 for $0.035.
+- **A router fit on all 16 models:**
+  - at lowest cost, 270 right for $0.022, against 265 for $0.0034 for the frozen router;
+  - at best quality, 282, the same as the frozen router;
+  - at fastest and balanced, 278 right for $0.26 at 2.3 s; the frozen router got 276 for $0.43 at 3.8 s, and the flagship router 284 for $0.50 at 2.6 s.
+- **Significance:** none of the eight fixed comparisons is significant after the Holm correction, on the fresh prompts or the test split. More models moved where the settings land, and none of the changes can be told from chance.
+- **Spend:** $1.00 billed for the five budget models on 900 prompts. $1.80 of credit is left for the demonstration.
+
+### More models: the wide study
+
+**Budget.** The OpenRouter account had $2.82 of credit left on 2026-11-20, against $9.48 on 2026-11-14 (this project's key had not been used since). Only very cheap paid models and free ones were added, and about $1.50 was kept for the live demonstration. The runner's cap was set at $0.80 for the suite and $0.45 for the fresh prompts.
+
+**Selection.** Seven candidates from the live catalog were smoke-tested on 8 prompts each ($0.015):
+
+- **Paid, chosen:** GPT-6 Luna (OpenAI, $0.10 / $0.50 per million tokens), MiMo-V2.6 Flash (Xiaomi, $0.14 / $0.28), Muse Ember (Meta, $0.10 / $0.50), and Ministral 8B (Mistral, $0.15 / $0.15). Each is pinned to its maker's own host.
+- **Free, chosen:** ERNIE 5.5 Flash (Baidu, free preview).
+- **Dropped:** GLM-5.3 Flash, which projected $0.58 for a 20-second median response the router would almost never pick, and Nemotron 3.5 Lightning (free), because the account's 1,000 free requests a day covered one free model, and NVIDIA is already in the pool. The registry keeps Nemotron 3.5 Lightning, so the study reports it as excluded with this reason.
+
+Registry: `data/registry/budget-pool-2026-11-20.json`. Prompts, token limits, retry policy, and grading are unchanged.
+
+**Runs (2026-11-21).** The four paid models ran on the 600 suite prompts ($0.67 billed) and the 300 fresh prompts ($0.33). Code was scored by the EvalPlus tests in Docker, as before.
+
+| Model | Suite (600) | Fresh (300) | Failed calls (suite, fresh) | Billed, both sets | Median time, fresh |
+| --- | --- | --- | --- | --- | --- |
+| GPT-6 Luna | 529 | 274 | 1, 0 | $0.132 | 2.7 s |
+| MiMo-V2.6 Flash | 511 | 262 | 25, 13 | $0.181 | 8.2 s |
+| Muse Ember | 495 | 266 | 47, 19 | $0.601 | 2.0 s |
+| Ministral 8B | 472 | 232 | 0, 0 | $0.088 | 3.1 s |
+| ERNIE 5.5 Flash (free) | 507 | 242 of 284 | 38, 27 | $0 | 2.1 s |
+
+A failed call is an unparseable or empty answer after the retry, or a rate-limited free call. Each counts as wrong.
+
+**ERNIE 5.5 Flash is excluded.**
+
+- **What happened:** the runner keeps free requests under 950 a day, below the account's 1,000. ERNIE made 961 requests on 2026-11-21 (UTC), counting retries and the smoke test, so the runner stopped it 16 fresh prompts short.
+- **The rule:** the rule set for Grok 4.7 applies. Only a model that answered every prompt joins the pool; the rest are reported with how far they got.
+- **The commitment:** the reason was written into `studies.py` before the wide study was first built, with a commitment. If the 16 prompts are run after the quota resets, the study is rebuilt with ERNIE, whatever the result.
+
+**Pool studies.** The flagship study is now one of two pool studies (`app/learned/studies.py`, `app/learned/pool_study.py`). A study adds one or more dated registries to the frozen pool, refits the Checkpoint 3 recipe unchanged, and evaluates the new router next to the frozen one and any earlier study's router.
+
+- **Flagship study:** regenerated by the general code with identical numbers and a byte-identical router. Only the report's field names and one strategy ID changed (`fixed_top_flagship` is now `fixed_top_added`).
+- **Wide study:** the frozen pool plus the flagships and the budget models. Its eight questions were fixed in code on 2026-11-21, while the budget models were still running. They compare the wide router with the frozen router at each priority, with the flagship router at best quality and lowest cost, with always using the strongest added model, and with per-task averages.
+- **Checks:** the study stops unless the frozen router's choices reproduce `final-evaluation.json` and the flagship router's choices reproduce `flagship-study.json`, on both prompt sets.
+
+Command: `python -m app.learned.pool_study --study wide --from-runs`. Report: `data/learned/wide-study.json`; router: `data/learned/wide-router-model.json`.
+
+**Wide study results on the 300 fresh prompts.** The study router was fit on 7,680 (prompt, model) rows from the suite's training split. Logistic regression was selected again (C = 0.003).
+
+| Setting | Wide router | Frozen router | Flagship router |
+| --- | --- | --- | --- |
+| Best quality | 282 · $0.97 · 7.8 s | 282 · $0.96 · 7.2 s | 283 · $1.03 · 7.1 s |
+| Lowest cost | 270 · $0.022 · 3.2 s | 265 · $0.0034 · 5.7 s | 265 · $0.018 · 4.1 s |
+| Fastest | 278 · $0.26 · 2.3 s | 276 · $0.43 · 3.8 s | 284 · $0.50 · 2.6 s |
+| Balanced | 278 · $0.26 · 2.3 s | 276 · $0.43 · 3.8 s | 283 · $0.40 · 2.2 s |
+
+Each cell gives right answers, billed cost for all 300 prompts, and median time.
+
+- **Where the prompts went:**
+  - at lowest cost, 110 went to GPT-6 Luna (mostly knowledge questions) and the rest to the free gpt-oss-120b and Nemotron 3 Ultra;
+  - at best quality, MiMo-V2.6 Flash took 98 math prompts;
+  - at fastest, Muse Ember took the math prompts, GPT-6 Luna most knowledge questions, and GPT-6.1 Sol the code.
+- **The fixed questions:** none is significant; every adjusted p is 1.00. The largest raw difference is lowest cost against the frozen router: 5 more right (95% interval 2 fewer to 12 more), p = 0.27 before adjustment.
+- **Fastest against the flagship router** (a descriptive comparison, not one of the fixed questions): 6 fewer right, for $0.24 less and 0.3 s quicker. The loss is on knowledge questions, 87 right against 92, where it used GPT-6 Luna instead of GPT-6.1 Sol.
+- **Per-task reference:** it again matches the router at best quality, 282 against 282.
+- **Hindsight oracle:** 291 of 300, up from 289 with the flagships, so the extra models add room the router does not use.
+- **Original test split (120 prompts):** the same picture; no difference is larger than 4 right, and none is significant.
+
+### Robustness figures
+
+`python -m app.learned.plots` now also draws, from the committed report, three figures for the fresh prompts (light into `docs/figures/`, dark with `--slides`):
+
+- `final-robustness`: right answers for each scenario, comparing the router told about the change with the same router using old estimates;
+- `final-robustness-cost`: the same comparison for billed cost, on a log scale;
+- `final-priority-sweep`: accuracy against billed cost as the cost weight rises, and against median time as the latency weight rises.
+
+The site shows the same data as interactive charts on the Research page.
+
+### Export, validation, and failure handling
+
+- **Export:** four more tables, served from the site and `python -m app.learned.export`:
+  - `study_strategies`;
+  - `study_comparisons`;
+  - `study_models`;
+  - `added_cells`.
+
+  The seven original tables are byte-identical.
+- **Data dictionary:** `docs/data-dictionary.md` gives every column's meaning and unit, for every committed data file and export table.
+- **Validation:** `python -m app.learned.validate` checks, offline:
+  - the checksums of every cell table, suite, router file, and the fresh set;
+  - row counts, unique cells, and known prompts;
+  - that no response text is stored;
+  - every report's model matrix, recomputed from the cells;
+  - that no file holds anything that looks like a key.
+
+  It runs in CI after the tests.
+- **Failure handling:** if the model a live run chose still fails after its one retry, the next-best eligible model answers instead, once, and the page says so. Previously the call simply failed.
+- **Spend cap:** the runner's `--count-spend-from` makes one cap cover related runs (suite, fresh set, smoke). This was the reviewer's open point from 2026-11-14.
+
+### Interface
+
+- **Search palette:** Ctrl+K (or ⌘K) on any page searches the pages, models, research sections, and FAQ answers, and opens the one picked with the keyboard.
+- **Comparing models:** the Models table has maker filter chips, a CSV download, and check boxes for up to four models. They open a side-by-side page (`#/compare?models=…`) with accuracy per task, cost, time, and how often the router chose each model. Every model page has a Compare button.
+- **Home:** an accuracy explorer plots every model, and the router's four settings, against cost or time, for the frozen pool or a study's pool.
+- **Router:**
+  - the pool switch offers the frozen pool, the pool with the flagships, and every model;
+  - each candidate's score is a bar split into its accuracy, cost, time, and reliability terms;
+  - a notice says when the chosen model failed and the next one answered (see failure handling).
+- **Research:**
+  - a robustness explorer: each scenario as a pair of marks, the router told about the change and the router with old estimates, per priority, as right answers or billed cost;
+  - a priority explorer: a slider and a clickable path showing right answers, cost, time, and where the prompts went at each weight;
+  - one section per pool study, and downloads for all eleven tables.
+- **Prompt explorer (`#/prompts`):**
+  - every prompt of the fresh set or the test split, with each model's outcome as a strip of marks and the frozen router's pick under the chosen priority;
+  - filters for task, benchmark, and text, and quick filters such as "Router wrong, another model right" (4 fresh prompts at best quality) and "No model right" (9);
+  - each prompt opens at `#/prompts/<id>`, with its full text, the expected answer, the router's pick under each priority, and every model's result, time, and cost.
+
+  It is served by `GET /api/v1/learned/prompts`. Responses are now gzip-compressed: the fresh set's 767 KB goes over the wire as 84 KB.
+- **Lab:** the earlier rule-based tools, restyled in the site's design.
+- **Fixes:** the Kimi logo was invisible in dark mode; wide charts widened the page at phone width; three new makers (Xiaomi, Mistral, Baidu) got logos and colors.
+- **Checked:** every page in light and dark at 1,440 and 390 pixels wide, with no sideways scrolling.
+
+### Tests
+
+- **Backend:** 123 tests pass (`python -m pytest backend/tests`); ruff and mypy are clean. New this week:
+  - `test_pool_study.py` (was `test_flagship_study.py`): the strongest added model, combining pools, one spend cap across related runs, serving a study's router, and the studies API;
+  - `test_api.py`: a live route falls back once when the chosen model keeps failing;
+  - `test_validate.py`: a changed cell, response text, repeated cells, unknown prompts, and a study's cell tables each fail the validator;
+  - `test_plots.py`: the new figures are drawn;
+  - `test_explorer.py`: the prompt explorer joins every prompt with every model and choice, skips a missing table, and rejects a missing or unknown prompt set.
+- **Validation:** 29 checks pass; CI runs them after the tests.
+- **Frontend:** 22 tests pass, covering the search palette, the comparison page, the explorers, and the prompt explorer. TypeScript, ESLint, and the production build are clean.
+- **End to end:** the 2 Playwright tests pass in Chrome.
+- **Data:** the flagship and wide studies rebuild byte for byte from committed files.
+
+## Left for the week of December 3
+
 - **The final report:**
   - the method;
   - the two evaluations;
   - the error analysis;
   - the robustness results;
-  - the flagship study, where a fast, accurate flagship helps the faster settings and the expensive flagships are never chosen;
+  - the pool studies: a fast, accurate flagship helps the faster settings, the expensive flagships are never chosen, and cheap models add small gains at the lowest-cost setting but none that is significant;
   - the limits: benchmarks are not real traffic, they are at the ceiling for strong models, prompt features add little here, and the router only knows the models it was measured on.
+- **Two design fixes, to report rather than evaluate:** score cost and time against fixed reference values (for example the snapshot's own maximum) instead of the current maximum, and give reliability a small default weight. Both change the router, so they cannot be tested on the fresh prompts without spending them; the report should describe them as recommendations, backed by the scenarios above.
+- **Optional:** run ERNIE 5.5 Flash's 16 unsent fresh prompts after the free quota resets, and rebuild the wide study with it (`--study wide --from-runs`).
+- **The final presentation and live demonstration**, rehearsed with the [live demo guide](live-demo-guide.md).
