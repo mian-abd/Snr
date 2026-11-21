@@ -74,6 +74,7 @@ def test_a_changed_cell_fails_the_command(
     assert _failed(data_copy) == [
         "learned/final-evaluation.json final matrix",
         "learned/flagship-study.json final matrix",
+        "learned/wide-study.json final matrix",
     ]
 
 
@@ -98,6 +99,8 @@ def test_response_text_repeated_cells_and_unknown_prompts_fail(data_copy: Path) 
 
 def test_a_study_finds_its_cell_tables_by_prefix_or_by_its_list(data_copy: Path) -> None:
     learned = data_copy / "learned"
+    # The wide study lists flagship-cells.jsonl by name, so it would fail once that is renamed.
+    (learned / "wide-study.json").unlink()
     (learned / "flagship-study.json").rename(learned / "frontier-study.json")
     for suffix in (".jsonl", ".meta.json"):
         (learned / f"flagship-cells{suffix}").rename(learned / f"frontier-cells{suffix}")

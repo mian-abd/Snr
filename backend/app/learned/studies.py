@@ -69,6 +69,15 @@ ADDED_POOLS: dict[str, AddedPool] = {
                 "the account's 1,000 free requests a day covered one free model on 2026-11-21, "
                 "and NVIDIA is already in the pool."
             ),
+            # Written on 2026-11-21, before the wide study was first built. If the 16 unsent
+            # prompts are run after the quota resets, the study is rebuilt with ERNIE in it,
+            # whatever the result.
+            "ernie-5.5-flash-free": (
+                "Stopped on 2026-11-21 after {scored} of {total} prompts: all 600 suite prompts "
+                "and 284 of the 300 fresh ones. The runner's free-request ceiling (950 a day, "
+                "kept under the account's 1,000) was reached, so 16 fresh prompts were never "
+                "sent; they can run after the daily quota resets."
+            ),
         },
     ),
 }

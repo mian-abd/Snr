@@ -64,6 +64,8 @@ export function FaqPage() {
   const wideFinal = wide.data?.evaluations.find((item) => item.evaluation_id === 'final')
   const budgetIds = new Set(Object.entries(wide.data?.added_from ?? {}).filter(([, group]) => group === 'budget').map(([id]) => id))
   const budgetRows = (wideFinal?.matrix ?? []).filter((row) => budgetIds.has(row.model_id) && row.failed_calls < row.prompts).sort((a, b) => b.correct - a.correct || a.cost_usd - b.cost_usd)
+  // Models the wide study lists but leaves out, other than the flagship study's own.
+  const budgetLeftOut = (wide.data?.excluded ?? []).filter((item) => !flagship.data?.excluded.some((other) => other.model_id === item.model_id))
   const wideCost = wideFinal && find(wideFinal.strategies, 'learned:cost')
   const frozenCost = wideFinal && find(wideFinal.strategies, 'previous_router:cost')
   const wideFast = wideFinal && find(wideFinal.strategies, 'learned:latency')
@@ -129,7 +131,7 @@ export function FaqPage() {
 
         {budgetRows.length > 0 && wideCost && frozenCost && wideFast && frozenFast && (
           <Q q="Do cheaper models help the router?">
-            <p>{budgetRows.length} low-cost models ({budgetRows.map((row) => row.display_name).join(', ')}) answered the same prompts{wide.data?.excluded.length ? `; ${wide.data.excluded.map((item) => item.display_name).join(', ')} did not finish and is left out` : ''}. The best of them, <strong>{budgetRows[0].display_name}</strong>, got {budgetRows[0].correct} of {budgetRows[0].prompts} right for {usd(budgetRows[0].cost_usd)}.</p>
+            <p>{budgetRows.length} low-cost models ({budgetRows.map((row) => row.display_name).join(', ')}) answered the same prompts{budgetLeftOut.length ? `; ${budgetLeftOut.map((item) => item.display_name).join(' and ')} ${budgetLeftOut.length === 1 ? 'was' : 'were'} listed but not run in full, and ${budgetLeftOut.length === 1 ? 'is' : 'are'} left out` : ''}. The best of them, <strong>{budgetRows[0].display_name}</strong>, got {budgetRows[0].correct} of {budgetRows[0].prompts} right for {usd(budgetRows[0].cost_usd)}.</p>
             <p>With every model in the pool, a router fit with the same recipe got <strong>{wideCost.correct} right for {usd(wideCost.total_cost_usd)}</strong> at the lowest-cost priority (the frozen router: {frozenCost.correct} for {usd(frozenCost.total_cost_usd)}), sending {toBudget(wideCost)} of {wideCost.prompts} prompts to a budget model, and {wideFast.correct} right at the fastest priority (the frozen router: {frozenFast.correct}).</p>
             <p>Each comparison and its significance test is under <Link to="/research?section=study-wide">With every model</Link>.</p>
           </Q>

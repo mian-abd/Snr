@@ -1,0 +1,27 @@
+{
+  "cells_sha256": "42cbfadd1251b503c14f945710c65048f9b4e95f78bf1f7b3d60681874ca106d",
+  "note": "Scored outcomes only: no prompts, responses, or request IDs. Same format as cells.jsonl; failed calls count as wrong.",
+  "provider_billed_spend_by_model_usd": {
+    "ernie-5.5-flash-free": 0.0,
+    "gpt-6-luna": 0.132211,
+    "mimo-v2.6-flash": 0.181121,
+    "ministral-8b": 0.08819,
+    "muse-ember": 0.601264
+  },
+  "provider_billed_spend_usd": {
+    "cp3": 0.67082,
+    "final": 0.331967
+  },
+  "rows": 4484,
+  "rows_by_model": {
+    "ernie-5.5-flash-free": 884,
+    "gpt-6-luna": 900,
+    "mimo-v2.6-flash": 900,
+    "ministral-8b": 900,
+    "muse-ember": 900
+  },
+  "rows_by_suite": {
+    "cp3": 3000,
+    "final": 1484
+  }
+}
