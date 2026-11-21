@@ -476,3 +476,79 @@ test('switches between light and dark themes', async () => {
   await userEvent.setup().click(toggle)
   expect(document.documentElement.dataset.theme).not.toBe(before)
 })
+
+test('draws the robustness scenarios as dumbbells that follow the priority and the measure', async () => {
+  stub([])
+  renderAt('/research')
+  const user = userEvent.setup()
+  const chart = await screen.findByRole('list', { name: /^Robustness, right answers, Best quality setting/ })
+  const drift = within(chart).getByRole('listitem', { name: /^Observed drift \(Nov 12-13\), really happened\. Told about the change: 112 of 120 right/ })
+  expect(within(drift).getByText('Really happened')).toBeInTheDocument()
+  expect(within(drift).getByText('Same')).toBeInTheDocument()
+  const section = screen.getByRole('region', { name: 'When prices, speed, or providers change' })
+  await user.click(within(section).getByRole('button', { name: 'Fastest' }))
+  const fastest = screen.getByRole('list', { name: /^Robustness, right answers, Fastest setting/ })
+  expect(within(fastest).getByRole('listitem', { name: /Old estimates: 29 of 120 right.*86 choices changed when told/ })).toBeInTheDocument()
+  expect(within(fastest).getByText('+81 right')).toBeInTheDocument()
+  fireEvent.focus(within(fastest).getAllByRole('listitem')[0])
+  expect(within(fastest).getByText('Choices changed: 86 told, 0 with old estimates')).toBeInTheDocument()
+  await user.click(within(section).getByRole('button', { name: 'Billed cost' }))
+  const cost = screen.getByRole('list', { name: /^Robustness, billed cost, Fastest setting/ })
+  expect(within(cost).getByText('+$0.13')).toBeInTheDocument()
+  // The table is still there, folded under the chart.
+  expect(within(screen.getByRole('table', { name: 'Robustness scenarios' })).getByText('29/120')).toBeInTheDocument()
+})
+
+test('picks a weight in the priority sweep and shows where its prompts went', async () => {
+  const point = (axis: string, weight: number, correct: number, cost: number, latency: number, models: Record<string, number>) => ({
+    axis, weight, correct, accuracy: correct / 120, total_cost_usd: cost, median_latency_ms: latency, selected_models: models,
+  })
+  const sweep = [
+    point('cost', 0, 112, 0.49, 5100, { 'gemini-4-argon': 120 }),
+    point('cost', 1, 108, 0.05, 6000, { 'gemma-4-26b': 80, 'gemini-4-argon': 40 }),
+    point('cost', 5, 104, 0.0087, 9185, { 'gemma-4-26b': 120 }),
+    point('latency', 0, 112, 0.49, 5100, { 'gemini-4-argon': 120 }),
+    point('latency', 2, 100, 0.1, 2000, { 'mercury-3': 90, 'gemini-4-argon': 30 }),
+  ]
+  stub([], { final: { ...finalReport, robustness: finalReport.robustness.map((item) => ({ ...item, priority_sweep: sweep })) } })
+  renderAt('/research')
+  const user = userEvent.setup()
+  // It opens on the weight where most of the saving has arrived.
+  const slider = await screen.findByRole('slider', { name: 'Cost weight' })
+  expect(slider).toHaveAttribute('aria-valuetext', '1')
+  expect(screen.getByRole('listitem', { name: 'Cost weight 1: Gemma 4 26B 67%, Gemini 4 Argon 33%' })).toBeInTheDocument()
+  expect(screen.getByText(/4 fewer than at weight 0/)).toBeInTheDocument()
+  fireEvent.change(slider, { target: { value: '2' } })
+  expect(screen.getByRole('listitem', { name: 'Cost weight 5: Gemma 4 26B 100%' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /^Cost weight 5, 104 of 120 right/, pressed: true })).toBeInTheDocument()
+  // A mark picks its weight from the keyboard too.
+  fireEvent.keyDown(screen.getByRole('button', { name: /^Cost weight 0, 112 of 120 right/ }), { key: 'Enter' })
+  expect(screen.getByRole('listitem', { name: 'Cost weight 0: Gemini 4 Argon 100%' })).toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'Speed weight' }))
+  expect(screen.getByRole('slider', { name: 'Speed weight' })).toHaveAttribute('aria-valuetext', '2')
+  expect(screen.getByRole('listitem', { name: 'Speed weight 2: Mercury 3 75%, Gemini 4 Argon 25%' })).toBeInTheDocument()
+  expect(screen.getByRole('table', { name: 'Priority sweep: speed weight' })).toBeInTheDocument()
+})
+
+test('shows each candidate score as a bar with its penalties cut off', async () => {
+  stub([], { keyed: true })
+  const base = globalThis.fetch
+  const scored = (id: string, name: string, p: number, cost: number, time: number) => ({
+    ...candidate(id, name, p - cost - time), p_success: p, quality_term: p, cost_penalty: cost, latency_penalty: time,
+  })
+  const decision = { ...learnedDecision, candidates: [
+    scored('gemini-4-argon', 'Gemini 4 Argon', 0.95, 0.05, 0.2),
+    scored('gemma-4-26b', 'Gemma 4 26B', 0.9, 0.004, 0.1),
+    candidate('qwen-3.5-9b-local', 'Qwen 3.5 9B (local)', null, 'Context 8,192 is below the required 500,000 tokens'),
+  ], selected_model_id: 'gemma-4-26b' }
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => (String(input).endsWith('/learned/decisions') ? json(decision) : base(input, init))))
+  renderAt('/router')
+  expect(await screen.findByText('How every model scored')).toBeInTheDocument()
+  const gemma = await screen.findByRole('img', { name: 'Gemma 4 26B: chance right 0.900, minus cost 0.004, time 0.100, and failures 0.000, scores 0.80' })
+  expect(screen.getByRole('img', { name: /^Gemini 4 Argon: chance right 0\.950, minus cost 0\.050, time 0\.200.*scores 0\.70$/ })).toBeInTheDocument()
+  expect(screen.getByText('Picked')).toBeInTheDocument()
+  expect(screen.getByText('Not considered: Context 8,192 is below the required 500,000 tokens')).toBeInTheDocument()
+  expect(screen.getByText('Time penalty')).toBeInTheDocument()
+  fireEvent.focus(gemma)
+  expect(screen.getByText('= Score')).toBeInTheDocument()
+})

@@ -1,0 +1,111 @@
+/* The interactive charts on the research and router pages: a dumbbell per scenario, the
+   priority sweep, and the score bars. Tokens only, so both themes work; the shared tooltip,
+   grid, tick, and label styles come from charts.module.css. */
+
+/* ---------- Dumbbell: two results per row, joined by a line ---------- */
+.dumbbell { --db-label: minmax(10rem, 15rem); --db-delta: 6.5rem; }
+.dbLegend { display: flex; flex-wrap: wrap; gap: 0.45rem 1.25rem; margin-bottom: 0.9rem; color: var(--text); font-size: 0.82rem; }
+.dbLegend span { display: inline-flex; align-items: center; gap: 0.45rem; }
+.keyA, .keyB { display: inline-block; flex: 0 0 auto; }
+.keyA { width: 10px; height: 10px; border-radius: 50%; background: var(--ink); }
+.keyB { width: 13px; height: 13px; border: 2px solid var(--text-2); border-radius: 2px; }
+.dbList { display: grid; }
+.dbRow { position: relative; display: grid; grid-template-columns: var(--db-label) minmax(0, 1fr) var(--db-delta); align-items: center; gap: 1rem; min-height: 2.6rem; padding: 0.3rem 0.5rem; border-radius: var(--radius-sm); outline: none; }
+.dbList .dbRow { border-top: 1px solid var(--border); border-radius: 0; cursor: default; }
+.dbList .dbRow:hover, .dbList .dbRow:focus-visible { background: var(--surface-2); }
+.dbList .dbRow:focus-visible { box-shadow: inset 0 0 0 2px var(--focus); }
+.dbHead { min-height: 0; padding-bottom: 0.45rem; color: var(--text-3); font-size: 0.74rem; font-weight: 500; }
+.dbHead span:last-child { text-align: right; }
+.dbFlagged { box-shadow: inset 3px 0 0 var(--warn); }
+.dbLabel { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; min-width: 0; color: var(--text); font-size: 0.84rem; line-height: 1.35; }
+.dbFlag { display: inline-flex; align-items: center; height: 1.25rem; padding: 0 0.4rem; border-radius: var(--radius-xs); background: var(--warn-soft); color: var(--warn); font-size: 0.68rem; font-style: normal; font-weight: 500; white-space: nowrap; }
+.dbTrack { position: relative; height: 1.6rem; margin: 0 9px; }
+.dbGrid { position: absolute; top: 0; bottom: 0; width: 0; border-left: 1px dashed var(--chart-grid); }
+.dbLine { position: absolute; top: 50%; height: 2px; margin-top: -1px; border-radius: 1px; background: var(--text-3); }
+.dbA, .dbB { position: absolute; top: 50%; transform: translate(-50%, -50%); }
+.dbA { width: 10px; height: 10px; border-radius: 50%; background: var(--ink); box-shadow: 0 0 0 2px var(--surface); }
+.dbB { width: 15px; height: 15px; border: 2px solid var(--text-2); border-radius: 2px; background: transparent; }
+.dbTip { top: 50%; }
+.dbTip.tipBelow { transform: translate(-50%, 18px); }
+/* Tooltips size to their text, not to the room left beside the mark. */
+.dbTip, .scoreTip, .sweepFrame > div { width: max-content; max-width: min(18rem, 82vw); }
+.dbDelta { color: var(--text-2); font-size: 0.8rem; font-weight: 500; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.good { color: var(--good); }
+.bad { color: var(--bad); }
+.plain { color: var(--text); }
+.same { color: var(--text-3); font-weight: 400; }
+.dbAxis { min-height: 0; padding-top: 0.2rem; border-top: 1px solid var(--chart-axis); border-radius: 0; }
+.dbTicks { position: relative; height: 1.1rem; margin: 0 9px; }
+.dbTicks span { position: absolute; top: 0; color: var(--text-3); font-size: 0.72rem; white-space: nowrap; transform: translateX(-50%); font-variant-numeric: tabular-nums; }
+.dbAxisLabel { margin-top: 0.35rem; color: var(--text-2); font-size: 0.76rem; text-align: center; }
+.chartNote { margin: 0.9rem 0 0.75rem; color: var(--text-3); font-size: 0.76rem; line-height: 1.5; }
+
+/* ---------- Priority sweep ---------- */
+.sweepFrame { position: relative; width: 100%; min-width: 0; }
+.sweepFrame svg { display: block; overflow: visible; }
+.sweepPath { fill: none; stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.sweepDot { fill: var(--ink); stroke: var(--surface); stroke-width: 2; }
+.sweepRing { fill: none; stroke: var(--ink); stroke-width: 2; }
+.sweepHit { fill: transparent; }
+/* Marks take keyboard focus; the pointer is handled by the nearest-mark layer under them. */
+.sweepKey { pointer-events: none; }
+.sweepGuide line { stroke: var(--text-3); stroke-width: 1; stroke-dasharray: 3 3; }
+.tipHint { margin-top: 0.2rem; color: var(--text-3); font-size: 0.72rem; }
+.sweepGrid { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(16rem, 1fr); gap: 1.5rem 2rem; align-items: start; }
+.slider { display: grid; gap: 0.4rem; margin-top: 0.75rem; padding: 0 0.25rem 0 3rem; color: var(--text-2); font-size: 0.8rem; }
+.slider > span:first-child { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+.slider b { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.slider input { width: 100%; margin: 0; accent-color: var(--ink); }
+.sliderEnds { display: flex; justify-content: space-between; color: var(--text-3); font-size: 0.72rem; font-variant-numeric: tabular-nums; }
+.readout { display: grid; align-content: start; gap: 1rem; padding: 1.15rem 1.2rem 1.25rem; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface-2); }
+.readoutHead span { display: block; color: var(--text-3); font-size: 0.78rem; }
+.readoutHead strong { display: block; margin-top: 0.15rem; color: var(--text); font: 400 2rem/1.1 var(--font-serif); letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.readoutHead p { margin-top: 0.4rem; color: var(--text-2); font-size: 0.8rem; line-height: 1.5; }
+.facts { display: grid; gap: 0; margin: 0; }
+.facts div { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 0.15rem 0.75rem; padding: 0.55rem 0; border-top: 1px solid var(--border); }
+.facts dt { color: var(--text-2); font-size: 0.8rem; }
+.facts dd { margin: 0; color: var(--text); font-size: 0.95rem; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+.facts small { grid-column: 1 / -1; color: var(--text-3); font-size: 0.74rem; text-align: right; }
+.picks { display: grid; gap: 0.6rem; }
+.picks > strong { color: var(--text); font-size: 0.82rem; font-weight: 600; }
+.picks [role='list'] > [role='listitem'] { grid-template-columns: minmax(0, 1fr); gap: 0.35rem; }
+.picks [role='listitem'] > span:first-child { display: none; }
+.pickList { display: grid; gap: 0.35rem; margin: 0; padding: 0; list-style: none; }
+.pickList li { display: grid; grid-template-columns: 10px 16px minmax(0, 1fr) auto; align-items: center; gap: 0.5rem; color: var(--text); font-size: 0.82rem; }
+.pickList i { width: 10px; height: 10px; border-radius: 2px; }
+.pickList small { color: var(--text-2); font-size: 0.78rem; font-variant-numeric: tabular-nums; }
+
+/* ---------- Score bars (router candidates) ---------- */
+.scoreBar { position: relative; display: block; padding: 0.3rem 0; outline: none; cursor: default; }
+.scoreBar:focus-visible .scoreTrack { box-shadow: 0 0 0 2px var(--focus); }
+.scoreTrack { position: relative; display: block; height: 14px; border-radius: 3px; background: var(--surface-3); }
+.scoreInk, .scoreCut { position: absolute; top: 0; bottom: 0; }
+.scoreInk { border-radius: 3px 0 0 3px; background: var(--ink); }
+.scoreCut { box-shadow: -2px 0 0 var(--surface); }
+.scoreCut:last-of-type { border-radius: 0 3px 3px 0; }
+.scoreZero { position: absolute; top: -3px; bottom: -3px; width: 0; border-left: 1px solid var(--text-2); }
+.scoreTip { top: 0; min-width: 12rem; }
+.tipRow { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; align-items: center; gap: 0.45rem; }
+.tipRow i { width: 9px; height: 9px; border-radius: 2px; }
+.tipRow b { color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }
+.tipTotal { margin-top: 0.15rem; padding-top: 0.25rem; border-top: 1px solid var(--border); color: var(--text); }
+.tipTotal b { font-weight: 600; }
+.scoreLegend { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 1rem; margin: -0.25rem 0 0.9rem; color: var(--text); font-size: 0.78rem; }
+.scoreLegend span { display: inline-flex; align-items: center; gap: 0.4rem; }
+.scoreLegend i { width: 10px; height: 10px; border-radius: 2px; }
+.scoreLegend small { flex-basis: 100%; color: var(--text-3); font-size: 0.75rem; }
+
+@media (max-width: 980px) {
+  .sweepGrid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  .dbRow { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'label delta' 'track track'; gap: 0.2rem 0.75rem; padding: 0.55rem 0.35rem; }
+  .dbLabel { grid-area: label; }
+  .dbTrack { grid-area: track; }
+  .dbDelta { grid-area: delta; }
+  .dbHead { display: none; }
+  .dbAxis { grid-template-areas: 'track track'; }
+  .dbAxis > span:first-child, .dbAxis > span:last-child { display: none; }
+  .dbTicks { grid-area: track; }
+  .slider { padding-left: 0; }
+}

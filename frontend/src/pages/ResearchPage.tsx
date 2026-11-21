@@ -2,8 +2,10 @@ import { AlertTriangle, BarChart3, BookOpen, Download, FlaskConical, Gauge, Grad
 import { useEffect, useMemo, useState } from 'react'
 import { client } from '../api/client'
 import type { EvaluationSet, ExportTable, LearnedStrategyOutcome, PairedComparison, RoutingPriority } from '../api/types'
-import { IntervalRow, PathChart } from '../charts/Charts'
+import { IntervalRow } from '../charts/Charts'
 import { ScatterLegend, TradeoffScatter, type TradeoffPoint } from '../charts/TradeoffScatter'
+import { PrioritySweep } from '../components/PrioritySweep'
+import { RobustnessExplorer } from '../components/RobustnessExplorer'
 import { evaluationLabel, evaluationOf, priorityLabel, priorityOrder, strategyFamily, strategyLabel, useFinalReport, useLearnedReport, useStudyReports } from '../lib/data'
 import { pct, pValue, seconds, signed, span, usd } from '../lib/format'
 import { costLine, timeLine, verdict } from '../lib/comparisons'
@@ -287,56 +289,43 @@ export function ResearchPage() {
           {robustness && (
             <Section id="robustness" icon={<FlaskConical size={18} />} title="When prices, speed, or providers change" description="The stored answers were replayed under each change. One router is told about the change (as the live catalog or call monitoring would tell it); the other keeps its old estimates. Nothing was retrained."
               actions={<Segmented label="Priority" value={preset} onChange={setPreset} options={priorityOrder.map((id) => ({ id, label: priorityLabel[id] }))} />}>
-              <div className={ui.tableWrap}>
-                <table className={ui.table} aria-label="Robustness scenarios">
-                  <thead><tr><th>Change</th><th>Router, told</th><th>Router, old estimates</th><th>Choices changed</th><th>Hindsight best</th><th>Always strongest</th></tr></thead>
-                  <tbody>{robustness.scenarios.map((scenario) => {
-                    const pick = (id: string) => scenario.strategies.find((item) => item.strategy_id === id)
-                    const told = pick(`learned:${preset}`)
-                    const old = pick(`learned_frozen:${preset}`)
-                    const oracle = pick(`oracle:${preset}`)
-                    const strongest = pick('fixed_strongest')
-                    return (
-                      <tr key={scenario.scenario.scenario_id}>
-                        <td className={styles.scenario}>
-                          <div className={styles.row}><strong>{scenario.scenario.title}</strong><Badge tone={scenario.scenario.observed ? 'warn' : 'neutral'}>{scenario.scenario.observed ? 'Really happened' : 'What if'}</Badge></div>
-                          <small>{scenario.scenario.description}</small>
-                        </td>
-                        <td>{told && <><span className={`${ui.num} ${ui.strong}`}>{told.correct}/{scenario.prompts}</span><span className={`${ui.cellSub} ${ui.nowrap}`}>{usd(told.total_cost_usd)} · {seconds(told.median_latency_ms)}</span></>}</td>
-                        <td>{old && <><span className={ui.num}>{old.correct}/{scenario.prompts}</span><span className={`${ui.cellSub} ${ui.nowrap}`}>{usd(old.total_cost_usd)} · {seconds(old.median_latency_ms)}</span></>}</td>
-                        <td className={ui.num}>{told?.changed_decisions ?? '—'}</td>
-                        <td className={ui.num}>{oracle?.correct ?? '—'}</td>
-                        <td>{strongest && <><span className={ui.num}>{strongest.correct}</span><span className={ui.cellSub}>{usd(strongest.total_cost_usd)}</span></>}</td>
-                      </tr>
-                    )
-                  })}</tbody>
-                </table>
-              </div>
+              <RobustnessExplorer robustness={robustness} priority={preset} />
+              <details className={styles.tableToggle}>
+                <summary>Every scenario in a table, with the hindsight best and the always-strongest model</summary>
+                <div className={ui.tableWrap}>
+                  <table className={ui.table} aria-label="Robustness scenarios">
+                    <thead><tr><th>Change</th><th>Router, told</th><th>Router, old estimates</th><th>Choices changed</th><th>Hindsight best</th><th>Always strongest</th></tr></thead>
+                    <tbody>{robustness.scenarios.map((scenario) => {
+                      const pick = (id: string) => scenario.strategies.find((item) => item.strategy_id === id)
+                      const told = pick(`learned:${preset}`)
+                      const old = pick(`learned_frozen:${preset}`)
+                      const oracle = pick(`oracle:${preset}`)
+                      const strongest = pick('fixed_strongest')
+                      return (
+                        <tr key={scenario.scenario.scenario_id}>
+                          <td className={styles.scenario}>
+                            <div className={styles.row}><strong>{scenario.scenario.title}</strong><Badge tone={scenario.scenario.observed ? 'warn' : 'neutral'}>{scenario.scenario.observed ? 'Really happened' : 'What if'}</Badge></div>
+                            <small>{scenario.scenario.description}</small>
+                          </td>
+                          <td>{told && <><span className={`${ui.num} ${ui.strong}`}>{told.correct}/{scenario.prompts}</span><span className={`${ui.cellSub} ${ui.nowrap}`}>{usd(told.total_cost_usd)} · {seconds(told.median_latency_ms)}</span></>}</td>
+                          <td>{old && <><span className={ui.num}>{old.correct}/{scenario.prompts}</span><span className={`${ui.cellSub} ${ui.nowrap}`}>{usd(old.total_cost_usd)} · {seconds(old.median_latency_ms)}</span></>}</td>
+                          <td className={ui.num}>{told?.changed_decisions ?? '—'}</td>
+                          <td className={ui.num}>{oracle?.correct ?? '—'}</td>
+                          <td>{strongest && <><span className={ui.num}>{strongest.correct}</span><span className={ui.cellSub}>{usd(strongest.total_cost_usd)}</span></>}</td>
+                        </tr>
+                      )
+                    })}</tbody>
+                  </table>
+                </div>
+              </details>
               <p className={styles.small} style={{ marginTop: '0.6rem' }}>Injected failures return an error after 2 seconds. Choices changed counts prompts routed differently from the unchanged conditions.</p>
             </Section>
           )}
 
           {sweep.length > 0 && (
-            <Section id="priorities" icon={<SlidersHorizontal size={18} />} title="What your priority costs you" description="The router with accuracy weighted 1 and one other weight turned up step by step, from 0 to 5. Each point is one setting; hover for details.">
-              <div className={styles.grid2}>
-                {(['cost', 'latency'] as const).map((axis) => {
-                  const series = sweep.filter((point) => point.axis === axis)
-                  return (
-                    <PathChart key={axis}
-                      title={axis === 'cost' ? 'Turning up the cost weight' : 'Turning up the speed weight'}
-                      subtitle={axis === 'cost' ? 'Accuracy against total paid cost' : 'Accuracy against median response time'}
-                      xLabel={axis === 'cost' ? 'Total paid cost (USD)' : 'Median response time (s)'} yLabel="Share right"
-                      formatX={axis === 'cost' ? (x) => `$${x.toFixed(2)}` : (x) => `${x.toFixed(0)} s`} formatY={(y) => pct(y, 0)}
-                      points={series.map((point, index) => ({
-                        x: axis === 'cost' ? point.total_cost_usd : (point.median_latency_ms ?? 0) / 1000,
-                        y: point.accuracy,
-                        label: index === 0 ? `weight 0` : index === series.length - 1 ? `weight ${point.weight}` : undefined,
-                        detail: [`${axis === 'cost' ? 'Cost' : 'Speed'} weight ${point.weight}`, `${point.correct} of ${robustness?.prompts} right`, `${usd(point.total_cost_usd)} · median ${seconds(point.median_latency_ms)}`],
-                      }))}
-                    />
-                  )
-                })}
-              </div>
+            <Section id="priorities" icon={<SlidersHorizontal size={18} />} title="What your priority costs you" description="The router with accuracy weighted 1 and one other weight turned up step by step, from 0 to 5. Pick a weight on the slider, or click a point, to see what it costs and where the prompts went.">
+              <PrioritySweep sweep={sweep} prompts={robustness?.prompts ?? evaluation.prompts}
+                models={evaluation.matrix.map((row) => ({ id: row.model_id, name: row.display_name }))} />
             </Section>
           )}
 

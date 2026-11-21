@@ -4,8 +4,9 @@ import { useEffect, useRef, useState } from 'react'
 import { client } from '../api/client'
 import type { LearnedCandidate, LearnedPool, LearnedRouteRequest, RoutingPriority, RoutingWeights, TaskGroup, WhatIfChanges } from '../api/types'
 import { accessLabel, priorityHint, priorityLabel, priorityOrder, providerLabel, useHealth, useLearnedReport, useStudyReports } from '../lib/data'
+import { ScoreBar, ScoreLegend, type ScoreTerms } from '../charts/ScoreBar'
 import { pct, seconds, usdOrFree } from '../lib/format'
-import { Badge, Button, Card, CardHeader, Empty, Meter, ModelAvatar, Notice, PageHeader, Segmented, Stat } from '../ui'
+import { Badge, Button, Card, CardHeader, Empty, ModelAvatar, Notice, PageHeader, Segmented, Stat } from '../ui'
 import ui from '../ui/ui.module.css'
 import styles from './pages.module.css'
 
@@ -46,20 +47,41 @@ function changesFor(model: string, condition: Condition, value: number): WhatIfC
   }
 }
 
-function CandidateRow({ item, selected }: { item: LearnedCandidate; selected: boolean }) {
+const termsOf = (item: LearnedCandidate): ScoreTerms | null => item.score == null ? null : {
+  quality: item.quality_term ?? item.p_success,
+  cost: item.cost_penalty ?? 0,
+  time: item.latency_penalty ?? 0,
+  failures: item.reliability_penalty ?? 0,
+  score: item.score,
+}
+
+/** One model's score: name and logo, a bar of the chance it's right with each penalty cut off it, and the number. */
+function CandidateRow({ item, selected, low, high }: { item: LearnedCandidate; selected: boolean; low: number; high: number }) {
+  const terms = item.eligible ? termsOf(item) : null
+  const note = item.catalog_note ?? accessLabel[item.access] ?? item.access
   return (
-    <div className={`${styles.candidate} ${selected ? styles.candidateSelected : ''} ${item.eligible ? '' : styles.candidateOut}`}>
+    <div className={`${styles.scoreRow} ${selected ? styles.scoreRowPicked : ''} ${item.eligible ? '' : styles.scoreRowOut}`}>
       <div className={styles.candidateName}>
         <ModelAvatar model={{ id: item.model_id, display_name: item.display_name }} size={28} />
         <div>
           <strong>{item.display_name}</strong>
-          <small title={item.exclusion_reason ?? item.catalog_note ?? undefined}>{item.eligible ? (item.catalog_note ?? accessLabel[item.access] ?? item.access) : item.exclusion_reason}</small>
+          <small title={note}>{note}</small>
         </div>
       </div>
-      <div className={styles.pbar}><Meter value={item.p_success} label={`Chance right ${pct(item.p_success, 0)}`} /><span className={ui.num}>{pct(item.p_success, 0)}</span></div>
-      <span className={ui.num} title={item.snapshot_expected_cost_usd != null ? `Was ${usdOrFree(item.snapshot_expected_cost_usd)} before the live price` : undefined}>{usdOrFree(item.expected_cost_usd)}</span>
-      <span className={ui.num}>{seconds(item.expected_latency_ms)}</span>
-      <span className={`${ui.num} ${selected ? ui.strong : ''}`} title={item.score == null ? undefined : `quality ${item.quality_term?.toFixed(3)} − cost ${item.cost_penalty?.toFixed(3)} − time ${item.latency_penalty?.toFixed(3)} − failures ${item.reliability_penalty?.toFixed(3)}`}>{item.score == null ? '—' : item.score.toFixed(2)}</span>
+      <div className={styles.scoreCell}>
+        {terms
+          ? <ScoreBar name={item.display_name} terms={terms} low={low} high={high} />
+          : <span className={styles.scoreOut}>{item.exclusion_reason ? `Not considered: ${item.exclusion_reason}` : 'Not considered'}</span>}
+        <span className={styles.scoreFacts}>
+          <span title="Chance it's right">{pct(item.p_success, 0)} right</span>
+          <span title={item.snapshot_expected_cost_usd != null ? `Expected cost; was ${usdOrFree(item.snapshot_expected_cost_usd)} before the live price` : 'Expected cost'}>{usdOrFree(item.expected_cost_usd)}</span>
+          <span title="Expected time">{seconds(item.expected_latency_ms)}</span>
+        </span>
+      </div>
+      <div className={styles.scoreNumber}>
+        {selected && <Badge tone="accent">Picked</Badge>}
+        <span className={`${ui.num} ${selected ? ui.strong : ''}`}>{item.score == null ? '—' : item.score.toFixed(2)}</span>
+      </div>
     </div>
   )
 }
@@ -100,6 +122,10 @@ export function RouterPage() {
   const decision = last === 'route' ? route.data?.decision ?? preview.data : preview.data ?? route.data?.decision
   const ranked = decision ? [...decision.candidates].sort((a, b) => (b.score ?? -Infinity) - (a.score ?? -Infinity)) : []
   const chosen = decision?.candidates.find((item) => item.model_id === decision.selected_model_id)
+  // Every score bar shares one scale: zero (or the lowest negative score) to the largest quality term.
+  const scored = ranked.map(termsOf).filter((terms): terms is ScoreTerms => terms != null)
+  const scoreLow = Math.min(0, ...scored.map((terms) => terms.score))
+  const scoreHigh = Math.max(1, ...scored.map((terms) => terms.quality))
   const [whatModel, setWhatModel] = useState<string | null>(null)
   const [condition, setCondition] = useState<Condition>('latency')
   const [factor, setFactor] = useState(3)
@@ -247,8 +273,9 @@ export function RouterPage() {
           {decision && (
             <Card>
               <CardHeader title="How every model scored" description="Score = chance it's right − cost, time, and failure penalties under your weights. Models that fail a hard requirement are shown faded with the reason." />
-              <div className={`${styles.candidate} ${styles.candidateHead}`}><span>Model</span><span>Chance right</span><span>Cost</span><span>Time</span><span>Score</span></div>
-              {ranked.map((item) => <CandidateRow key={item.model_id} item={item} selected={item.model_id === decision.selected_model_id} />)}
+              <ScoreLegend />
+              <div className={`${styles.scoreRow} ${styles.scoreHead}`} aria-hidden="true"><span>Model</span><span>Chance it's right, minus penalties</span><span>Score</span></div>
+              {ranked.map((item) => <CandidateRow key={item.model_id} item={item} selected={item.model_id === decision.selected_model_id} low={scoreLow} high={scoreHigh} />)}
             </Card>
           )}
 

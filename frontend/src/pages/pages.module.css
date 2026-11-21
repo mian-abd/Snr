@@ -133,3 +133,33 @@
   .verdictNumbers { justify-items: start; text-align: left; }
   .beforeAfter { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* ---------- Research: the robustness table, folded under its chart ---------- */
+.tableToggle { margin-top: 1rem; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
+.tableToggle > summary { display: flex; align-items: center; gap: 0.6rem; padding: 0.85rem 1.1rem; color: var(--text-2); font-size: 0.84rem; cursor: pointer; list-style: none; }
+.tableToggle > summary::-webkit-details-marker { display: none; }
+.tableToggle > summary::after { content: '+'; margin-left: auto; color: var(--text-3); font-size: 1.05rem; line-height: 1; }
+.tableToggle[open] > summary::after { content: '−'; }
+.tableToggle > summary:hover { color: var(--text); }
+.tableToggle[open] > summary { border-bottom: 1px solid var(--border); }
+.tableToggle > div { border: 0; border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
+
+/* ---------- Router: every candidate's score as a bar ---------- */
+.scoreRow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(9rem, 1.35fr) 4.5rem; align-items: center; gap: 0.5rem 1rem; padding: 0.65rem 0.25rem; border-bottom: 1px solid var(--border); font-size: 0.84rem; }
+.scoreRow:last-child { border-bottom: 0; }
+.scoreHead { padding-top: 0; color: var(--text-3); font-size: 0.74rem; font-weight: 500; }
+.scoreHead > span:last-child { text-align: right; }
+.scoreRowPicked { margin: 0 -0.6rem; padding-right: 0.6rem; padding-left: 0.6rem; border-radius: var(--radius-sm); background: var(--surface-2); box-shadow: inset 3px 0 0 var(--ink); }
+.scoreRowOut > * { opacity: 0.5; }
+.scoreCell { display: grid; gap: 0.1rem; min-width: 0; }
+.scoreFacts { display: flex; flex-wrap: wrap; gap: 0 0.8rem; color: var(--text-3); font-size: 0.74rem; font-variant-numeric: tabular-nums; }
+.scoreOut { color: var(--text-2); font-size: 0.78rem; line-height: 1.4; }
+.scoreNumber { display: flex; flex-direction: column; align-items: flex-end; gap: 0.25rem; text-align: right; }
+@media (max-width: 640px) {
+  .scoreRow { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'name score' 'bar bar'; gap: 0.35rem 0.75rem; }
+  .scoreRow > :nth-child(1) { grid-area: name; }
+  .scoreRow > :nth-child(2) { grid-area: bar; }
+  .scoreRow > :nth-child(3) { grid-area: score; }
+  .scoreHead > span:nth-child(2) { display: none; }
+  .scoreNumber { flex-direction: row-reverse; align-items: center; }
+}
