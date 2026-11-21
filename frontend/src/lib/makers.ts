@@ -3,7 +3,7 @@ import gemini from '../assets/makers/gemini-color.svg'
 import gemma from '../assets/makers/gemma-color.svg'
 import grok from '../assets/makers/grok.svg'
 import inception from '../assets/makers/inception.svg'
-import kimi from '../assets/makers/kimi-color.svg'
+import kimi from '../assets/makers/kimi.svg'
 import meta from '../assets/makers/meta-color.svg'
 import mistral from '../assets/makers/mistral-color.svg'
 import nvidia from '../assets/makers/nvidia-color.svg'
@@ -44,7 +44,7 @@ const rules: Array<[RegExp, MakerId, string | null, boolean]> = [
   [/nemotron|nvidia/i, 'nvidia', nvidia, false],
   [/qwen/i, 'alibaba', qwen, false],
   [/grok|xai/i, 'xai', grok, true],
-  [/kimi|moonshot/i, 'moonshot', kimi, false],
+  [/kimi|moonshot/i, 'moonshot', kimi, true],
   [/mercury|inception/i, 'inception', inception, true],
   [/mimo|xiaomi/i, 'xiaomi', mimo, true],
   [/mistral|ministral/i, 'mistral', mistral, false],
