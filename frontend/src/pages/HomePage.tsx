@@ -2,14 +2,14 @@ import { ArrowRight, Calculator, Route as RouteIcon, ShieldCheck } from 'lucide-
 import type { EvaluationSet } from '../api/types'
 import { ShareBars } from '../charts/Charts'
 import { ModelBars, type ModelBar } from '../charts/ModelBars'
-import { ScatterLegend, TradeoffScatter, type TradeoffPoint } from '../charts/TradeoffScatter'
 import { evaluationOf, find, priorityLabel, priorityOrder, studyRouterName, useFinalReport, useLearnedReport, useStudyReports, widest } from '../lib/data'
 import { detailLines, fleetRows, listNames, routerName, routerRows, type FleetRow } from '../lib/fleet'
 import { pct, seconds, usd } from '../lib/format'
 import { Link } from '../lib/Link'
-import { makersIn, modelColors } from '../lib/makers'
+import { modelColors } from '../lib/makers'
 import { ButtonLink, ChartCard, Highlight, Highlights, Section, Skeleton } from '../ui'
 import styles from './home.module.css'
+import { TradeoffExplorer } from './TradeoffExplorer'
 
 const pctLabel = (value: number) => `${Math.round(value * 100)}%`
 const costLabel = (value: number) => (value === 0 ? 'Free' : value < 0.01 ? `$${value.toFixed(4)}` : `$${value.toFixed(2)}`)
@@ -85,11 +85,6 @@ export function HomePage() {
   const speedBars: ModelBar[] = f.bySpeed.map((m) => ({ id: m.id, name: m.name, value: (m.latencyMs ?? 0) / 1000, display: `${((m.latencyMs ?? 0) / 1000).toFixed(1)} s`, modelId: m.id, local: m.local, details: detailLines(m.correct, m.prompts, m.cost, m.latencyMs) }))
     .sort((a, b) => a.value - b.value)
 
-  const scatter: TradeoffPoint[] = [
-    ...models.map((m) => ({ id: m.id, label: m.name, kind: 'model' as const, modelId: m.id, x: m.cost, y: m.accuracy * 100, details: detailLines(m.correct, m.prompts, m.cost, m.latencyMs) })),
-    ...routers.map((r) => ({ id: r.strategy_id, label: routerName(r), kind: 'router' as const, x: r.total_cost_usd, y: r.accuracy * 100, details: detailLines(r.correct, r.prompts, r.total_cost_usd, r.median_latency_ms) })),
-    ...(second ? [{ id: 'second:quality', label: `${routerWord} · Best quality`, kind: 'router' as const, x: second.total_cost_usd, y: second.accuracy * 100, details: detailLines(second.correct, second.prompts, second.total_cost_usd, second.median_latency_ms) }] : []),
-  ]
   const names = new Map(matrix.map((row) => [row.model_id, row.display_name.replace(/\s*\((free|local)\)/i, '')]))
   const shares = priorityOrder.map((priority) => {
     const strategy = find(fresh.strategies, `learned:${priority}`)
@@ -171,16 +166,8 @@ export function HomePage() {
         </ChartCard>
       </div>
 
-      <Section id="tradeoff" title="Accuracy against cost" description="Up and to the left is better. The dotted line joins the cheapest model at each level of accuracy; a router point above it beats every single model at that price.">
-        <ChartCard metric="route" title="Accuracy against cost" subtitle={`Right answers and billed cost for all ${fresh.prompts} prompts · cost on a log scale, free at the left`}
-          tools={<ScatterLegend items={[
-            ...makersIn(models.map((m) => m.id)).map((maker) => ({ name: maker.name, color: maker.color, shape: 'dot' as const })),
-            { name: 'Adaptive router', shape: 'diamond' },
-            { name: 'Cheapest at each accuracy', shape: 'line' },
-          ]} />}>
-          <TradeoffScatter points={scatter} xScale="symlog" frontier label="Accuracy against cost" xLabel="Cost for all prompts (USD, log scale)" yLabel="Right answers"
-            formatX={(value) => (value === 0 ? 'Free' : value < 1 ? `$${Number(value.toPrecision(1))}` : `$${value}`)} />
-        </ChartCard>
+      <Section id="tradeoff" title="Accuracy against cost and time" description="Up and to the left is better. The dotted line joins the cheapest (or fastest) model at each level of accuracy; a router point above it beats every single model at that price or speed. Switch the pool to see the routers fit with more models.">
+        <TradeoffExplorer fresh={fresh} studies={studies} />
       </Section>
 
       <Section id="routing" title="Where the router sends prompts" description="The same router, four priorities. Each bar splits the fresh prompts by the model the router chose; the colors follow the model makers.">

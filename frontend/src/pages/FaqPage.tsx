@@ -60,6 +60,15 @@ export function FaqPage() {
   const fastWith = extended && find(extended.strategies, 'learned:latency')
   const fastWithout = extended && find(extended.strategies, 'previous_router:latency')
   const fastGain = extended?.comparisons.find((item) => item.strategy_id === 'learned:latency' && item.baseline_id === 'previous_router:latency')
+  const wide = useStudy('wide')
+  const wideFinal = wide.data?.evaluations.find((item) => item.evaluation_id === 'final')
+  const budgetIds = new Set(Object.entries(wide.data?.added_from ?? {}).filter(([, group]) => group === 'budget').map(([id]) => id))
+  const budgetRows = (wideFinal?.matrix ?? []).filter((row) => budgetIds.has(row.model_id) && row.failed_calls < row.prompts).sort((a, b) => b.correct - a.correct || a.cost_usd - b.cost_usd)
+  const wideCost = wideFinal && find(wideFinal.strategies, 'learned:cost')
+  const frozenCost = wideFinal && find(wideFinal.strategies, 'previous_router:cost')
+  const wideFast = wideFinal && find(wideFinal.strategies, 'learned:latency')
+  const frozenFast = wideFinal && find(wideFinal.strategies, 'previous_router:latency')
+  const toBudget = (strategy: typeof wideCost) => (strategy ? Object.entries(strategy.selected_models).filter(([id]) => budgetIds.has(id)).reduce((sum, [, n]) => sum + n, 0) : 0)
   const toFlagships = second ? Object.entries(second.selected_models).filter(([id]) => flagshipIds.has(id)).reduce((sum, [, n]) => sum + n, 0) : 0
   const { lq, fs, comparison, main, share } = savings(fresh)
   const features = fresh?.comparisons.find((item) => item.strategy_id === 'learned:quality' && item.baseline_id === 'model_task_prior:quality')
@@ -115,6 +124,14 @@ export function FaqPage() {
             <p>A second router fit with the same recipe on all {extended?.models.length} models got <strong>{second.correct} right for {usd(second.total_cost_usd)}</strong> at the best-quality priority, sending {toFlagships} of {second.prompts} prompts to a flagship. The frozen router without them got {frozen.correct} for {usd(frozen.total_cost_usd)}.{secondVsFrozen && (secondVsFrozen.holm_p < 0.05 ? ' The difference in accuracy is statistically clear.' : ' The difference in accuracy is within what chance could produce on this many prompts.')}</p>
             {fastWith && fastWithout && fastGain && <p>Where they did change things is speed: at the Fastest priority the second router got {fastWith.correct} right instead of {fastWithout.correct}{fastGain.median_latency_difference_ci.high < 0 ? `, ${Math.abs(fastGain.median_latency_difference_ms / 1000).toFixed(1)} s quicker at the median` : ''}, by sending almost every prompt to the fast flagship. {fastGain.holm_p < 0.05 ? 'That accuracy gain is statistically clear.' : 'That accuracy gain is not statistically clear once all the questions asked are accounted for.'}</p>}
             <p>These benchmarks are close to their ceiling for strong models, so a flagship can add only a few right answers here. The full comparison is under <Link to="/research?section=study-flagship">With flagship models</Link>.</p>
+          </Q>
+        )}
+
+        {budgetRows.length > 0 && wideCost && frozenCost && wideFast && frozenFast && (
+          <Q q="Do cheaper models help the router?">
+            <p>{budgetRows.length} low-cost models ({budgetRows.map((row) => row.display_name).join(', ')}) answered the same prompts{wide.data?.excluded.length ? `; ${wide.data.excluded.map((item) => item.display_name).join(', ')} did not finish and is left out` : ''}. The best of them, <strong>{budgetRows[0].display_name}</strong>, got {budgetRows[0].correct} of {budgetRows[0].prompts} right for {usd(budgetRows[0].cost_usd)}.</p>
+            <p>With every model in the pool, a router fit with the same recipe got <strong>{wideCost.correct} right for {usd(wideCost.total_cost_usd)}</strong> at the lowest-cost priority (the frozen router: {frozenCost.correct} for {usd(frozenCost.total_cost_usd)}), sending {toBudget(wideCost)} of {wideCost.prompts} prompts to a budget model, and {wideFast.correct} right at the fastest priority (the frozen router: {frozenFast.correct}).</p>
+            <p>Each comparison and its significance test is under <Link to="/research?section=study-wide">With every model</Link>.</p>
           </Q>
         )}
 

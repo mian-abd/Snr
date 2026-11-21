@@ -5,10 +5,13 @@ import grok from '../assets/makers/grok.svg'
 import inception from '../assets/makers/inception.svg'
 import kimi from '../assets/makers/kimi-color.svg'
 import meta from '../assets/makers/meta-color.svg'
+import mistral from '../assets/makers/mistral-color.svg'
 import nvidia from '../assets/makers/nvidia-color.svg'
 import ollama from '../assets/makers/ollama.svg'
 import openai from '../assets/makers/openai.svg'
 import qwen from '../assets/makers/qwen-color.svg'
+import ernie from '../assets/makers/wenxin-color.svg'
+import mimo from '../assets/makers/xiaomimimo.svg'
 
 /** Who made a model: the name, the data color its marks wear, and its logo. */
 export type Maker = { id: string; name: string; color: string; logo: string | null; mono: boolean }
@@ -23,6 +26,9 @@ const makers = {
   xai: { name: 'xAI', color: 'var(--maker-xai)' },
   moonshot: { name: 'Moonshot AI', color: 'var(--maker-moonshot)' },
   inception: { name: 'Inception', color: 'var(--maker-inception)' },
+  xiaomi: { name: 'Xiaomi', color: 'var(--maker-xiaomi)' },
+  mistral: { name: 'Mistral AI', color: 'var(--maker-mistral)' },
+  baidu: { name: 'Baidu', color: 'var(--maker-baidu)' },
   other: { name: 'Other', color: 'var(--maker-other)' },
 } as const
 
@@ -40,6 +46,9 @@ const rules: Array<[RegExp, MakerId, string | null, boolean]> = [
   [/grok|xai/i, 'xai', grok, true],
   [/kimi|moonshot/i, 'moonshot', kimi, false],
   [/mercury|inception/i, 'inception', inception, true],
+  [/mimo|xiaomi/i, 'xiaomi', mimo, true],
+  [/mistral|ministral/i, 'mistral', mistral, false],
+  [/ernie|baidu/i, 'baidu', ernie, false],
 ]
 
 export function makerOf(modelId: string): Maker {

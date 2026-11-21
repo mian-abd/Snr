@@ -6,6 +6,8 @@
 .heroText { display: grid; gap: 0.9rem; color: var(--text-2); font-size: 0.98rem; line-height: 1.65; }
 .inline { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
 .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; margin-top: 1.25rem; }
+.controls { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.5rem; }
+.legendRow { margin-top: 0.5rem; padding-top: 0.75rem; border-top: 1px solid var(--border); }
 .keyList { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.35rem 0.9rem; max-width: 34rem; color: var(--text); font-size: 0.8rem; }
 .keyList span { display: inline-flex; align-items: center; gap: 0.4rem; }
 .keyList i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; }

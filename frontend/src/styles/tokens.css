@@ -39,6 +39,9 @@
   --maker-xai: #6b6b76;
   --maker-moonshot: #e0435a;
   --maker-inception: #a6762b;
+  --maker-xiaomi: #0f8f8a;
+  --maker-mistral: #d99a0b;
+  --maker-baidu: #334a8c;
   --maker-other: #9a9aa3;
   --attractive: rgb(34 197 94 / 9%);
   --chart-grid: #ececee;
@@ -115,6 +118,9 @@
     --maker-xai: #9c9ca6;
     --maker-moonshot: #f0607a;
     --maker-inception: #c99a4f;
+    --maker-xiaomi: #2bb5ae;
+    --maker-mistral: #f0b429;
+    --maker-baidu: #6f86d6;
     --maker-other: #7c7c86;
     --attractive: rgb(74 222 128 / 8%);
     --chart-grid: #222226;
@@ -159,6 +165,9 @@
   --maker-xai: #9c9ca6;
   --maker-moonshot: #f0607a;
   --maker-inception: #c99a4f;
+  --maker-xiaomi: #2bb5ae;
+  --maker-mistral: #f0b429;
+  --maker-baidu: #6f86d6;
   --maker-other: #7c7c86;
   --attractive: rgb(74 222 128 / 8%);
   --chart-grid: #222226;
