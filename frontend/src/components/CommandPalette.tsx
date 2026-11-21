@@ -90,7 +90,7 @@ function Palette({ onClose }: { onClose: () => void }) {
   const groups = useMemo(() => {
     const order: GroupId[] = ['pages', 'models', 'research']
     const ranked = items
-      .map((item) => ({ item, rank: query.trim() ? rankScore(query, item.title, `${item.sub} ${item.keywords}`) : 0 }))
+      .map((item) => ({ item, rank: query.trim() ? rankScore(query, item.title, item.keywords, item.sub) : 0 }))
       .filter((entry): entry is { item: Item; rank: number } => entry.rank != null)
     return order
       .map((id) => {

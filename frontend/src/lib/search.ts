@@ -28,20 +28,23 @@ const words = (query: string) => normalize(query).split(/\s+/).filter(Boolean)
 
 /**
  * How well a query matches an item: each word against the title (also as letters in order), or
- * failing that against the item's other words (only as written, and worth less). Null when a
- * word matches neither.
+ * failing that against the item's keywords, or its description (only as written, and worth less
+ * in that order, so a section tagged "robustness" outranks a page that mentions it). Null when a
+ * word matches none of them.
  */
-export function rankScore(query: string, title: string, keywords = ''): number | null {
+export function rankScore(query: string, title: string, keywords = '', description = ''): number | null {
   const tokens = words(query)
   if (!tokens.length) return 0
   const name = normalize(title)
-  const extra = normalize(keywords)
+  const tags = normalize(keywords)
+  const about = normalize(description)
   let total = 0
   for (const token of tokens) {
     const own = tokenScore(token, name, true)
-    const other = extra ? tokenScore(token, extra, false) : null
-    if (own == null && other == null) return null
-    total += Math.max(own ?? -Infinity, other == null ? -Infinity : other - 45)
+    const tagged = tags ? tokenScore(token, tags, false) : null
+    const described = about ? tokenScore(token, about, false) : null
+    if (own == null && tagged == null && described == null) return null
+    total += Math.max(own ?? -Infinity, tagged == null ? -Infinity : tagged - 45, described == null ? -Infinity : described - 60)
   }
   return total
 }

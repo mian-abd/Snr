@@ -745,6 +745,7 @@ The site shows the same data as interactive charts on the Research page.
 - **Lab:** the earlier rule-based tools, restyled in the site's design.
 - **Fixes:** the Kimi logo was invisible in dark mode; wide charts widened the page at phone width; three new makers (Xiaomi, Mistral, Baidu) got logos and colors.
 - **Checked:** every page in light and dark at 1,440 and 390 pixels wide, with no sideways scrolling.
+- **Backup recording:** `docs/demo/checkpoint-4-backup-demo.webm` (2 min 22 s, no provider call) follows the new steps in the [live demo guide](live-demo-guide.md).
 
 ### Tests
 
@@ -755,7 +756,7 @@ The site shows the same data as interactive charts on the Research page.
   - `test_plots.py`: the new figures are drawn;
   - `test_explorer.py`: the prompt explorer joins every prompt with every model and choice, skips a missing table, and rejects a missing or unknown prompt set.
 - **Validation:** 29 checks pass; CI runs them after the tests.
-- **Frontend:** 22 tests pass, covering the search palette, the comparison page, the explorers, and the prompt explorer. TypeScript, ESLint, and the production build are clean.
+- **Frontend:** 23 tests pass, covering the search palette and its ranking, the comparison page, the explorers, and the prompt explorer. TypeScript, ESLint, and the production build are clean.
 - **End to end:** the 2 Playwright tests pass in Chrome.
 - **Data:** the flagship and wide studies rebuild byte for byte from committed files.
 

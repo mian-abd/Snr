@@ -23,6 +23,8 @@ Open **Research**: the highlights, the leaderboard (press **Show** under Referen
 
 ### What is new since November 19 (about three minutes; no provider call)
 
+The backup recording `docs/demo/checkpoint-4-backup-demo.webm` (2 min 22 s) shows these steps.
+
 1. Press **Ctrl+K**, type `robust`, and press Enter: the search palette opens **When prices, speed, or providers change** on Research.
 2. Pick **Fastest**. In the observed-drift row, the router told about the change keeps 276 right; the same router with its old estimates gets 83, because it kept choosing the retired Mercury 3. **Billed cost** switches the measure.
 3. Scroll to **What your priority costs you** and move the slider to a cost weight of 0.2: 265 right for $0.0176 instead of 284 for $1.17 at weight 0. Most of the saving arrives by then; the bar shows where the prompts went.

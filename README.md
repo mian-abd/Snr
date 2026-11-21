@@ -72,7 +72,7 @@ See the [week of November 19](docs/checkpoint-4-progress.md).
 - Data validation: `python -m app.learned.validate` checks every committed table, report, and router offline, and runs in CI. Column meanings and units are in the [data dictionary](docs/data-dictionary.md).
 - Export of eleven tables, including four for the pool studies.
 - Failure handling: when the chosen model still fails after its retry, the next-best eligible model answers once, and the page says so. One spend cap can now cover related runs (`--count-spend-from`).
-- Site: a search palette (Ctrl+K), a model comparison page, interactive robustness and priority charts, score bars on Router, a pool switch with every model, a prompt explorer (`#/prompts`) showing every model's result on every prompt, and a restyled Lab.
+- Site: a search palette (Ctrl+K), a model comparison page, interactive robustness and priority charts, score bars on Router, a pool switch with every model, a prompt explorer (`#/prompts`) showing every model's result on every prompt, and a restyled Lab. Backup demo recording: `docs/demo/checkpoint-4-backup-demo.webm`.
 
 See the [week of November 26](docs/checkpoint-4-progress.md#week-of-november-26-robustness-figures-data-validation-failure-handling-more-models-interface).
 
