@@ -11,7 +11,6 @@ from app import __version__
 from app.benchmarks.costs import PAID_DEMO_NAME, SPEND_CAP_USD, estimate_worst_case_usd
 from app.benchmarks.gsm8k import load_samples
 from app.benchmarks.tasks import MAX_TOKENS
-from app.domain.flagship import FlagshipStudyReport
 from app.domain.models import (
     BenchmarkEstimate,
     BenchmarkMode,
@@ -24,6 +23,8 @@ from app.domain.models import (
     EligibilityResult,
     FinalEvaluationReport,
     GenerationRequest,
+    GenerationResult,
+    GenerationStatus,
     HealthResponse,
     LearnedPool,
     LearnedRouteRequest,
@@ -33,6 +34,7 @@ from app.domain.models import (
     LiveCatalogStatus,
     PaginatedRecords,
     RegistrySnapshot,
+    RouteFallback,
     RouteRequest,
     RouteResponse,
     RoutingDashboard,
@@ -42,8 +44,10 @@ from app.domain.models import (
     WhatIfRequest,
     WhatIfResponse,
 )
+from app.domain.study import PoolStudyReport, StudySummary
 from app.learned.export import TABLES, ExportError, load_report, render
 from app.learned.router import LearnedRouter, NoEligibleModelError
+from app.learned.studies import POOL_STUDY, STUDIES
 from app.registry.filtering import evaluate_eligibility
 from app.registry.loader import ModelDriftError, ModelRegistry
 from app.registry.pool import PoolSnapshot
@@ -73,7 +77,6 @@ def _require_live_services(services: AppServices) -> None:
 DEMO_DIRS = {RoutingPool.BASELINE: "checkpoint-1", RoutingPool.PAID: PAID_DEMO_NAME}
 # Written by `python -m app.learned.train --run-id cp3-full` and committed.
 LEARNED_REPORT = Path("learned") / "cp3-full-router-comparison.json"
-FLAGSHIP_REPORT = Path("learned") / "flagship-study.json"
 LEARNED_TIMEOUT_SECONDS = 180  # the anonymous OVHcloud endpoints can take minutes
 
 
@@ -315,8 +318,8 @@ def _learned_decision(
     if router is None:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="The flagship router has not been fit yet"
-            if payload.pool == LearnedPool.FLAGSHIPS
+            detail=f"The {payload.pool.value} router has not been fit yet"
+            if payload.pool != LearnedPool.STANDARD
             else "The learned router has not been trained yet",
         )
     configured = {"OPENROUTER_API_KEY"} if services.settings.credential_configured else set()
@@ -360,16 +363,40 @@ async def final_evaluation(services: Services) -> FinalEvaluationReport:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 
 
-@router.get("/learned/flagships", response_model=FlagshipStudyReport)
-async def flagship_study(services: Services) -> FlagshipStudyReport:
-    """The flagship extension: a second router with the flagship models in the pool."""
-    path = services.settings.data_dir / FLAGSHIP_REPORT
+def _study_report(services: AppServices, study_id: str) -> PoolStudyReport | None:
+    if study_id not in STUDIES:
+        return None
+    path = services.settings.data_dir / "learned" / STUDIES[study_id].report_path.name
     if not path.exists():
+        return None
+    return PoolStudyReport.model_validate_json(path.read_text(encoding="utf-8"))
+
+
+@router.get("/learned/studies", response_model=list[StudySummary])
+async def pool_studies(services: Services) -> list[StudySummary]:
+    """The pool studies that have been run: the frozen pool widened with more models."""
+    pools = {study_id: pool for pool, study_id in POOL_STUDY.items()}
+    summaries = []
+    for study_id in STUDIES:
+        report = _study_report(services, study_id)
+        if report is not None:
+            summaries.append(StudySummary(
+                study_id=study_id, title=report.title, question=report.question,
+                added=len(report.added), pool=pools[study_id],
+            ))
+    return summaries
+
+
+@router.get("/learned/studies/{study_id}", response_model=PoolStudyReport)
+async def pool_study(study_id: str, services: Services) -> PoolStudyReport:
+    """One pool study: its added models, refit router, evaluations, and fixed comparisons."""
+    report = _study_report(services, study_id)
+    if report is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="The flagship study has not been run yet",
+            detail=f"No study {study_id!r} has been run",
         )
-    return FlagshipStudyReport.model_validate_json(path.read_text(encoding="utf-8"))
+    return report
 
 
 @router.get("/learned/pool", response_model=PoolSnapshot)
@@ -412,8 +439,8 @@ async def learned_what_if(payload: WhatIfRequest, services: Services) -> WhatIfR
     if router_ is None:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="The flagship router has not been fit yet"
-            if payload.route.pool == LearnedPool.FLAGSHIPS
+            detail=f"The {payload.route.pool.value} router has not been fit yet"
+            if payload.route.pool != LearnedPool.STANDARD
             else "The learned router has not been trained yet",
         )
     unknown = payload.changes.model_ids() - set(router_.pool_ids)
@@ -445,7 +472,11 @@ async def preview_learned_decision(
 
 @router.post("/learned/routes", response_model=LearnedRouteResponse)
 async def learned_route(payload: LearnedRouteRequest, services: Services) -> LearnedRouteResponse:
-    """Route with the learned router and send exactly one generation request (one retry)."""
+    """Route with the learned router and send one generation request (with one retry).
+
+    If the chosen model still fails, the next-best eligible model answers instead, once, and the
+    response says so; nothing else is tried.
+    """
     _, decision = _learned_decision(services, payload)
     service = services.generation_for(payload.pool)
     if service is None:
@@ -453,18 +484,37 @@ async def learned_route(payload: LearnedRouteRequest, services: Services) -> Lea
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="The learned router's model pool is not configured",
         )
-    outcome = await service.generate_with_retries(
-        GenerationRequest(
-            model_id=decision.selected_model_id,
-            prompt=payload.prompt,
-            max_tokens=MAX_TOKENS[decision.task_group],
-            timeout_seconds=LEARNED_TIMEOUT_SECONDS,
+
+    async def call(model_id: str) -> GenerationResult:
+        outcome = await service.generate_with_retries(
+            GenerationRequest(
+                model_id=model_id,
+                prompt=payload.prompt,
+                max_tokens=MAX_TOKENS[decision.task_group],
+                timeout_seconds=LEARNED_TIMEOUT_SECONDS,
+            )
         )
-    )
-    return LearnedRouteResponse(
-        decision=decision,
-        result=outcome.final.model_copy(update={"provider_request_id": None}),
-    )
+        return outcome.final.model_copy(update={"provider_request_id": None})
+
+    result = await call(decision.selected_model_id)
+    fallback = None
+    if result.status != GenerationStatus.SUCCESS:
+        ranked = sorted(
+            (item for item in decision.candidates
+             if item.eligible and item.score is not None
+             and item.model_id != decision.selected_model_id),
+            key=lambda item: item.score or 0.0,
+            reverse=True,
+        )
+        if ranked:
+            fallback = RouteFallback(
+                failed_model_id=decision.selected_model_id,
+                failed_status=result.status,
+                failed_error=result.error_message,
+                model_id=ranked[0].model_id,
+            )
+            result = await call(ranked[0].model_id)
+    return LearnedRouteResponse(decision=decision, result=result, fallback=fallback)
 
 
 def _estimate(

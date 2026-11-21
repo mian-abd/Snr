@@ -5,7 +5,8 @@ import type {
   EligibilityResult,
   ExportTable,
   FinalEvaluationReport,
-  FlagshipStudyReport,
+  PoolStudyReport,
+  StudySummary,
   Health,
   LearnedRouteRequest,
   LearnedRouteResponse,
@@ -126,9 +127,17 @@ export const client = {
       throw error
     }
   },
-  flagshipReport: async () => {
+  studies: async () => {
     try {
-      return await api<FlagshipStudyReport>('/api/v1/learned/flagships')
+      return await api<StudySummary[]>('/api/v1/learned/studies')
+    } catch (error) {
+      if (error instanceof ApiError && (error.status === 404 || error.status === 503)) return []
+      throw error
+    }
+  },
+  study: async (id: string) => {
+    try {
+      return await api<PoolStudyReport>(`/api/v1/learned/studies/${encodeURIComponent(id)}`)
     } catch (error) {
       if (error instanceof ApiError && error.status === 404) return null
       throw error

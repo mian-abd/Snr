@@ -243,26 +243,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/learned/flagships": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Flagship Study
-         * @description The flagship extension: a second router with the flagship models in the pool.
-         */
-        get: operations["flagship_study_api_v1_learned_flagships_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/learned/pool": {
         parameters: {
             query?: never;
@@ -314,9 +294,52 @@ export interface paths {
         put?: never;
         /**
          * Learned Route
-         * @description Route with the learned router and send exactly one generation request (one retry).
+         * @description Route with the learned router and send one generation request (with one retry).
+         *
+         *     If the chosen model still fails, the next-best eligible model answers instead, once, and the
+         *     response says so; nothing else is tried.
          */
         post: operations["learned_route_api_v1_learned_routes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/learned/studies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Pool Studies
+         * @description The pool studies that have been run: the frozen pool widened with more models.
+         */
+        get: operations["pool_studies_api_v1_learned_studies_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/learned/studies/{study_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Pool Study
+         * @description One pool study: its added models, refit router, evaluations, and fixed comparisons.
+         */
+        get: operations["pool_study_api_v1_learned_studies__study_id__get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -841,10 +864,10 @@ export interface components {
             uncertainty: components["schemas"]["StrategyUncertainty"][];
         };
         /**
-         * ExcludedFlagship
-         * @description A flagship that did not answer every prompt, so neither router can be fit with it.
+         * ExcludedModel
+         * @description A listed model that did not answer every prompt, so no router can be fit with it.
          */
-        ExcludedFlagship: {
+        ExcludedModel: {
             /** Display Name */
             display_name: string;
             /** Model Id */
@@ -880,68 +903,6 @@ export interface components {
             robustness: components["schemas"]["RobustnessReport"][];
             /** Spend Usd */
             spend_usd: number;
-        };
-        /**
-         * FlagshipRouter
-         * @description The second router: the Checkpoint 3 recipe refit with the flagship models in the pool.
-         */
-        FlagshipRouter: {
-            /** Artifact Id */
-            artifact_id: string;
-            /** Classifiers */
-            classifiers: {
-                [key: string]: components["schemas"]["ClassifierReport"];
-            };
-            /** Family */
-            family: string;
-            /** Features */
-            features: number;
-            /** Params */
-            params: {
-                [key: string]: number;
-            };
-            reference_model_task_prior: components["schemas"]["ClassifierMetrics"];
-            /** Selection Rule */
-            selection_rule: string;
-            /** Training Rows */
-            training_rows: number;
-            /** Validation Prompts */
-            validation_prompts: number;
-            /** Weight Tuning */
-            weight_tuning: components["schemas"]["WeightTuningResult"][];
-        };
-        /**
-         * FlagshipStudyReport
-         * @description Week of Nov 19 extension: does adding flagship models to the pool pay off?
-         */
-        FlagshipStudyReport: {
-            /** Evaluations */
-            evaluations: components["schemas"]["EvaluationSet"][];
-            /** Excluded Flagships */
-            excluded_flagships: components["schemas"]["ExcludedFlagship"][];
-            /** Flagship Snapshot Id */
-            flagship_snapshot_id: string;
-            /** Flagships */
-            flagships: components["schemas"]["PoolModel"][];
-            /** Protocol */
-            protocol: string[];
-            /** Question */
-            question: string;
-            router: components["schemas"]["FlagshipRouter"];
-            /** Spend By Model Usd */
-            spend_by_model_usd: {
-                [key: string]: number;
-            };
-            /** Spend Usd */
-            spend_usd: {
-                [key: string]: number;
-            };
-            /** Strongest Flagship Id */
-            strongest_flagship_id: string;
-            /** Suite Matrix */
-            suite_matrix: components["schemas"]["LearnedMatrixRow"][];
-            /** Title */
-            title: string;
         };
         /** GenerationResult */
         GenerationResult: {
@@ -1124,7 +1085,7 @@ export interface components {
          * LearnedPool
          * @enum {string}
          */
-        LearnedPool: "standard" | "flagships";
+        LearnedPool: "standard" | "flagships" | "wide";
         /** LearnedRouteRequest */
         LearnedRouteRequest: {
             /**
@@ -1144,6 +1105,7 @@ export interface components {
         /** LearnedRouteResponse */
         LearnedRouteResponse: {
             decision: components["schemas"]["LearnedRoutingDecision"];
+            fallback?: components["schemas"]["RouteFallback"] | null;
             result: components["schemas"]["GenerationResult"];
         };
         /**
@@ -1470,6 +1432,49 @@ export interface components {
             /** Snapshot Id */
             snapshot_id: string;
         };
+        /**
+         * PoolStudyReport
+         * @description Does widening the frozen router's pool with these models pay off?
+         */
+        PoolStudyReport: {
+            /** Added */
+            added: components["schemas"]["PoolModel"][];
+            /** Added From */
+            added_from: {
+                [key: string]: string;
+            };
+            /** Added Snapshot Ids */
+            added_snapshot_ids: string[];
+            /** Base Snapshot Id */
+            base_snapshot_id: string;
+            /** Cell Tables */
+            cell_tables: string[];
+            /** Evaluations */
+            evaluations: components["schemas"]["EvaluationSet"][];
+            /** Excluded */
+            excluded: components["schemas"]["ExcludedModel"][];
+            /** Protocol */
+            protocol: string[];
+            /** Question */
+            question: string;
+            router: components["schemas"]["StudyRouter"];
+            /** Spend By Model Usd */
+            spend_by_model_usd: {
+                [key: string]: number;
+            };
+            /** Spend Usd */
+            spend_usd: {
+                [key: string]: number;
+            };
+            /** Strongest Added Id */
+            strongest_added_id: string;
+            /** Study Id */
+            study_id: string;
+            /** Suite Matrix */
+            suite_matrix: components["schemas"]["LearnedMatrixRow"][];
+            /** Title */
+            title: string;
+        };
         /** PricingSpec */
         PricingSpec: {
             /** Completion Per Token */
@@ -1571,6 +1576,19 @@ export interface components {
             prompts: number;
             /** Scenarios */
             scenarios: components["schemas"]["ScenarioResult"][];
+        };
+        /**
+         * RouteFallback
+         * @description The chosen model failed after its retry, so the next-best eligible model answered.
+         */
+        RouteFallback: {
+            /** Failed Error */
+            failed_error: string | null;
+            /** Failed Model Id */
+            failed_model_id: string;
+            failed_status: components["schemas"]["GenerationStatus"];
+            /** Model Id */
+            model_id: string;
         };
         /** RouteRequest */
         RouteRequest: {
@@ -1851,6 +1869,48 @@ export interface components {
             /** Strategy Id */
             strategy_id: string;
             total_cost_usd: components["schemas"]["Interval"];
+        };
+        /**
+         * StudyRouter
+         * @description The study's router: the Checkpoint 3 recipe refit on the widened pool.
+         */
+        StudyRouter: {
+            /** Artifact Id */
+            artifact_id: string;
+            /** Classifiers */
+            classifiers: {
+                [key: string]: components["schemas"]["ClassifierReport"];
+            };
+            /** Family */
+            family: string;
+            /** Features */
+            features: number;
+            /** Params */
+            params: {
+                [key: string]: number;
+            };
+            reference_model_task_prior: components["schemas"]["ClassifierMetrics"];
+            /** Selection Rule */
+            selection_rule: string;
+            /** Training Rows */
+            training_rows: number;
+            /** Validation Prompts */
+            validation_prompts: number;
+            /** Weight Tuning */
+            weight_tuning: components["schemas"]["WeightTuningResult"][];
+        };
+        /** StudySummary */
+        StudySummary: {
+            /** Added */
+            added: number;
+            /** Pool */
+            pool: string;
+            /** Question */
+            question: string;
+            /** Study Id */
+            study_id: string;
+            /** Title */
+            title: string;
         };
         /**
          * TaskGroup
@@ -2303,26 +2363,6 @@ export interface operations {
             };
         };
     };
-    flagship_study_api_v1_learned_flagships_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["FlagshipStudyReport"];
-                };
-            };
-        };
-    };
     learned_pool_api_v1_learned_pool_get: {
         parameters: {
             query?: never;
@@ -2383,6 +2423,57 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LearnedRouteResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    pool_studies_api_v1_learned_studies_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudySummary"][];
+                };
+            };
+        };
+    };
+    pool_study_api_v1_learned_studies__study_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                study_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PoolStudyReport"];
                 };
             };
             /** @description Validation Error */

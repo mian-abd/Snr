@@ -4,14 +4,14 @@ import { client } from '../api/client'
 import type { EvaluationSet, ExportTable, LearnedStrategyOutcome, PairedComparison, RoutingPriority } from '../api/types'
 import { IntervalRow, PathChart } from '../charts/Charts'
 import { ScatterLegend, TradeoffScatter, type TradeoffPoint } from '../charts/TradeoffScatter'
-import { evaluationLabel, evaluationOf, priorityLabel, priorityOrder, strategyFamily, strategyLabel, useFinalReport, useFlagshipReport, useLearnedReport } from '../lib/data'
+import { evaluationLabel, evaluationOf, priorityLabel, priorityOrder, strategyFamily, strategyLabel, useFinalReport, useLearnedReport, useStudyReports } from '../lib/data'
 import { pct, pValue, seconds, signed, span, usd } from '../lib/format'
 import { costLine, timeLine, verdict } from '../lib/comparisons'
 import { highlights } from '../lib/insights'
 import { useRoute } from '../lib/router'
 import { Badge, Card, ChartCard, Empty, Meter, ModelLogo, PageHeader, Section, Segmented, SideNav, Skeleton, Stat } from '../ui'
 import ui from '../ui/ui.module.css'
-import { FlagshipSection } from './FlagshipSection'
+import { StudySection } from './StudySection'
 import styles from './pages.module.css'
 
 const views = [
@@ -25,7 +25,8 @@ const nav = [
   { id: 'leaderboard', label: 'Leaderboard', icon: ListOrdered },
   { id: 'tradeoffs', label: 'Accuracy, cost, speed', icon: BarChart3 },
   { id: 'significance', label: 'Is it real?', icon: Sigma },
-  { id: 'flagships', label: 'With flagship models', icon: Gauge },
+  { id: 'study-flagship', label: 'With flagship models', icon: Gauge },
+  { id: 'study-wide', label: 'With every model', icon: Gauge },
   { id: 'errors', label: 'Where it goes wrong', icon: Search },
   { id: 'robustness', label: 'When things change', icon: FlaskConical },
   { id: 'priorities', label: 'Your priorities', icon: SlidersHorizontal },
@@ -139,9 +140,10 @@ function Leaderboard({ evaluation, view }: { evaluation: EvaluationSet; view: st
 export function ResearchPage() {
   const report = useFinalReport()
   const learned = useLearnedReport()
-  const flagship = useFlagshipReport()
+  const studies = useStudyReports()
+  const studyIds = studies.map((study) => `study-${study.study_id}`).join(',')
   const { query } = useRoute()
-  const navItems = useMemo(() => nav.filter((item) => item.id !== 'flagships' || flagship.data).map(({ id, label }) => ({ id, label })), [flagship.data])
+  const navItems = useMemo(() => nav.filter((item) => !item.id.startsWith('study-') || studyIds.split(',').includes(item.id)).map(({ id, label }) => ({ id, label })), [studyIds])
   const [evaluationId, setEvaluationId] = useState<EvaluationSet['evaluation_id']>('final')
   const [view, setView] = useState('all')
   const [preset, setPreset] = useState<RoutingPriority>('quality')
@@ -253,7 +255,7 @@ export function ResearchPage() {
             <p className={styles.small} style={{ marginTop: '0.6rem' }}>The bar shows the accuracy difference with its 95% interval; the line is zero. "No detectable difference" means the data cannot tell the two apart, not that they are identical.</p>
           </Section>
 
-          {flagship.data && <FlagshipSection report={flagship.data} evaluationId={evaluation.evaluation_id} />}
+          {studies.map((study) => <StudySection key={study.study_id} report={study} evaluationId={evaluation.evaluation_id} />)}
 
           <Section id="errors" icon={<Search size={18} />} title="Where the router goes wrong" description="Each choice compared with what every model actually did on the same prompt."
             actions={<Segmented label="Priority" value={preset} onChange={setPreset} options={priorityOrder.map((id) => ({ id, label: priorityLabel[id] }))} />}>

@@ -1,0 +1,156 @@
+{
+  "metadata_as_of": "2026-11-20T00:00:00Z",
+  "models": [
+    {
+      "access": "paid",
+      "api_key_env": "OPENROUTER_API_KEY",
+      "base_url": "https://openrouter.ai/api/v1",
+      "completion_price_per_token": "5E-7",
+      "context_length": 1050000,
+      "data_policy": "OpenRouter paid route pinned to OpenAI (standard tier).",
+      "display_name": "GPT-6 Luna",
+      "enabled": true,
+      "family": "OpenAI GPT",
+      "id": "gpt-6-luna",
+      "max_concurrency": 3,
+      "open_weight": false,
+      "parameters": "undisclosed",
+      "prompt_price_per_token": "1E-7",
+      "provider": "openrouter",
+      "request_options": {
+        "provider": {
+          "allow_fallbacks": false,
+          "order": [
+            "openai"
+          ]
+        }
+      },
+      "requests_per_minute": 60.0,
+      "upstream_model": "openai/gpt-6-luna"
+    },
+    {
+      "access": "paid",
+      "api_key_env": "OPENROUTER_API_KEY",
+      "base_url": "https://openrouter.ai/api/v1",
+      "completion_price_per_token": "2.8E-7",
+      "context_length": 1048576,
+      "data_policy": "OpenRouter paid route pinned to Xiaomi (its own FP8 deployment).",
+      "display_name": "MiMo-V2.6 Flash",
+      "enabled": true,
+      "family": "Xiaomi MiMo",
+      "id": "mimo-v2.6-flash",
+      "max_concurrency": 3,
+      "open_weight": true,
+      "parameters": "not recorded",
+      "prompt_price_per_token": "1.4E-7",
+      "provider": "openrouter",
+      "request_options": {
+        "provider": {
+          "allow_fallbacks": false,
+          "order": [
+            "xiaomi/fp8"
+          ]
+        }
+      },
+      "requests_per_minute": 60.0,
+      "upstream_model": "xiaomi/mimo-v2.6-flash"
+    },
+    {
+      "access": "paid",
+      "api_key_env": "OPENROUTER_API_KEY",
+      "base_url": "https://openrouter.ai/api/v1",
+      "completion_price_per_token": "5E-7",
+      "context_length": 1048576,
+      "data_policy": "OpenRouter paid route pinned to Meta.",
+      "display_name": "Muse Ember",
+      "enabled": true,
+      "family": "Meta Muse",
+      "id": "muse-ember",
+      "max_concurrency": 3,
+      "open_weight": false,
+      "parameters": "undisclosed",
+      "prompt_price_per_token": "1E-7",
+      "provider": "openrouter",
+      "request_options": {
+        "provider": {
+          "allow_fallbacks": false,
+          "order": [
+            "meta"
+          ]
+        }
+      },
+      "requests_per_minute": 60.0,
+      "upstream_model": "meta/muse-ember"
+    },
+    {
+      "access": "paid",
+      "api_key_env": "OPENROUTER_API_KEY",
+      "base_url": "https://openrouter.ai/api/v1",
+      "completion_price_per_token": "1.5E-7",
+      "context_length": 262144,
+      "data_policy": "OpenRouter paid route pinned to Mistral (zero data retention).",
+      "display_name": "Ministral 8B",
+      "enabled": true,
+      "family": "Mistral Ministral",
+      "id": "ministral-8b",
+      "max_concurrency": 3,
+      "open_weight": true,
+      "parameters": "8B",
+      "prompt_price_per_token": "1.5E-7",
+      "provider": "openrouter",
+      "request_options": {
+        "provider": {
+          "allow_fallbacks": false,
+          "order": [
+            "mistral/zdr"
+          ]
+        }
+      },
+      "requests_per_minute": 60.0,
+      "upstream_model": "mistralai/ministral-8b-2512"
+    },
+    {
+      "access": "free",
+      "api_key_env": "OPENROUTER_API_KEY",
+      "base_url": "https://openrouter.ai/api/v1",
+      "completion_price_per_token": "0",
+      "context_length": 1024000,
+      "data_policy": "Free endpoint on OpenRouter; free endpoints may log prompts and use them for training. Counts against the account-wide 1,000 free requests per day.",
+      "display_name": "ERNIE 5.5 Flash (free preview)",
+      "enabled": true,
+      "family": "Baidu ERNIE",
+      "id": "ernie-5.5-flash-free",
+      "max_concurrency": 2,
+      "open_weight": true,
+      "parameters": "not recorded",
+      "prompt_price_per_token": "0",
+      "provider": "openrouter",
+      "request_options": {},
+      "requests_per_minute": 18.0,
+      "upstream_model": "baidu/ernie-5.5-flash-preview:free"
+    },
+    {
+      "access": "free",
+      "api_key_env": "OPENROUTER_API_KEY",
+      "base_url": "https://openrouter.ai/api/v1",
+      "completion_price_per_token": "0",
+      "context_length": 1000000,
+      "data_policy": "Free endpoint on OpenRouter; free endpoints may log prompts and use them for training. Counts against the account-wide 1,000 free requests per day.",
+      "display_name": "Nemotron 3.5 Lightning (free)",
+      "enabled": true,
+      "family": "NVIDIA Nemotron",
+      "id": "nemotron-3.5-lightning-free",
+      "max_concurrency": 2,
+      "open_weight": true,
+      "parameters": "not recorded",
+      "prompt_price_per_token": "0",
+      "provider": "openrouter",
+      "request_options": {},
+      "requests_per_minute": 18.0,
+      "upstream_model": "nvidia/nemotron-3.5-lightning:free"
+    }
+  ],
+  "models_sha256": "60bfe0d907b2c60378a60d1a46bda7b5bdf13756dc54315942eaf56d313d9832",
+  "schema_version": "1.0",
+  "snapshot_id": "budget-pool-2026-11-20"
+}

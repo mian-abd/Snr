@@ -3,7 +3,7 @@ import type { EvaluationSet } from '../api/types'
 import { ShareBars } from '../charts/Charts'
 import { ModelBars, type ModelBar } from '../charts/ModelBars'
 import { ScatterLegend, TradeoffScatter, type TradeoffPoint } from '../charts/TradeoffScatter'
-import { evaluationOf, find, priorityLabel, priorityOrder, useFinalReport, useFlagshipReport, useLearnedReport } from '../lib/data'
+import { evaluationOf, find, priorityLabel, priorityOrder, studyRouterName, useFinalReport, useLearnedReport, useStudyReports, widest } from '../lib/data'
 import { detailLines, fleetRows, listNames, routerName, routerRows, type FleetRow } from '../lib/fleet'
 import { pct, seconds, usd } from '../lib/format'
 import { Link } from '../lib/Link'
@@ -30,8 +30,11 @@ export function HomePage() {
   const report = useFinalReport()
   const learned = useLearnedReport()
   const fresh = evaluationOf(report.data, 'final')
-  const flagship = useFlagshipReport()
-  const extended = flagship.data?.evaluations.find((item) => item.evaluation_id === 'final')
+  const studies = useStudyReports()
+  const study = widest(studies)
+  const extended = study?.evaluations.find((item) => item.evaluation_id === 'final')
+  const routerWord = studyRouterName[study?.study_id ?? 'flagship'] ?? 'Study router'
+  const addedWord = study?.study_id === 'wide' ? 'the added models' : 'the flagships'
   const suitePrompts = learned.data?.matrix[0]?.prompts ?? 600
 
   if (!fresh) {
@@ -57,11 +60,11 @@ export function HomePage() {
     )
   }
 
-  // With the flagship study, the charts show all thirteen models on the same fresh prompts.
+  // With a pool study, the charts show every measured model on the same fresh prompts.
   const matrix = extended?.matrix ?? fresh.matrix
   const models = fleetRows(matrix).filter((m) => m.served)
   const retired = fleetRows(matrix).filter((m) => !m.served)
-  const flagshipIds = new Set(flagship.data?.flagships.map((model) => model.id) ?? [])
+  const flagshipIds = new Set(study?.added.map((model) => model.id) ?? [])
   const second = extended ? find(extended.strategies, 'learned:quality') : undefined
   const secondFast = extended ? find(extended.strategies, 'learned:latency') : undefined
   const frozenFast = extended ? find(extended.strategies, 'previous_router:latency') : undefined
@@ -74,8 +77,8 @@ export function HomePage() {
   const accuracyBars: ModelBar[] = [
     ...f.byAccuracy.map((m) => ({ id: m.id, name: m.name, value: m.accuracy, display: pctLabel(m.accuracy), modelId: m.id, local: m.local, details: detailLines(m.correct, m.prompts, m.cost, m.latencyMs) })),
     ...routers.map((r) => ({ id: r.strategy_id, name: routerName(r), value: r.accuracy, display: pctLabel(r.accuracy), kind: 'router' as const, details: detailLines(r.correct, r.prompts, r.total_cost_usd, r.median_latency_ms) })),
-    ...(second ? [{ id: 'second:quality', name: 'Router + flagships · Best quality', value: second.accuracy, display: pctLabel(second.accuracy), kind: 'router' as const, details: detailLines(second.correct, second.prompts, second.total_cost_usd, second.median_latency_ms) }] : []),
-    ...(secondFast ? [{ id: 'second:latency', name: 'Router + flagships · Fastest', value: secondFast.accuracy, display: pctLabel(secondFast.accuracy), kind: 'router' as const, details: detailLines(secondFast.correct, secondFast.prompts, secondFast.total_cost_usd, secondFast.median_latency_ms) }] : []),
+    ...(second ? [{ id: 'second:quality', name: `${routerWord} · Best quality`, value: second.accuracy, display: pctLabel(second.accuracy), kind: 'router' as const, details: detailLines(second.correct, second.prompts, second.total_cost_usd, second.median_latency_ms) }] : []),
+    ...(secondFast ? [{ id: 'second:latency', name: `${routerWord} · Fastest`, value: secondFast.accuracy, display: pctLabel(secondFast.accuracy), kind: 'router' as const, details: detailLines(secondFast.correct, secondFast.prompts, secondFast.total_cost_usd, secondFast.median_latency_ms) }] : []),
   ].sort((a, b) => b.value - a.value)
   const costBars: ModelBar[] = [...f.paid, ...f.free].map((m) => ({ id: m.id, name: m.name, value: m.cost, display: costLabel(m.cost), modelId: m.id, local: m.local, details: detailLines(m.correct, m.prompts, m.cost, m.latencyMs) }))
     .sort((a, b) => b.value - a.value)
@@ -85,7 +88,7 @@ export function HomePage() {
   const scatter: TradeoffPoint[] = [
     ...models.map((m) => ({ id: m.id, label: m.name, kind: 'model' as const, modelId: m.id, x: m.cost, y: m.accuracy * 100, details: detailLines(m.correct, m.prompts, m.cost, m.latencyMs) })),
     ...routers.map((r) => ({ id: r.strategy_id, label: routerName(r), kind: 'router' as const, x: r.total_cost_usd, y: r.accuracy * 100, details: detailLines(r.correct, r.prompts, r.total_cost_usd, r.median_latency_ms) })),
-    ...(second ? [{ id: 'second:quality', label: 'Router + flagships · Best quality', kind: 'router' as const, x: second.total_cost_usd, y: second.accuracy * 100, details: detailLines(second.correct, second.prompts, second.total_cost_usd, second.median_latency_ms) }] : []),
+    ...(second ? [{ id: 'second:quality', label: `${routerWord} · Best quality`, kind: 'router' as const, x: second.total_cost_usd, y: second.accuracy * 100, details: detailLines(second.correct, second.prompts, second.total_cost_usd, second.median_latency_ms) }] : []),
   ]
   const names = new Map(matrix.map((row) => [row.model_id, row.display_name.replace(/\s*\((free|local)\)/i, '')]))
   const shares = priorityOrder.map((priority) => {
@@ -114,7 +117,7 @@ export function HomePage() {
             </div>
           </div>
           <div className={styles.heroText}>
-            <p>An open study of routing language-model prompts by what they need. We measured {matrix.length} models{flagshipIds.size ? `, ${flagshipIds.size} of them flagships,` : ''} on {(suitePrompts + fresh.prompts).toLocaleString()} benchmark prompts in math, knowledge, and code, trained a small router on the results, and tested it on {fresh.prompts} fresh prompts it had never seen.</p>
+            <p>An open study of routing language-model prompts by what they need. We measured {matrix.length} models{flagshipIds.size ? `, ${flagshipIds.size} of them added later as ${study?.study_id === 'wide' ? 'flagship and budget models' : 'flagships'},` : ''} on {(suitePrompts + fresh.prompts).toLocaleString()} benchmark prompts in math, knowledge, and code, trained a small router on the results, and tested it on {fresh.prompts} fresh prompts it had never seen.</p>
             <p>Every number on this site comes from those runs, with what the providers actually billed, and can be downloaded. <Link to="/research?section=method" className={styles.inline}>Method and limits</Link></p>
           </div>
         </section>
@@ -137,8 +140,8 @@ export function HomePage() {
             </Highlight>
           )}
           {second && bestFlagship && secondFast && frozenFast && (
-            <Highlight title="Flagships" models={[...flagshipIds]}>
-              <b>{bestFlagship.name}</b> got {pct(bestFlagship.accuracy, 0)} right for {usd(bestFlagship.cost)} at {seconds(bestFlagship.latencyMs)}. With the flagships in the pool, the fastest setting got <b>{secondFast.correct} right instead of {frozenFast.correct}</b>{fastGain && fastGain.median_latency_difference_ci.high < 0 ? `, ${Math.abs(fastGain.median_latency_difference_ms / 1000).toFixed(1)} s quicker` : ''}; best quality got {second.correct}, against {f.lq?.correct ?? '—'} without them.
+            <Highlight title={study?.study_id === 'wide' ? 'More models' : 'Flagships'} models={[...flagshipIds].slice(0, 6)}>
+              <b>{bestFlagship.name}</b> got {pct(bestFlagship.accuracy, 0)} right for {usd(bestFlagship.cost)} at {seconds(bestFlagship.latencyMs)}. With {addedWord} in the pool, the fastest setting got <b>{secondFast.correct} right instead of {frozenFast.correct}</b>{fastGain && fastGain.median_latency_difference_ci.high < 0 ? `, ${Math.abs(fastGain.median_latency_difference_ms / 1000).toFixed(1)} s quicker` : ''}; best quality got {second.correct}, against {f.lq?.correct ?? '—'} without them.
             </Highlight>
           )}
           {f.lc && f.fc && savedCheap != null && (

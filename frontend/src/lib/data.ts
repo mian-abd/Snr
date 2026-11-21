@@ -3,7 +3,7 @@ import { client } from '../api/client'
 import type {
   EvaluationSet,
   FinalEvaluationReport,
-  FlagshipStudyReport,
+  PoolStudyReport,
   LearnedMatrixRow,
   LearnedRouterReport,
   LearnedStrategyOutcome,
@@ -19,7 +19,21 @@ export const catalogKey = ['learned-catalog']
 export const useHealth = () => useQuery({ queryKey: ['health'], queryFn: client.health, refetchInterval: 15_000 })
 export const useFinalReport = () => useQuery({ queryKey: ['final-report'], queryFn: client.finalReport, staleTime: Infinity })
 export const useLearnedReport = () => useQuery({ queryKey: ['learned-report'], queryFn: client.learnedReport, staleTime: Infinity })
-export const useFlagshipReport = () => useQuery({ queryKey: ['flagship-report'], queryFn: client.flagshipReport, staleTime: Infinity })
+export const useStudies = () => useQuery({ queryKey: ['studies'], queryFn: client.studies, staleTime: Infinity })
+export const useStudy = (id: string) => useQuery({ queryKey: ['study', id], queryFn: () => client.study(id), staleTime: Infinity })
+
+/** Every pool study that has been run, narrowest first (flagships, then every model). */
+export function useStudyReports(): PoolStudyReport[] {
+  const flagship = useStudy('flagship')
+  const wide = useStudy('wide')
+  return [flagship.data, wide.data].filter((item): item is PoolStudyReport => Boolean(item))
+}
+
+/** The widest study: the one whose charts cover the most models. */
+export const widest = (studies: PoolStudyReport[]) => studies[studies.length - 1]
+
+export const addedLabel: Record<string, string> = { flagship: 'Flagship', budget: 'Budget' }
+export const studyRouterName: Record<string, string> = { flagship: 'Router + flagships', wide: 'Router · every model' }
 export const usePool = () => useQuery({ queryKey: ['learned-pool'], queryFn: client.learnedPool, staleTime: Infinity })
 export const useCatalog = () => useQuery({ queryKey: catalogKey, queryFn: client.learnedCatalog })
 
@@ -83,8 +97,8 @@ export type ModelView = {
   inRouter: boolean
   fresh: LearnedMatrixRow | undefined
   suite: LearnedMatrixRow | undefined
-  /** In the flagship study only: reached by the second router, not the frozen one. */
-  flagship: boolean
+  /** Added in a pool study ("flagship", "budget"): reached by a study's router, not the frozen one. */
+  added: string | null
 }
 
 export function modelViews(
@@ -92,7 +106,7 @@ export function modelViews(
   catalog: LiveCatalogStatus | null | undefined,
   learned: LearnedRouterReport | null | undefined,
   final: FinalEvaluationReport | null | undefined,
-  flagships?: FlagshipStudyReport | null,
+  studies: PoolStudyReport[] = [],
 ): ModelView[] {
   if (!pool) return []
   const status = new Map(catalog?.models.map((item) => [item.model_id, item]))
@@ -106,13 +120,17 @@ export function modelViews(
     inRouter: routed.size === 0 || routed.has(model.id),
     fresh: fresh.get(model.id),
     suite: suite.get(model.id),
-    flagship: false,
+    added: null,
   }))
-  if (flagships) {
-    const flagshipFresh = new Map(flagships.evaluations.find((item) => item.evaluation_id === 'final')?.matrix.map((row) => [row.model_id, row]))
-    const flagshipSuite = new Map(flagships.suite_matrix.map((row) => [row.model_id, row]))
-    for (const model of flagships.flagships) {
-      views.push({ id: model.id, pool: model, status: status.get(model.id), inRouter: false, fresh: flagshipFresh.get(model.id), suite: flagshipSuite.get(model.id), flagship: true })
+  const seen = new Set(views.map((view) => view.id))
+  // The widest study first, so each added model takes its numbers from the largest pool.
+  for (const study of [...studies].reverse()) {
+    const studyFresh = new Map(study.evaluations.find((item) => item.evaluation_id === 'final')?.matrix.map((row) => [row.model_id, row]))
+    const studySuite = new Map(study.suite_matrix.map((row) => [row.model_id, row]))
+    for (const model of study.added) {
+      if (seen.has(model.id)) continue
+      seen.add(model.id)
+      views.push({ id: model.id, pool: model, status: status.get(model.id), inRouter: false, fresh: studyFresh.get(model.id), suite: studySuite.get(model.id), added: study.added_from[model.id] ?? 'flagship' })
     }
   }
   return views

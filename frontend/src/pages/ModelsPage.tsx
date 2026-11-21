@@ -3,7 +3,7 @@ import { ArrowDown, ArrowUp, ArrowUpRight, RefreshCw, Satellite } from 'lucide-r
 import { useState } from 'react'
 import { client } from '../api/client'
 import type { LiveCatalogStatus } from '../api/types'
-import { accessLabel, catalogKey, modelViews, providerLabel, useCatalog, useFinalReport, useFlagshipReport, useLearnedReport, usePool, type ModelView } from '../lib/data'
+import { accessLabel, addedLabel, catalogKey, modelViews, providerLabel, useCatalog, useFinalReport, useLearnedReport, usePool, useStudyReports, type ModelView } from '../lib/data'
 import { perMillion, seconds, shortTime, usd } from '../lib/format'
 import { makerOf } from '../lib/makers'
 import { availability, changedPrice, priceOf } from '../lib/models'
@@ -12,7 +12,7 @@ import { Button, Empty, ModelLogo, Notice, PageHeader, Segmented, Skeleton } fro
 import ui from '../ui/ui.module.css'
 import styles from './models.module.css'
 
-type Filter = 'all' | 'paid' | 'free' | 'local' | 'flagship'
+type Filter = 'all' | 'paid' | 'free' | 'local' | 'flagship' | 'budget'
 type SortKey = 'name' | 'fresh' | 'math' | 'qa' | 'code' | 'input' | 'output' | 'cost' | 'speed' | 'context'
 
 export function CatalogBar({ status }: { status: LiveCatalogStatus | null | undefined }) {
@@ -71,14 +71,15 @@ export function ModelsPage() {
   const catalog = useCatalog()
   const learned = useLearnedReport()
   const final = useFinalReport()
-  const flagships = useFlagshipReport()
+  const studies = useStudyReports()
   const [filter, setFilter] = useState<Filter>('all')
   const [sort, setSort] = useState<{ key: SortKey; ascending: boolean }>({ key: 'fresh', ascending: false })
   const [query, setQuery] = useState('')
-  const views = modelViews(pool.data, catalog.data, learned.data, final.data, flagships.data)
+  const views = modelViews(pool.data, catalog.data, learned.data, final.data, studies)
+  const groups = [...new Set(views.map((view) => view.added).filter((group): group is string => Boolean(group)))]
   const freshPrompts = final.data?.evaluations.find((item) => item.evaluation_id === 'final')?.prompts ?? 300
   const rows = views
-    .filter((view) => filter === 'all' || (filter === 'flagship' ? view.flagship : view.pool.access === filter))
+    .filter((view) => filter === 'all' || (filter === 'flagship' || filter === 'budget' ? view.added === filter : view.pool.access === filter))
     .filter((view) => `${view.pool.display_name} ${view.id} ${view.pool.family} ${makerOf(view.id).name}`.toLowerCase().includes(query.toLowerCase()))
     .sort((a, b) => {
       const x = sorters[sort.key](a)
@@ -111,7 +112,7 @@ export function ModelsPage() {
         <CatalogBar status={catalog.data} />
         <div className={styles.toolbar}>
           <input className={`${ui.input} ${styles.search}`} type="search" placeholder="Filter, e.g. Gemini, free, Google" aria-label="Filter models" value={query} onChange={(event) => setQuery(event.target.value)} />
-          <Segmented label="Access" value={filter} onChange={setFilter} options={[{ id: 'all', label: 'All' }, { id: 'paid', label: 'Paid' }, { id: 'free', label: 'Free' }, { id: 'local', label: 'Local' }, ...(flagships.data ? [{ id: 'flagship' as const, label: 'Flagships' }] : [])]} />
+          <Segmented label="Access" value={filter} onChange={setFilter} options={[{ id: 'all', label: 'All' }, { id: 'paid', label: 'Paid' }, { id: 'free', label: 'Free' }, { id: 'local', label: 'Local' }, ...groups.map((group) => ({ id: group as Filter, label: `${addedLabel[group] ?? group}${group === 'flagship' ? 's' : ''}` }))]} />
         </div>
         {pool.isLoading && <Skeleton height={420} />}
         {pool.data === null && <Empty title="No model pool loaded">The router has not been trained on this server yet.</Empty>}
@@ -150,12 +151,12 @@ export function ModelsPage() {
                   const maker = makerOf(view.id)
                   const isServed = served(view)
                   return (
-                    <tr key={view.id} className={(!view.inRouter && !view.flagship) || state.tone === 'bad' ? styles.dim : undefined}>
+                    <tr key={view.id} className={(!view.inRouter && !view.added) || state.tone === 'bad' ? styles.dim : undefined}>
                       <td className={styles.modelCell} style={{ ['--maker' as string]: maker.color }}>
                         <Link to={`/models/${encodeURIComponent(view.id)}`} className={styles.modelLink}>
                           <ModelLogo id={view.id} size={18} local={view.pool.access === 'local'} />
                           <span className={styles.modelName}>{view.pool.display_name.replace(/\s*\((free|local)\)/i, '')}</span>
-                          <span className={styles.modelSub}>{maker.name} · {accessLabel[view.pool.access]}{view.flagship ? ' · Flagship' : ''}</span>
+                          <span className={styles.modelSub}>{maker.name} · {accessLabel[view.pool.access]}{view.added ? ` · ${addedLabel[view.added] ?? 'Added'}` : ''}</span>
                         </Link>
                       </td>
                       <td><Score value={freshShare(view)} /></td>

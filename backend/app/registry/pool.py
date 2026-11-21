@@ -78,12 +78,12 @@ def load_pool(path: Path) -> PoolSnapshot:
     return snapshot
 
 
-def combine_pools(base: PoolSnapshot, extra: PoolSnapshot) -> PoolSnapshot:
-    """One pool with every model of ``base`` and then ``extra`` (the flagship study's pool)."""
-    models = [*base.models, *extra.models]
+def combine_pools(base: PoolSnapshot, *extras: PoolSnapshot) -> PoolSnapshot:
+    """One pool with every model of ``base`` and then each of ``extras`` (a pool study's pool)."""
+    models = [*base.models, *(model for extra in extras for model in extra.models)]
     return PoolSnapshot(
-        snapshot_id=f"{base.snapshot_id}+{extra.snapshot_id}",
-        metadata_as_of=extra.metadata_as_of,
+        snapshot_id="+".join([base.snapshot_id, *(extra.snapshot_id for extra in extras)]),
+        metadata_as_of=(extras[-1] if extras else base).metadata_as_of,
         models_sha256=models_sha256(models),
         models=models,
     )

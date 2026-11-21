@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import httpx
@@ -23,6 +23,7 @@ from app.domain.models import (
     RoutingPool,
 )
 from app.learned.router import ROUTER_MODEL_FILE, ROUTER_POOL_FILE, LearnedRouter, load_router
+from app.learned.studies import POOL_STUDY, STUDIES
 from app.providers import GenerationService
 from app.providers.openai_compatible import OpenAICompatibleAdapter
 from app.registry import ModelRegistry
@@ -32,8 +33,6 @@ from app.registry.pool import combine_pools, endpoint_for, load_pool
 REGISTRY_PATH = REPOSITORY_ROOT / "data" / "registry" / "openrouter-2026-09-30.json"
 PAID_REGISTRY_PATH = REPOSITORY_ROOT / "data" / "registry" / "openrouter-paid-2026-10-23.json"
 CATALOG_TIMEOUT_SECONDS = 12.0  # startup waits at most this long, then uses the snapshot
-FLAGSHIP_ROUTER_FILE = Path("learned") / "flagship-router-model.json"  # relative to data dir
-FLAGSHIP_POOL_FILE = Path("registry") / "flagship-pool-2026-11-14.json"
 PAID_MODEL_IDS = (
     "google/gemma-4-26b-a4b-it",
     "inception/mercury-3",
@@ -54,8 +53,9 @@ class AppServices:
     paid_benchmark_coordinator: BenchmarkCoordinator | None = None
     learned_router: LearnedRouter | None = None
     learned_generation_service: GenerationService | None = None
-    flagship_router: LearnedRouter | None = None
-    flagship_generation_service: GenerationService | None = None
+    # Pool studies' routers, by study ID ("flagship", "wide"), and clients for their pools.
+    study_routers: dict[str, LearnedRouter] = field(default_factory=dict)
+    study_generation_services: dict[str, GenerationService] = field(default_factory=dict)
     catalog: LiveCatalogStatus | None = None
     catalog_transport: httpx.AsyncBaseTransport | None = None  # tests inject a mock
 
@@ -68,10 +68,10 @@ class AppServices:
         if not self.settings.live_catalog_check:
             self.catalog = snapshot_status(snapshot)
             return self.catalog
-        # The flagship router's extra models are checked too, so both pools see the same catalog.
+        # The studies' added models are checked too, so every pool sees the same catalog.
         models = dict(router.models)
-        if self.flagship_router is not None:
-            for model_id, model in self.flagship_router.models.items():
+        for other in self.study_routers.values():
+            for model_id, model in other.models.items():
                 models.setdefault(model_id, model)
         try:
             self.catalog = await asyncio.wait_for(
@@ -87,12 +87,14 @@ class AppServices:
         return self.catalog
 
     def router_for(self, pool: LearnedPool) -> LearnedRouter | None:
-        return self.flagship_router if pool == LearnedPool.FLAGSHIPS else self.learned_router
+        if pool == LearnedPool.STANDARD:
+            return self.learned_router
+        return self.study_routers.get(POOL_STUDY[pool.value])
 
     def generation_for(self, pool: LearnedPool) -> GenerationService | None:
-        if pool == LearnedPool.FLAGSHIPS:
-            return self.flagship_generation_service
-        return self.learned_generation_service
+        if pool == LearnedPool.STANDARD:
+            return self.learned_generation_service
+        return self.study_generation_services.get(POOL_STUDY[pool.value])
 
     def pool_registry(self, pool: RoutingPool) -> ModelRegistry | None:
         return self.routing_registry if pool == RoutingPool.PAID else self.registry
@@ -176,22 +178,24 @@ def build_learned_services(
     return router, GenerationService(adapter)
 
 
-def build_flagship_services(
-    settings: Settings,
+def build_study_services(
+    settings: Settings, study_id: str
 ) -> tuple[LearnedRouter | None, GenerationService | None]:
-    """The flagship study's second router and a client for its pool, if it has been fit."""
-    artifact = settings.data_dir / FLAGSHIP_ROUTER_FILE
+    """A pool study's router and a client for its pool, if that study has been fit."""
+    spec = STUDIES[study_id]
+    artifact = settings.data_dir / "learned" / spec.router_path.name
     if not artifact.exists():
         return None, None
     try:
         pool = combine_pools(
             load_pool(settings.data_dir / ROUTER_POOL_FILE),
-            load_pool(settings.data_dir / FLAGSHIP_POOL_FILE),
+            *(load_pool(settings.data_dir / "registry" / added.registry_file)
+              for added in spec.added),
         )
         router = load_router(artifact, pool)
     except (OSError, ValueError) as exc:
-        # The flagship router is optional: a broken file must not take the standard one down.
-        logging.getLogger(__name__).warning("Flagship router not loaded: %s", exc)
+        # Study routers are optional: a broken file must not take the standard one down.
+        logging.getLogger(__name__).warning("%s router not loaded: %s", study_id, exc)
         return None, None
     keys = (
         {"OPENROUTER_API_KEY": settings.openrouter_api_key.get_secret_value()}
@@ -212,7 +216,9 @@ def build_services(settings: Settings) -> AppServices:
         require_free=False,
     )
     learned_router, learned_service = build_learned_services(settings)
-    flagship_router, flagship_service = build_flagship_services(settings)
+    studies = {study_id: build_study_services(settings, study_id) for study_id in STUDIES}
+    study_routers = {key: router for key, (router, _) in studies.items() if router is not None}
+    study_services = {key: service for key, (_, service) in studies.items() if service is not None}
     if not settings.credential_configured:
         return AppServices(
             settings=settings,
@@ -222,8 +228,8 @@ def build_services(settings: Settings) -> AppServices:
             routing_registry=routing_registry,
             learned_router=learned_router,
             learned_generation_service=learned_service,
-            flagship_router=flagship_router,
-            flagship_generation_service=flagship_service,
+            study_routers=study_routers,
+            study_generation_services=study_services,
         )
     assert settings.openrouter_api_key is not None
     from app.providers.litellm_openrouter import LiteLLMOpenRouterAdapter
@@ -275,6 +281,6 @@ def build_services(settings: Settings) -> AppServices:
         paid_benchmark_coordinator=BenchmarkCoordinator(paid_runner),
         learned_router=learned_router,
         learned_generation_service=learned_service,
-        flagship_router=flagship_router,
-        flagship_generation_service=flagship_service,
+        study_routers=study_routers,
+        study_generation_services=study_services,
     )

@@ -1,8 +1,12 @@
 {
+  "study_id": "flagship",
   "title": "With flagship models",
   "question": "Does adding 3 flagship models to the pool pay off?",
-  "flagship_snapshot_id": "flagship-pool-2026-11-14",
-  "flagships": [
+  "base_snapshot_id": "cp3-pool-2026-10-27",
+  "added_snapshot_ids": [
+    "flagship-pool-2026-11-14"
+  ],
+  "added": [
     {
       "id": "gpt-6.1-sol",
       "display_name": "GPT-6.1 Sol",
@@ -85,7 +89,12 @@
       "enabled": true
     }
   ],
-  "excluded_flagships": [
+  "added_from": {
+    "gpt-6.1-sol": "flagship",
+    "gemini-4-carbon": "flagship",
+    "kimi-k3.1-pro": "flagship"
+  },
+  "excluded": [
     {
       "model_id": "grok-4.7",
       "display_name": "Grok 4.7",
@@ -95,7 +104,7 @@
       "reason": "Stopped on 2026-11-14 after 375 of 900 prompts. Its reasoning ignored the 4,096-token answer limit on knowledge questions (one answer ran to 35,234 tokens and ten minutes), so finishing would have taken the flagship runs past their $25 budget."
     }
   ],
-  "strongest_flagship_id": "gemini-4-carbon",
+  "strongest_added_id": "gemini-4-carbon",
   "router": {
     "artifact_id": "cp3-full+flagship-cp3-logistic_regression-C0.003",
     "family": "logistic_regression",
@@ -1374,7 +1383,7 @@
           }
         },
         {
-          "strategy_id": "fixed_top_flagship",
+          "strategy_id": "fixed_top_added",
           "prompts": 120,
           "correct": 110,
           "accuracy": 0.9166666666666666,
@@ -1809,7 +1818,7 @@
           }
         },
         {
-          "strategy_id": "fixed_top_flagship",
+          "strategy_id": "fixed_top_added",
           "accuracy": {
             "low": 0.8666666667,
             "high": 0.9583333333
@@ -1919,7 +1928,7 @@
         },
         {
           "strategy_id": "learned:quality",
-          "baseline_id": "fixed_top_flagship",
+          "baseline_id": "fixed_top_added",
           "question": "Is the best-quality setting as accurate as always using the strongest flagship, for less?",
           "prompts": 120,
           "correct": 111,
@@ -3773,7 +3782,7 @@
           }
         },
         {
-          "strategy_id": "fixed_top_flagship",
+          "strategy_id": "fixed_top_added",
           "prompts": 300,
           "correct": 284,
           "accuracy": 0.9466666666666667,
@@ -4287,7 +4296,7 @@
           }
         },
         {
-          "strategy_id": "fixed_top_flagship",
+          "strategy_id": "fixed_top_added",
           "accuracy": {
             "low": 0.92,
             "high": 0.97
@@ -4397,7 +4406,7 @@
         },
         {
           "strategy_id": "learned:quality",
-          "baseline_id": "fixed_top_flagship",
+          "baseline_id": "fixed_top_added",
           "question": "Is the best-quality setting as accurate as always using the strongest flagship, for less?",
           "prompts": 300,
           "correct": 283,
@@ -5461,6 +5470,10 @@
       "median_latency_ms": 23800.0,
       "cost_usd": 0.0
     }
+  ],
+  "cell_tables": [
+    "data/learned/cells.jsonl",
+    "data/learned/flagship-cells.jsonl"
   ],
   "spend_usd": {
     "cp3": 11.515083,

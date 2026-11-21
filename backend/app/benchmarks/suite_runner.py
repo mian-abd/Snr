@@ -50,7 +50,8 @@ SUITES = {"cp3": SUITE_PATH, "final": FINAL_PATH}
 DEFAULT_RUN_IDS = {"cp3": "cp3-full", "final": "final-heldout"}
 POOL_PATH = REPOSITORY_ROOT / "data" / "registry" / "cp3-pool-2026-10-27.json"
 FLAGSHIP_POOL_PATH = REPOSITORY_ROOT / "data" / "registry" / "flagship-pool-2026-11-14.json"
-POOLS = {"cp3": POOL_PATH, "flagship": FLAGSHIP_POOL_PATH}
+BUDGET_POOL_PATH = REPOSITORY_ROOT / "data" / "registry" / "budget-pool-2026-11-20.json"
+POOLS = {"cp3": POOL_PATH, "flagship": FLAGSHIP_POOL_PATH, "budget": BUDGET_POOL_PATH}
 RUNS_DIR = REPOSITORY_ROOT / "data" / "local" / "cp3"
 SPEND_CAP_USD = Decimal("15.00")
 MAX_SPEND_CAP_USD = Decimal("25.00")  # the owner's ceiling for any one run (2026-11-14)
@@ -291,14 +292,21 @@ async def run(args: argparse.Namespace) -> int:
 
     run_id = args.run_id or ("cp3-smoke" if args.smoke else DEFAULT_RUN_IDS[args.suite])
     run_dir = RUNS_DIR / run_id
+    # The cap covers this run plus any related runs named with --count-spend-from, so one budget
+    # can span the suite, the fresh set, and the smoke test.
+    related = [name for name in (args.count_spend_from or "").split(",") if name]
+    counted = [run_dir, *(RUNS_DIR / name for name in related)]
     spent = sum(
         (
             Decimal(str(row["result"]["cost_usd"] or "0"))
-            for path in run_dir.glob("*/attempts.jsonl")
+            for folder in counted
+            for path in folder.glob("*/attempts.jsonl")
             for row in read_jsonl(path)
         ),
         Decimal("0"),
     )
+    if counted[1:]:
+        print(f"already spent ${spent:.4f} across {', '.join(folder.name for folder in counted)}")
     budget = Budget(cap, spent, free_used_today=args.free_used_today)
     adapter = OpenAICompatibleAdapter([endpoint_for(model) for model in models], keys=keys)
     # One manifest per model, so separate invocations can add models to the same run.
@@ -343,6 +351,8 @@ def main() -> int:
     parser.add_argument("--spend-cap", help=f"Paid spend cap in USD for this run "
                         f"(default {SPEND_CAP_USD}, at most {MAX_SPEND_CAP_USD})")
     parser.add_argument("--models", help="Comma-separated pool IDs (default: all with keys)")
+    parser.add_argument("--count-spend-from",
+                        help="Comma-separated other run IDs whose spend counts against the cap")
     parser.add_argument("--smoke", type=int, help="Only the first N prompts of each benchmark")
     parser.add_argument("--run-id", help="Resume or name a run")
     parser.add_argument("--free-used-today", type=int, default=0,

@@ -612,7 +612,8 @@ class WhatIfChanges(StrictModel):
 
 class LearnedPool(StrEnum):
     STANDARD = "standard"  # the frozen Checkpoint 3 router and its pool
-    FLAGSHIPS = "flagships"  # the second router, refit with the flagship models
+    FLAGSHIPS = "flagships"  # the flagship study's router
+    WIDE = "wide"  # the wide study's router: flagships and budget models
 
 
 class LearnedRouteRequest(StrictModel):
@@ -673,9 +674,19 @@ class LearnedRoutingDecision(StrictModel):
     catalog_checked_at_utc: datetime | None = None
 
 
+class RouteFallback(StrictModel):
+    """The chosen model failed after its retry, so the next-best eligible model answered."""
+
+    failed_model_id: str
+    failed_status: GenerationStatus
+    failed_error: str | None
+    model_id: str
+
+
 class LearnedRouteResponse(StrictModel):
     decision: LearnedRoutingDecision
     result: GenerationResult
+    fallback: RouteFallback | None = None
 
 
 class WhatIfRequest(StrictModel):

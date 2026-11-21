@@ -1001,9 +1001,9 @@
         "title": "EvaluationSet",
         "type": "object"
       },
-      "ExcludedFlagship": {
+      "ExcludedModel": {
         "additionalProperties": false,
-        "description": "A flagship that did not answer every prompt, so neither router can be fit with it.",
+        "description": "A listed model that did not answer every prompt, so no router can be fit with it.",
         "properties": {
           "display_name": {
             "title": "Display Name",
@@ -1038,7 +1038,7 @@
           "spend_usd",
           "reason"
         ],
-        "title": "ExcludedFlagship",
+        "title": "ExcludedModel",
         "type": "object"
       },
       "FinalEvaluationReport": {
@@ -1109,171 +1109,6 @@
           "spend_usd"
         ],
         "title": "FinalEvaluationReport",
-        "type": "object"
-      },
-      "FlagshipRouter": {
-        "additionalProperties": false,
-        "description": "The second router: the Checkpoint 3 recipe refit with the flagship models in the pool.",
-        "properties": {
-          "artifact_id": {
-            "title": "Artifact Id",
-            "type": "string"
-          },
-          "classifiers": {
-            "additionalProperties": {
-              "$ref": "#/components/schemas/ClassifierReport"
-            },
-            "title": "Classifiers",
-            "type": "object"
-          },
-          "family": {
-            "title": "Family",
-            "type": "string"
-          },
-          "features": {
-            "title": "Features",
-            "type": "integer"
-          },
-          "params": {
-            "additionalProperties": {
-              "anyOf": [
-                {
-                  "type": "integer"
-                },
-                {
-                  "type": "number"
-                }
-              ]
-            },
-            "title": "Params",
-            "type": "object"
-          },
-          "reference_model_task_prior": {
-            "$ref": "#/components/schemas/ClassifierMetrics"
-          },
-          "selection_rule": {
-            "title": "Selection Rule",
-            "type": "string"
-          },
-          "training_rows": {
-            "title": "Training Rows",
-            "type": "integer"
-          },
-          "validation_prompts": {
-            "title": "Validation Prompts",
-            "type": "integer"
-          },
-          "weight_tuning": {
-            "items": {
-              "$ref": "#/components/schemas/WeightTuningResult"
-            },
-            "title": "Weight Tuning",
-            "type": "array"
-          }
-        },
-        "required": [
-          "artifact_id",
-          "family",
-          "params",
-          "selection_rule",
-          "training_rows",
-          "features",
-          "classifiers",
-          "reference_model_task_prior",
-          "validation_prompts",
-          "weight_tuning"
-        ],
-        "title": "FlagshipRouter",
-        "type": "object"
-      },
-      "FlagshipStudyReport": {
-        "additionalProperties": false,
-        "description": "Week of Nov 19 extension: does adding flagship models to the pool pay off?",
-        "properties": {
-          "evaluations": {
-            "items": {
-              "$ref": "#/components/schemas/EvaluationSet"
-            },
-            "title": "Evaluations",
-            "type": "array"
-          },
-          "excluded_flagships": {
-            "items": {
-              "$ref": "#/components/schemas/ExcludedFlagship"
-            },
-            "title": "Excluded Flagships",
-            "type": "array"
-          },
-          "flagship_snapshot_id": {
-            "title": "Flagship Snapshot Id",
-            "type": "string"
-          },
-          "flagships": {
-            "items": {
-              "$ref": "#/components/schemas/PoolModel"
-            },
-            "title": "Flagships",
-            "type": "array"
-          },
-          "protocol": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Protocol",
-            "type": "array"
-          },
-          "question": {
-            "title": "Question",
-            "type": "string"
-          },
-          "router": {
-            "$ref": "#/components/schemas/FlagshipRouter"
-          },
-          "spend_by_model_usd": {
-            "additionalProperties": {
-              "type": "number"
-            },
-            "title": "Spend By Model Usd",
-            "type": "object"
-          },
-          "spend_usd": {
-            "additionalProperties": {
-              "type": "number"
-            },
-            "title": "Spend Usd",
-            "type": "object"
-          },
-          "strongest_flagship_id": {
-            "title": "Strongest Flagship Id",
-            "type": "string"
-          },
-          "suite_matrix": {
-            "items": {
-              "$ref": "#/components/schemas/LearnedMatrixRow"
-            },
-            "title": "Suite Matrix",
-            "type": "array"
-          },
-          "title": {
-            "title": "Title",
-            "type": "string"
-          }
-        },
-        "required": [
-          "title",
-          "question",
-          "flagship_snapshot_id",
-          "flagships",
-          "excluded_flagships",
-          "strongest_flagship_id",
-          "router",
-          "protocol",
-          "evaluations",
-          "suite_matrix",
-          "spend_usd",
-          "spend_by_model_usd"
-        ],
-        "title": "FlagshipStudyReport",
         "type": "object"
       },
       "GenerationResult": {
@@ -1840,7 +1675,8 @@
       "LearnedPool": {
         "enum": [
           "standard",
-          "flagships"
+          "flagships",
+          "wide"
         ],
         "title": "LearnedPool",
         "type": "string"
@@ -1900,6 +1736,16 @@
         "properties": {
           "decision": {
             "$ref": "#/components/schemas/LearnedRoutingDecision"
+          },
+          "fallback": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RouteFallback"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "result": {
             "$ref": "#/components/schemas/GenerationResult"
@@ -2816,6 +2662,125 @@
         "title": "PoolSnapshot",
         "type": "object"
       },
+      "PoolStudyReport": {
+        "additionalProperties": false,
+        "description": "Does widening the frozen router's pool with these models pay off?",
+        "properties": {
+          "added": {
+            "items": {
+              "$ref": "#/components/schemas/PoolModel"
+            },
+            "title": "Added",
+            "type": "array"
+          },
+          "added_from": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Added From",
+            "type": "object"
+          },
+          "added_snapshot_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Added Snapshot Ids",
+            "type": "array"
+          },
+          "base_snapshot_id": {
+            "title": "Base Snapshot Id",
+            "type": "string"
+          },
+          "cell_tables": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Cell Tables",
+            "type": "array"
+          },
+          "evaluations": {
+            "items": {
+              "$ref": "#/components/schemas/EvaluationSet"
+            },
+            "title": "Evaluations",
+            "type": "array"
+          },
+          "excluded": {
+            "items": {
+              "$ref": "#/components/schemas/ExcludedModel"
+            },
+            "title": "Excluded",
+            "type": "array"
+          },
+          "protocol": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Protocol",
+            "type": "array"
+          },
+          "question": {
+            "title": "Question",
+            "type": "string"
+          },
+          "router": {
+            "$ref": "#/components/schemas/StudyRouter"
+          },
+          "spend_by_model_usd": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Spend By Model Usd",
+            "type": "object"
+          },
+          "spend_usd": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Spend Usd",
+            "type": "object"
+          },
+          "strongest_added_id": {
+            "title": "Strongest Added Id",
+            "type": "string"
+          },
+          "study_id": {
+            "title": "Study Id",
+            "type": "string"
+          },
+          "suite_matrix": {
+            "items": {
+              "$ref": "#/components/schemas/LearnedMatrixRow"
+            },
+            "title": "Suite Matrix",
+            "type": "array"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "study_id",
+          "title",
+          "question",
+          "base_snapshot_id",
+          "added_snapshot_ids",
+          "added",
+          "added_from",
+          "excluded",
+          "strongest_added_id",
+          "router",
+          "protocol",
+          "evaluations",
+          "suite_matrix",
+          "cell_tables",
+          "spend_usd",
+          "spend_by_model_usd"
+        ],
+        "title": "PoolStudyReport",
+        "type": "object"
+      },
       "PricingSpec": {
         "additionalProperties": false,
         "properties": {
@@ -3100,6 +3065,42 @@
           "notes"
         ],
         "title": "RobustnessReport",
+        "type": "object"
+      },
+      "RouteFallback": {
+        "additionalProperties": false,
+        "description": "The chosen model failed after its retry, so the next-best eligible model answered.",
+        "properties": {
+          "failed_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failed Error"
+          },
+          "failed_model_id": {
+            "title": "Failed Model Id",
+            "type": "string"
+          },
+          "failed_status": {
+            "$ref": "#/components/schemas/GenerationStatus"
+          },
+          "model_id": {
+            "title": "Model Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "failed_model_id",
+          "failed_status",
+          "failed_error",
+          "model_id"
+        ],
+        "title": "RouteFallback",
         "type": "object"
       },
       "RouteRequest": {
@@ -3873,6 +3874,115 @@
         "title": "StrategyUncertainty",
         "type": "object"
       },
+      "StudyRouter": {
+        "additionalProperties": false,
+        "description": "The study's router: the Checkpoint 3 recipe refit on the widened pool.",
+        "properties": {
+          "artifact_id": {
+            "title": "Artifact Id",
+            "type": "string"
+          },
+          "classifiers": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ClassifierReport"
+            },
+            "title": "Classifiers",
+            "type": "object"
+          },
+          "family": {
+            "title": "Family",
+            "type": "string"
+          },
+          "features": {
+            "title": "Features",
+            "type": "integer"
+          },
+          "params": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            "title": "Params",
+            "type": "object"
+          },
+          "reference_model_task_prior": {
+            "$ref": "#/components/schemas/ClassifierMetrics"
+          },
+          "selection_rule": {
+            "title": "Selection Rule",
+            "type": "string"
+          },
+          "training_rows": {
+            "title": "Training Rows",
+            "type": "integer"
+          },
+          "validation_prompts": {
+            "title": "Validation Prompts",
+            "type": "integer"
+          },
+          "weight_tuning": {
+            "items": {
+              "$ref": "#/components/schemas/WeightTuningResult"
+            },
+            "title": "Weight Tuning",
+            "type": "array"
+          }
+        },
+        "required": [
+          "artifact_id",
+          "family",
+          "params",
+          "selection_rule",
+          "training_rows",
+          "features",
+          "classifiers",
+          "reference_model_task_prior",
+          "validation_prompts",
+          "weight_tuning"
+        ],
+        "title": "StudyRouter",
+        "type": "object"
+      },
+      "StudySummary": {
+        "additionalProperties": false,
+        "properties": {
+          "added": {
+            "title": "Added",
+            "type": "integer"
+          },
+          "pool": {
+            "title": "Pool",
+            "type": "string"
+          },
+          "question": {
+            "title": "Question",
+            "type": "string"
+          },
+          "study_id": {
+            "title": "Study Id",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "study_id",
+          "title",
+          "question",
+          "added",
+          "pool"
+        ],
+        "title": "StudySummary",
+        "type": "object"
+      },
       "TaskGroup": {
         "enum": [
           "math",
@@ -4525,25 +4635,6 @@
         "summary": "Final Evaluation"
       }
     },
-    "/api/v1/learned/flagships": {
-      "get": {
-        "description": "The flagship extension: a second router with the flagship models in the pool.",
-        "operationId": "flagship_study_api_v1_learned_flagships_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FlagshipStudyReport"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Flagship Study"
-      }
-    },
     "/api/v1/learned/pool": {
       "get": {
         "description": "The dated Checkpoint 3 model pool the learned router was trained on (Model Registry).",
@@ -4584,7 +4675,7 @@
     },
     "/api/v1/learned/routes": {
       "post": {
-        "description": "Route with the learned router and send exactly one generation request (one retry).",
+        "description": "Route with the learned router and send one generation request (with one retry).\n\nIf the chosen model still fails, the next-best eligible model answers instead, once, and the\nresponse says so; nothing else is tried.",
         "operationId": "learned_route_api_v1_learned_routes_post",
         "requestBody": {
           "content": {
@@ -4619,6 +4710,69 @@
           }
         },
         "summary": "Learned Route"
+      }
+    },
+    "/api/v1/learned/studies": {
+      "get": {
+        "description": "The pool studies that have been run: the frozen pool widened with more models.",
+        "operationId": "pool_studies_api_v1_learned_studies_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StudySummary"
+                  },
+                  "title": "Response Pool Studies Api V1 Learned Studies Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Pool Studies"
+      }
+    },
+    "/api/v1/learned/studies/{study_id}": {
+      "get": {
+        "description": "One pool study: its added models, refit router, evaluations, and fixed comparisons.",
+        "operationId": "pool_study_api_v1_learned_studies__study_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "study_id",
+            "required": true,
+            "schema": {
+              "title": "Study Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PoolStudyReport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Pool Study"
       }
     },
     "/api/v1/learned/what-if": {

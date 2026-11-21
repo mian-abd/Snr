@@ -393,3 +393,38 @@ def test_learned_router_excludes_openrouter_models_without_a_key(registry, tmp_p
         assert reasons["gpt-oss-120b"] is None
         assert decision["selected_model_id"] in {"gpt-oss-120b", "llama-3.3-70b",
                                                   "qwen-3.8-27b", "qwen-3.5-9b-local"}
+
+
+def test_live_route_falls_back_once_when_the_chosen_model_keeps_failing(
+    registry, tmp_path
+) -> None:
+    calls: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        body = json.loads(request.content)
+        calls.append(body["model"])
+        if body["model"] == calls[0]:  # the chosen model fails every time
+            return httpx.Response(500, json={"error": {"message": "upstream down"}})
+        return httpx.Response(200, json={
+            "model": body["model"],
+            "choices": [{"message": {"content": "36"}, "finish_reason": "stop"}],
+            "usage": {"prompt_tokens": 12, "completion_tokens": 2, "total_tokens": 14},
+        })
+
+    settings, services = _learned_services(registry, tmp_path, api_key="test-key", handler=handler)
+    with TestClient(create_app(settings=settings, services=services)) as client:
+        live = client.post(
+            "/api/v1/learned/routes",
+            json={"prompt": "Calculate 15 percent of 240.", "priority": "quality"},
+        ).json()
+    fallback = live["fallback"]
+    assert fallback["failed_model_id"] == live["decision"]["selected_model_id"]
+    assert fallback["model_id"] != fallback["failed_model_id"]
+    assert live["result"]["status"] == "success"
+    ranked = sorted(
+        (item for item in live["decision"]["candidates"]
+         if item["eligible"] and item["model_id"] != fallback["failed_model_id"]),
+        key=lambda item: item["score"], reverse=True,
+    )
+    assert fallback["model_id"] == ranked[0]["model_id"]
+    assert len(set(calls)) == 2  # one model, retried, then exactly one other

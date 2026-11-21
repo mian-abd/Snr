@@ -124,16 +124,17 @@ const flagshipEvaluation = (id: 'cp3_test' | 'final') => {
       ...base.strategies.filter((item) => item.strategy_id !== 'learned:quality'),
       strategy('learned:quality', 114, 0.3, 4800, { 'gpt-6.1-sol': 60, 'gemma-4-26b': 60 }),
       strategy('previous_router:quality', 112, 0.421, 5300, { 'gemini-4-argon': 80, 'gemma-4-26b': 40 }),
-      strategy('fixed_top_flagship', 115, 0.25, 3000, { 'gpt-6.1-sol': 120 }),
+      strategy('fixed_top_added', 115, 0.25, 3000, { 'gpt-6.1-sol': 120 }),
     ],
     comparisons: [comparison('learned:quality', 'previous_router:quality', 'Does the best-quality setting get more right with the flagships in the pool?', 0.017, 0.5)],
   }
 }
 const flagshipReport = {
-  title: 'With flagship models', question: 'Does adding 1 flagship models to the pool pay off?', flagship_snapshot_id: 'flagship-pool-test',
-  flagships: [poolModel('gpt-6.1-sol', 'GPT-6.1 Sol', '0.000002', '0.00001')],
-  excluded_flagships: [{ model_id: 'grok-4.7', display_name: 'Grok 4.7', prompts_scored: 372, prompts_total: 900, spend_usd: 2.9, reason: 'Stopped after 372 of 900 prompts.' }],
-  strongest_flagship_id: 'gpt-6.1-sol',
+  study_id: 'flagship', title: 'With flagship models', question: 'Does adding 1 flagship models to the pool pay off?',
+  base_snapshot_id: 'pool-test', added_snapshot_ids: ['flagship-pool-test'], added_from: { 'gpt-6.1-sol': 'flagship' }, cell_tables: ['data/learned/cells.jsonl'],
+  added: [poolModel('gpt-6.1-sol', 'GPT-6.1 Sol', '0.000002', '0.00001')],
+  excluded: [{ model_id: 'grok-4.7', display_name: 'Grok 4.7', prompts_scored: 372, prompts_total: 900, spend_usd: 2.9, reason: 'Stopped after 372 of 900 prompts.' }],
+  strongest_added_id: 'gpt-6.1-sol',
   router: { artifact_id: 'flagship-router-test', family: 'logistic_regression', params: { logisticregression__C: 0.01 }, selection_rule: 'Lower validation log loss.', training_rows: 5000, features: 30,
     classifiers: report.classifiers, reference_model_task_prior: metrics(0.45), validation_prompts: 120, weight_tuning: report.weight_tuning },
   protocol: ['Same recipe.', 'Read once more here.'],
@@ -153,13 +154,15 @@ function stub(requested: Requested, { trained = true, keyed = false, final = fin
     if (url.endsWith('/health')) return json({ ...health, credential_configured: keyed })
     if (url.includes('/learned/')) {
       if (!trained) {
-        return url.endsWith('/learned/report') || url.endsWith('/learned/final') || url.endsWith('/learned/flagships')
+        return url.endsWith('/learned/report') || url.endsWith('/learned/final') || url.includes('/learned/studies')
           ? json({ detail: 'No report has been generated yet' }, 404)
           : json({ detail: 'The learned router has not been trained yet' }, 503)
       }
       if (url.endsWith('/learned/report')) return json(report)
       if (url.endsWith('/learned/final')) return json(final)
-      if (url.endsWith('/learned/flagships')) return flagships ? json(flagships) : json({ detail: 'The flagship study has not been run yet' }, 404)
+      if (url.endsWith('/learned/studies')) return json(flagships ? [{ study_id: 'flagship', title: 'With flagship models', question: 'Q', added: 1, pool: 'flagships' }] : [])
+      if (url.endsWith('/learned/studies/flagship') && flagships) return json(flagships)
+      if (url.includes('/learned/studies/')) return json({ detail: 'No study has been run' }, 404)
       if (url.includes('/learned/catalog')) return json(catalogStatus)
       if (url.endsWith('/learned/pool')) return json(pool)
       if (url.endsWith('/learned/decisions')) return json(learnedDecision)
@@ -276,9 +279,9 @@ test('adds the flagship study to the research, the catalog, and the router', asy
   const user = userEvent.setup()
   expect(await screen.findByRole('heading', { name: 'With flagship models' })).toBeInTheDocument()
   expect(screen.getByText('Grok 4.7 is not in this comparison.')).toBeInTheDocument()
-  const table = screen.getByRole('table', { name: 'Flagship study strategies' })
+  const table = screen.getByRole('table', { name: 'With flagship models: strategies' })
   expect(within(table).getByText('Always GPT-6.1 Sol')).toBeInTheDocument()
-  expect(within(table).getByText('Without flagships · Best quality')).toBeInTheDocument()
+  expect(within(table).getByText('Frozen router · Best quality')).toBeInTheDocument()
   expect(screen.getByText('Does the best-quality setting get more right with the flagships in the pool?')).toBeInTheDocument()
   cleanup()
   renderAt('/models')

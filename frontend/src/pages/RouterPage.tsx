@@ -3,7 +3,7 @@ import { ArrowRight, Clock3, Coins, FlaskConical, Gauge, Globe2, HardDrive, Play
 import { useEffect, useRef, useState } from 'react'
 import { client } from '../api/client'
 import type { LearnedCandidate, LearnedPool, LearnedRouteRequest, RoutingPriority, RoutingWeights, TaskGroup, WhatIfChanges } from '../api/types'
-import { accessLabel, priorityHint, priorityLabel, priorityOrder, providerLabel, useFlagshipReport, useHealth, useLearnedReport } from '../lib/data'
+import { accessLabel, priorityHint, priorityLabel, priorityOrder, providerLabel, useHealth, useLearnedReport, useStudyReports } from '../lib/data'
 import { pct, seconds, usdOrFree } from '../lib/format'
 import { Badge, Button, Card, CardHeader, Empty, Meter, ModelAvatar, Notice, PageHeader, Segmented, Stat } from '../ui'
 import ui from '../ui/ui.module.css'
@@ -28,6 +28,7 @@ const destinations: Record<string, string> = {
   nvidia_nim: 'NVIDIA NIM, a third-party API',
 }
 const taskNames: Record<string, string> = { math: 'Math', qa: 'Knowledge', code: 'Code' }
+const studyPool: Record<string, LearnedPool> = { flagship: 'flagships', wide: 'wide' }
 type Condition = 'latency' | 'price' | 'failure' | 'unavailable'
 const conditions: Array<{ id: Condition; label: string; unit: string; initial: number }> = [
   { id: 'latency', label: 'Gets slower', unit: '× slower', initial: 3 },
@@ -66,9 +67,10 @@ function CandidateRow({ item, selected }: { item: LearnedCandidate; selected: bo
 export function RouterPage() {
   const report = useLearnedReport()
   const health = useHealth()
-  const flagships = useFlagshipReport()
+  const studies = useStudyReports()
   const [pool, setPool] = useState<LearnedPool>('standard')
-  const tuning = pool === 'flagships' ? flagships.data?.router.weight_tuning : report.data?.weight_tuning
+  const poolStudy = studies.find((study) => studyPool[study.study_id] === pool)
+  const tuning = poolStudy ? poolStudy.router.weight_tuning : report.data?.weight_tuning
   const presets: Partial<Record<RoutingPriority, RoutingWeights>> = Object.fromEntries(tuning?.map((item) => [item.priority, item.weights]) ?? [])
   const [prompt, setPrompt] = useState(examples[0].text)
   const [priority, setPriority] = useState<RoutingPriority>('balanced')
@@ -122,14 +124,18 @@ export function RouterPage() {
             {examples.map((example) => <button key={example.label} type="button" className={styles.chip} onClick={() => setPrompt(example.text)}>{example.label}</button>)}
           </div>
 
-          {flagships.data && (
+          {studies.length > 0 && (
             <>
               <span className={styles.label}>Models to choose from</span>
               <Segmented label="Model pool" value={pool} onChange={(next) => { setPool(next); setCustom(null); setWhatModel(null) }} options={[
-                { id: 'standard', label: `Standard · ${report.data?.models.length ?? 9}`, title: 'The frozen router and the models it was built on' },
-                { id: 'flagships', label: `With flagships · ${(report.data?.models.length ?? 9) + flagships.data.flagships.length}`, title: `A second router fit with the same recipe, adding ${flagships.data.flagships.map((model) => model.display_name).join(', ')}` },
+                { id: 'standard' as LearnedPool, label: `Standard · ${report.data?.models.length ?? 9}`, title: 'The frozen router and the models it was built on' },
+                ...studies.map((study) => ({
+                  id: studyPool[study.study_id],
+                  label: `${study.study_id === 'wide' ? 'Every model' : 'With flagships'} · ${(report.data?.models.length ?? 9) + study.added.length}`,
+                  title: `A router fit with the same recipe, adding ${study.added.map((model) => model.display_name).join(', ')}`,
+                })),
               ]} />
-              {pool === 'flagships' && <p className={styles.small} style={{ marginTop: '0.5rem' }}>The second router, fit with the same recipe after adding {flagships.data.flagships.map((model) => model.display_name).join(', ')}. The live catalog check covers the standard models; flagship prices are as listed on 2026-11-14.</p>}
+              {poolStudy && <p className={styles.small} style={{ marginTop: '0.5rem' }}>A router fit with the same recipe after adding {poolStudy.added.map((model) => model.display_name).join(', ')}. The live catalog check covers every model.</p>}
             </>
           )}
 
@@ -215,8 +221,15 @@ export function RouterPage() {
                 </div>
                 {last === 'route' && route.data && (
                   <div style={{ marginTop: '1rem' }}>
+                    {route.data.fallback && (
+                      <div style={{ marginBottom: '0.75rem' }}>
+                        <Notice tone="warn" role="status">
+                          <strong>{names.get(route.data.fallback.failed_model_id)?.display_name ?? route.data.fallback.failed_model_id} failed</strong> ({route.data.fallback.failed_status.replaceAll('_', ' ')}{route.data.fallback.failed_error ? `: ${route.data.fallback.failed_error}` : ''}) after its retry, so the prompt went to the next-best model, <strong>{names.get(route.data.fallback.model_id)?.display_name ?? route.data.fallback.model_id}</strong>.
+                        </Notice>
+                      </div>
+                    )}
                     <div className={styles.between}>
-                      <strong style={{ fontSize: '0.9rem' }}>Response</strong>
+                      <strong style={{ fontSize: '0.9rem' }}>Response{route.data.fallback ? ` from ${names.get(route.data.fallback.model_id)?.display_name ?? route.data.fallback.model_id}` : ''}</strong>
                       <div className={styles.row}>
                         <Badge tone={route.data.result.status === 'success' ? 'good' : 'bad'} dot>{route.data.result.status.replaceAll('_', ' ')}</Badge>
                         <Badge>{Math.round(route.data.result.latency_ms).toLocaleString()} ms</Badge>

@@ -376,7 +376,7 @@ export type LearnedRoutingDecision = {
   catalog_checked_at_utc: string | null
 }
 
-export type LearnedPool = 'standard' | 'flagships'
+export type LearnedPool = 'standard' | 'flagships' | 'wide'
 
 export type LearnedRouteRequest = {
   prompt: string
@@ -387,7 +387,9 @@ export type LearnedRouteRequest = {
   min_context_tokens: number
 }
 
-export type LearnedRouteResponse = { decision: LearnedRoutingDecision; result: GenerationResult }
+export type RouteFallback = { failed_model_id: string; failed_status: string; failed_error: string | null; model_id: string }
+
+export type LearnedRouteResponse = { decision: LearnedRoutingDecision; result: GenerationResult; fallback?: RouteFallback | null }
 
 export type CatalogSource = 'live' | 'snapshot' | 'off'
 
@@ -598,7 +600,7 @@ export type FinalEvaluationReport = {
   spend_usd: number
 }
 
-export type FlagshipRouter = {
+export type StudyRouter = {
   artifact_id: string
   family: string
   params: Record<string, number>
@@ -611,7 +613,7 @@ export type FlagshipRouter = {
   weight_tuning: WeightTuningResult[]
 }
 
-export type ExcludedFlagship = {
+export type ExcludedModel = {
   model_id: string
   display_name: string
   prompts_scored: number
@@ -620,19 +622,25 @@ export type ExcludedFlagship = {
   reason: string
 }
 
-export type FlagshipStudyReport = {
+export type PoolStudyReport = {
+  study_id: string
   title: string
   question: string
-  flagship_snapshot_id: string
-  flagships: PoolModel[]
-  excluded_flagships: ExcludedFlagship[]
-  strongest_flagship_id: string
-  router: FlagshipRouter
+  base_snapshot_id: string
+  added_snapshot_ids: string[]
+  added: PoolModel[]
+  added_from: Record<string, string>
+  excluded: ExcludedModel[]
+  strongest_added_id: string
+  router: StudyRouter
   protocol: string[]
   evaluations: EvaluationSet[]
   suite_matrix: LearnedMatrixRow[]
+  cell_tables: string[]
   spend_usd: Record<string, number>
   spend_by_model_usd: Record<string, number>
 }
 
-export type ExportTable = 'strategies' | 'comparisons' | 'errors' | 'robustness' | 'sweep' | 'decisions' | 'cells'
+export type StudySummary = { study_id: string; title: string; question: string; added: number; pool: LearnedPool }
+
+export type ExportTable = 'strategies' | 'comparisons' | 'errors' | 'robustness' | 'sweep' | 'decisions' | 'cells' | 'study_strategies' | 'study_comparisons' | 'study_models' | 'added_cells'
