@@ -6,6 +6,9 @@ export type Health = {
   routing_registry_snapshot_id: string | null
   credential_configured: boolean
   active_benchmark_run_id: string | null
+  public_mode?: boolean
+  live_calls_left?: number | null
+  client_live_calls_left?: number | null
 }
 
 export type ModelSpec = {
@@ -59,6 +62,7 @@ export type ComparisonResponse = {
   prompt: string
   pool: RoutingPool
   saved: boolean
+  note?: string | null
   created_at_utc: string
   results: GenerationResult[]
 }

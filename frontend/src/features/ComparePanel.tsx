@@ -1,14 +1,15 @@
 import * as Switch from '@radix-ui/react-switch'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Clock3, Database, Send, TriangleAlert } from 'lucide-react'
 import { useState } from 'react'
 import { client } from '../api/client'
 import type { GenerationResult, ModelSpec, RoutingPool } from '../api/types'
 import { StatusBadge } from '../components/StatusBadge'
+import { LiveError } from './LiveError'
 import styles from './Panels.module.css'
 import { PoolSwitch } from './PoolSwitch'
 
-type Props = { pools: Record<RoutingPool, ModelSpec[]>; credentialConfigured: boolean }
+type Props = { pools: Record<RoutingPool, ModelSpec[]>; credentialConfigured: boolean; liveNote: string | null }
 
 const samplePrompt =
   'Explain why alternating model order matters in a small latency benchmark. Keep the answer under 120 words.'
@@ -76,11 +77,15 @@ function ResultCard({ result, model }: { result: GenerationResult; model?: Model
   )
 }
 
-export function ComparePanel({ pools, credentialConfigured }: Props) {
+export function ComparePanel({ pools, credentialConfigured, liveNote }: Props) {
+  const queryClient = useQueryClient()
   const [prompt, setPrompt] = useState(samplePrompt)
   const [save, setSave] = useState(false)
   const [pool, setPool] = useState<RoutingPool>('paid')
-  const mutation = useMutation({ mutationFn: () => client.compare(prompt.trim(), save, pool) })
+  const mutation = useMutation({
+    mutationFn: () => client.compare(prompt.trim(), save, pool),
+    onSettled: () => void queryClient.invalidateQueries({ queryKey: ['health'] }),
+  })
   const models = pools[pool]
   const choosePool = (next: RoutingPool) => {
     setPool(next)
@@ -119,12 +124,14 @@ export function ComparePanel({ pools, credentialConfigured }: Props) {
         maxLength={50_000}
       />
       <div className={styles.actionRow}>
-        <label className={styles.switchLabel}>
-          <Switch.Root className={styles.switchRoot} checked={save} onCheckedChange={setSave}>
-            <Switch.Thumb className={styles.switchThumb} />
-          </Switch.Root>
-          <span><Database size={15} /> Save locally</span>
-        </label>
+        {liveNote === null ? (
+          <label className={styles.switchLabel}>
+            <Switch.Root className={styles.switchRoot} checked={save} onCheckedChange={setSave}>
+              <Switch.Thumb className={styles.switchThumb} />
+            </Switch.Root>
+            <span><Database size={15} /> Save locally</span>
+          </label>
+        ) : <span />}
         <button
           className={styles.primaryButton}
           disabled={!credentialConfigured || !prompt.trim() || mutation.isPending}
@@ -137,7 +144,8 @@ export function ComparePanel({ pools, credentialConfigured }: Props) {
       {!credentialConfigured && (
         <p className={styles.notice}>Add a replacement key to <code>backend/.env</code> to enable live calls.</p>
       )}
-      {mutation.error && <p className={styles.errorBox} role="alert">{mutation.error.message}</p>}
+      {liveNote && <p className={styles.notice}>{liveNote}</p>}
+      {mutation.error && <LiveError error={mutation.error} />}
       {mutation.data && (
         <div className={mutation.data.results.length > 2 ? styles.resultsGridThree : styles.resultsGrid} aria-live="polite">
           {mutation.data.results.map((result) => (

@@ -7,6 +7,7 @@ import { ComparePanel } from '../features/ComparePanel'
 import { EligibilityPanel } from '../features/EligibilityPanel'
 import { RouterPanel } from '../features/RouterPanel'
 import { useHealth } from '../lib/data'
+import { liveCallsNote } from '../lib/publicMode'
 import { PageHeader, Segmented, Skeleton } from '../ui'
 import styles from './pages.module.css'
 
@@ -27,6 +28,7 @@ export function LabPage() {
   const ready = health.data && free.data && paid.data
   const pools = ready ? { baseline: free.data.models, paid: paid.data.models } : null
   const keyed = health.data?.credential_configured ?? false
+  const liveNote = liveCallsNote(health.data)
 
   return (
     <>
@@ -38,9 +40,9 @@ export function LabPage() {
       />
       {!ready || !pools ? <Skeleton height={420} /> : (
         <div className={styles.labPanels}>
-          {tool === 'rules' && <RouterPanel models={free.data!.models} credentialConfigured={keyed} />}
-          {tool === 'compare' && <ComparePanel pools={pools} credentialConfigured={keyed} />}
-          {tool === 'benchmark' && <BenchmarkPanel pools={pools} credentialConfigured={keyed} />}
+          {tool === 'rules' && <RouterPanel models={free.data!.models} credentialConfigured={keyed} liveNote={liveNote} />}
+          {tool === 'compare' && <ComparePanel pools={pools} credentialConfigured={keyed} liveNote={liveNote} />}
+          {tool === 'benchmark' && <BenchmarkPanel pools={pools} credentialConfigured={keyed} publicMode={health.data.public_mode ?? false} />}
           {tool === 'context' && <EligibilityPanel pools={pools} />}
         </div>
       )}

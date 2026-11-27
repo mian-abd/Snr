@@ -7,7 +7,7 @@ import { StatusBadge } from '../components/StatusBadge'
 import styles from './Panels.module.css'
 import { PoolSwitch } from './PoolSwitch'
 
-type Props = { pools: Record<RoutingPool, ModelSpec[]>; credentialConfigured: boolean }
+type Props = { pools: Record<RoutingPool, ModelSpec[]>; credentialConfigured: boolean; publicMode: boolean }
 
 const activeStatuses = new Set(['pending', 'running'])
 
@@ -15,7 +15,7 @@ function formatMetric(value: number | null, suffix = '') {
   return value == null ? '—' : `${Math.round(value).toLocaleString()}${suffix}`
 }
 
-export function BenchmarkPanel({ pools, credentialConfigured }: Props) {
+export function BenchmarkPanel({ pools, credentialConfigured, publicMode }: Props) {
   const queryClient = useQueryClient()
   const [pool, setPool] = useState<RoutingPool>('paid')
   const [pending, setPending] = useState<BenchmarkEstimate | null>(null)
@@ -89,11 +89,12 @@ export function BenchmarkPanel({ pools, credentialConfigured }: Props) {
 
       <div className={styles.actionRow}>
         <div className={styles.secondaryActions}>
-          <button disabled={!credentialConfigured || running || estimate.isPending} onClick={() => begin('pilot')}><Play size={15} /> Run pilot</button>
-          <button disabled={!credentialConfigured || running || estimate.isPending} onClick={() => begin('full')}><Play size={15} /> Run benchmark</button>
+          <button disabled={publicMode || !credentialConfigured || running || estimate.isPending} onClick={() => begin('pilot')}><Play size={15} /> Run pilot</button>
+          <button disabled={publicMode || !credentialConfigured || running || estimate.isPending} onClick={() => begin('full')}><Play size={15} /> Run benchmark</button>
         </div>
         <button className={styles.iconButton} onClick={() => latest.refetch()} aria-label="Refresh benchmark"><RotateCcw size={16} /></button>
       </div>
+      {publicMode && <p className={styles.notice}>Benchmark runs are turned off on the public demo; the saved results above are open to browse.</p>}
       {pending && (
         <div className={styles.estimateBox} role="dialog" aria-labelledby="estimate-heading">
           <span className={styles.eyebrow}>Confirm paid run</span>

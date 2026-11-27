@@ -1,12 +1,13 @@
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowRight, CheckCircle2, Clock3, Route, ScanSearch, XCircle } from 'lucide-react'
 import { useState } from 'react'
 import { client } from '../api/client'
 import type { ModelSpec, RoutingPool, RoutingPriority } from '../api/types'
 import { StatusBadge } from '../components/StatusBadge'
+import { LiveError } from './LiveError'
 import styles from './Panels.module.css'
 
-type Props = { models: ModelSpec[]; credentialConfigured: boolean }
+type Props = { models: ModelSpec[]; credentialConfigured: boolean; liveNote: string | null }
 
 const priorities: Array<{ id: RoutingPriority; label: string; description: Record<RoutingPool, string> }> = [
   { id: 'balanced', label: 'Balanced', description: { baseline: 'Escalate on visible effort signals.', paid: 'Tier by visible effort signals.' } },
@@ -19,7 +20,8 @@ const shortModel = (id: string) => (id.split('/')[1] ?? id).replace(':free', ' (
 const usd = (value: string | null) => (value == null ? '—' : `$${Number(value).toFixed(6)}`)
 const ms = (value: number | null) => (value == null ? '—' : `${Math.round(value).toLocaleString()} ms`)
 
-export function RouterPanel({ models, credentialConfigured }: Props) {
+export function RouterPanel({ models, credentialConfigured, liveNote }: Props) {
+  const queryClient = useQueryClient()
   const [prompt, setPrompt] = useState('Explain why a router should separate hard requirements from user preferences.')
   const [priority, setPriority] = useState<RoutingPriority>('balanced')
   const [pool, setPool] = useState<RoutingPool>('paid')
@@ -32,6 +34,7 @@ export function RouterPanel({ models, credentialConfigured }: Props) {
   const route = useMutation({
     mutationFn: () => client.route(prompt.trim(), priority, pool, minContextTokens),
     onSuccess: () => setLastAction('route'),
+    onSettled: () => void queryClient.invalidateQueries({ queryKey: ['health'] }),
   })
   const [replayStrategy, setReplayStrategy] = useState('rule_balanced')
   const dashboard = useQuery({ queryKey: ['routing-dashboard', pool], queryFn: () => client.routingDashboard(pool) })
@@ -113,9 +116,10 @@ export function RouterPanel({ models, credentialConfigured }: Props) {
           </button>
         </div>
       </div>
+      {liveNote && <p className={styles.notice}>{liveNote}</p>}
 
       {preview.error && <p className={styles.errorBox} role="alert">{preview.error.message}</p>}
-      {route.error && <p className={styles.errorBox} role="alert">{route.error.message}</p>}
+      {route.error && <LiveError error={route.error} />}
       {decision && (
         <div className={styles.routeOutcome} aria-live="polite">
           <div className={styles.decisionBlock}>

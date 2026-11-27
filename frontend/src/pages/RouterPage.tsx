@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { ArrowRight, Clock3, Coins, FlaskConical, Gauge, Globe2, HardDrive, Play, Scale, ScanSearch, Sparkles, Zap } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { client } from '../api/client'
@@ -6,6 +6,7 @@ import type { LearnedCandidate, LearnedPool, LearnedRouteRequest, RoutingPriorit
 import { accessLabel, priorityHint, priorityLabel, priorityOrder, providerLabel, useHealth, useLearnedReport, useStudyReports } from '../lib/data'
 import { ScoreBar, ScoreLegend, type ScoreTerms } from '../charts/ScoreBar'
 import { pct, seconds, usdOrFree } from '../lib/format'
+import { isLimitNotice, liveCallsNote } from '../lib/publicMode'
 import { Badge, Button, Card, CardHeader, Empty, ModelAvatar, Notice, PageHeader, Segmented, Stat } from '../ui'
 import ui from '../ui/ui.module.css'
 import styles from './pages.module.css'
@@ -118,7 +119,13 @@ export function RouterPage() {
     shownPool.current = pool
     runPreview()
   }, [pool, runPreview])
-  const route = useMutation({ mutationFn: () => client.learnedRoute(request()), onSuccess: () => setLast('route') })
+  const queryClient = useQueryClient()
+  const route = useMutation({
+    mutationFn: () => client.learnedRoute(request()),
+    onSuccess: () => setLast('route'),
+    onSettled: () => void queryClient.invalidateQueries({ queryKey: ['health'] }),
+  })
+  const liveNote = liveCallsNote(health.data)
   const decision = last === 'route' ? route.data?.decision ?? preview.data : preview.data ?? route.data?.decision
   const ranked = decision ? [...decision.candidates].sort((a, b) => (b.score ?? -Infinity) - (a.score ?? -Infinity)) : []
   const chosen = decision?.candidates.find((item) => item.model_id === decision.selected_model_id)
@@ -209,12 +216,15 @@ export function RouterPage() {
               {route.isPending ? <Clock3 size={16} /> : <Play size={16} />}{route.isPending ? 'Running…' : 'Run prompt'}
             </Button>
           </div>
+          {liveNote && <p className={styles.small} style={{ marginTop: '0.75rem' }}><strong>{liveNote}</strong></p>}
           <p className={styles.small} style={{ marginTop: '0.75rem' }}>Run sends one call to the chosen model's provider (with one retry if it times out, is rate-limited, or hits a server error). Don't send personal or confidential text.{keyMissing && ' The OpenRouter key is not configured, so only free and local models can be chosen.'}</p>
         </Card>
 
         <div className={styles.stack}>
           {preview.error && <Notice tone="bad" role="alert">{preview.error.message}</Notice>}
-          {route.error && <Notice tone="bad" role="alert">{route.error.message}</Notice>}
+          {route.error && (isLimitNotice(route.error)
+            ? <Notice tone="warn" role="status">{route.error.message}</Notice>
+            : <Notice tone="bad" role="alert">{route.error.message}</Notice>)}
           {!decision && !preview.isPending && (
             <Empty icon={<ScanSearch size={22} />} title="No decision yet">Preview a decision to see which model the router picks and why. Nothing leaves this computer until you press Run.</Empty>
           )}
