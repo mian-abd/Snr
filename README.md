@@ -83,6 +83,9 @@ See the [week of November 26](docs/checkpoint-4-progress.md#week-of-november-26-
 - ERNIE 5.5 Flash is complete: 254 of 300 fresh prompts right, never chosen. The wide study was rebuilt with 17 models and every headline number is unchanged.
 - Scorer fix: EvalPlus reused an old `*_eval_results.json` when a run was resumed, so `app/benchmarks/code_scoring.py` now deletes it before every evaluation. An audit of all 66 results files found no earlier result affected.
 - Gemma 4 26B A4B is now unavailable (its pinned host, NextBit, no longer serves it; found on 2026-11-26), the second real provider change after Mercury 3. The live catalog check handles it. On the standard pool, Fastest now picks Qwen 3.5 9B (local), and the stress test moves it to DeepSeek V4 Flash.
+- Live public demo: https://web-production-961deca9.up.railway.app, on Railway, built from `main`. Public mode limits live model calls (see [docs/deploy.md](docs/deploy.md)).
+- The scoring fix, tested on the robustness scenarios: it holds the lowest-cost setting at 268 right when the free models fail half their calls (frozen router: 137), but over-corrects when the most expensive model's price rises fourfold.
+- Accessibility: an axe sweep of every page in both themes runs in CI, with no serious or critical problems. The first page is 26% lighter.
 
 See the [week of December 3](docs/checkpoint-4-progress.md#week-of-december-3).
 

@@ -784,7 +784,7 @@ This records the proposal's work-plan items for the week of December 3 that coul
 - **The bug:** EvalPlus reuses an existing `*_eval_results.json` instead of evaluating again. When ERNIE's fresh run was resumed, its 16 new answers were first scored against the stubs from the earlier attempt.
 - **The fix** (commit 4953bbc): `app/benchmarks/code_scoring.py` now deletes the file before every evaluation, and a regression test covers it.
 - **The audit:** all 66 EvalPlus results files were checked against their answers. Every other one matched, so no earlier result was affected.
-- **Tests now:** backend 124 pass and validation 29 of 29 pass. The frontend and end-to-end tests are unchanged (23 and 2).
+- **Tests then:** backend 124 pass and validation 29 of 29 pass. The current counts are under [Tests](#tests-at-the-end-of-the-week).
 
 ### Gemma's host change and the demo
 
@@ -847,6 +847,34 @@ Told, both routers leave Gemma and Mercury at once; with old estimates they keep
 - The fix is not free at the lowest-cost setting with nothing changed: nearly the same right answers, five times the (tiny) spend.
 
 **Checks.** `final-evaluation.json`, `flagship-study.json`, `wide-study.json`, every router file and every cell table are unchanged: rerunning `final_eval`, `pool_study --study flagship` and `--study wide` leaves `git diff --stat data/` empty. `python -m app.learned.validate` has 36 checks (7 new for this report); backend tests 135, frontend tests 24.
+
+### Public deployment
+
+- **Live:** https://web-production-961deca9.up.railway.app, on Railway (project `adaptive-llm-router`, service `web`). Railway builds the root `Dockerfile` from GitHub `main`.
+- **Public mode** (`PUBLIC_MODE=true` in the image):
+  - previews and every research page are unlimited;
+  - live model calls share 60 a day, with 6 per visitor, reset at 00:00 UTC;
+  - a call whose worst case is above $0.02 is refused, and the preview still shows the decision;
+  - Lab benchmark runs are off, and prompts are never saved.
+  The settings and steps are in [docs/deploy.md](deploy.md).
+- **Hosted differences:** the local Qwen model has no Ollama there, so it shows as unavailable, and Fastest on the standard pool picks gpt-oss-120b.
+- **Keys:** the owner sets the OpenRouter key in Railway's variables. Without it, previews and the free OVHcloud models still work.
+- **Checked:** the image runs with no secrets inside, is healthy about 3 s after starting, and serves the scoring-fix data and the caching headers.
+- **Pending:** redeploying on every push needs Railway's GitHub app to have access to the repository.
+
+### Accessibility and speed
+
+- **Accessibility:** an axe sweep of 10 pages and the search palette, in both themes, now finds no serious or critical problems. It runs in CI as the `accessibility` job.
+  - Fixed: text contrast (the `--text-3`, `--warn` and `--good` color tokens), names and roles for chart points, a definition list, the palette's scrollable list, heading order, and empty table headers.
+  - Added: a "Skip to content" link, a visible focus ring everywhere, text tables behind the scatter and path charts, and keyboard tests for the palette and the sliders.
+- **Speed:** the first page transfers 292 KB instead of 398 KB, because the bar-chart library now loads only when a chart nears the screen. Text fonts are preloaded, and hashed files are cached for a year.
+
+### Tests at the end of the week
+
+- **Backend:** 149 tests pass. ruff and mypy are clean.
+- **Data:** validation passes 36 of 36 checks.
+- **Frontend:** 27 unit tests pass.
+- **Browser:** 27 accessibility and keyboard tests and 2 smoke tests pass.
 
 ### Left
 

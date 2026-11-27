@@ -1128,6 +1128,11 @@ The full record is `docs/checkpoint-3-progress.md`. Key facts:
 - **Tests:** backend 124 pass, validation 29 of 29; frontend and end-to-end unchanged (23 and 2).
 - **Left:** the final report (owner), rehearsal, tag `checkpoint-4` after it, presenting on December 3.
 
+- **Public deployment:** https://web-production-961deca9.up.railway.app on Railway (project `adaptive-llm-router`, service `web`), built from GitHub `main` with the root `Dockerfile`. `PUBLIC_MODE=true`: 60 live calls a day shared and 6 per visitor, a $0.02 cap per call, and Lab runs and saving off (`backend/app/public.py`, `docs/deploy.md`). The owner sets `OPENROUTER_API_KEY` in Railway. Push-triggered redeploys need Railway's GitHub app to have access to the repo. `railway.json` is read until 2026-12-01; after that, set the health check path in the dashboard.
+- **Scoring fix study:** `python -m app.learned.scoring_fix` writes `data/learned/scoring-fix-study.json`; `GET /learned/scoring-fix`; the Research section "Fixing the scoring flaw". The frozen router is unchanged.
+- **Accessibility and speed:** an axe sweep and keyboard tests (`frontend/e2e`) run in the CI `accessibility` job; hashed assets are cached for a year; charts load lazily.
+- **Tests:** backend 149, validation 36, frontend 27, browser 27 + 2.
+
 **Local environment.**
 - mypy must run as `python -m mypy --config-file backend/pyproject.toml`: Application Control blocks `mypy.exe`, and without `--config-file` strict mode was silently not applied. The check script and CI are fixed.
 - Ollama v0.40.12 was installed from the signed official installer (Ollama Inc. / DigiCert, SHA-256 `9A6A44DD…`) in the owner's terminal, so it lands in the real profile, not the sandboxed one.
