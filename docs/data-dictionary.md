@@ -184,6 +184,24 @@ The two pool studies (`PoolStudyReport` in `backend/app/domain/study.py`; their 
 
 Strategy ids in a study: `learned:<priority>` is the study's router; `previous_router:<priority>` is the frozen router on the same prompts; `flagship_router:<priority>` (wide study only) is the flagship study's router; `fixed_top_added` always uses the strongest added model. Command: `python -m app.learned.pool_study --study flagship|wide --from-runs`.
 
+### scoring-fix-study.json
+
+The tested scoring fix (`ScoringFixReport` in `backend/app/domain/scoring_fix.py`; its questions are fixed in `backend/app/learned/scoring_fix.py`). The frozen router next to a variant with the same classifier whose cost and time terms are divided by fixed references and whose presets have a small reliability weight. Command: `python -m app.learned.scoring_fix`. Served at `GET /api/v1/learned/scoring-fix`.
+
+| Key | Meaning |
+| --- | --- |
+| `study_id`, `title` | `scoring-fix` and its title. |
+| `artifact_id`, `artifact_sha256`, `final_set_sha256`, `pool_snapshot_id` | The frozen router evaluated and the checksums of `cp3-router-model.json` and `final_heldout.jsonl`; the validator checks both. |
+| `reference` | The fixed divisors the variant uses: `cost_usd` and `latency_ms` per task group (`code`, `math`, `qa`), the largest expected value among the frozen estimates. Stored here, not in the router file. |
+| `frozen_weights`, `fixed_weights` | The four presets (quality, cost, latency, reliability weights) of the frozen router and of the variant. |
+| `tuning` | How the variant's presets were chosen on the validation split: `validation_prompts`, `reliability_floor` and `reliability_grid`, `tuning_reference` (divisors from the training-split estimates), `frozen_recipe_reproduced` (the old recipe, rerun, gives the frozen presets), `recipe_check_presets`, `reference_only_presets` (fixed divisors, old reliability grid), `fixed_presets` (each a `WeightTuningResult`: weights, validation right answers, billed cost in USD, median time in ms), and a `note`. |
+| `protocol`, `caveats` | What was fixed before the results were read, and what the numbers do not show, in sentences. |
+| `questions` | The four fixed questions: `question_id`, `question`, `rule` (how yes was decided), `holds_fresh`, `holds_test`, `answer_fresh`, `answer_test` (the numbers behind each verdict), and `evidence` rows (`evaluation_id`, `scenario_id`, `priority`, `router` `frozen` or `fixed`, then `told`, `old` and `unchanged`, each a scenario strategy result, and `told_vs_old_p`, the Holm-adjusted McNemar p-value on right answers). |
+| `evaluations` | `cp3_test` and `final`: `prompts`, `models`, `matrix` (as in `final-evaluation.json`), `comparisons` (paired tests in one Holm family: fixed against frozen with nothing changed, and each router told against old estimates in the question scenarios), and `frozen` and `fixed`, each a robustness report over the existing scenarios plus `no_change` and `gemma_mercury_unavailable` (observed, 2026-11-26: Gemma 4 26B and Mercury 3 unavailable). |
+| `cell_tables` | The cell table the report was built from. |
+
+In each robustness report, `learned:<priority>` is the router told about the change and `learned_frozen:<priority>` keeps its old estimates; both use that router's own presets. The validator recomputes each `matrix` from `cells.jsonl`, the always-cheapest and always-strongest results of the `no_change` scenario, and the two checksums, and checks that all four questions are answered.
+
 ## Export tables
 
 `GET /api/v1/learned/export/{table}?format=csv|json` and `python -m app.learned.export TABLE --format csv|json --out FILE`. Every table is built from committed files only and holds no response text or keys. In CSV, `selected_models` is written as `model x count; model x count`, most chosen first; an empty cell is `null`.
@@ -325,3 +343,11 @@ Every model in each pool study, per prompt set (one row per study, prompt set, a
 ### added_cells
 
 The rows of every added-model cell table (`flagship-cells.jsonl`, `budget-cells.jsonl`), with a leading `pool` column naming the added pool (`flagship` or `budget`); other columns as in `cells.jsonl`.
+
+### scoring_fix
+
+Every scenario and strategy of the tested scoring fix (one row per evaluation, scoring, scenario, and strategy), from `scoring-fix-study.json`. Columns are those of `robustness` (without `condition` and `accuracy`) plus:
+
+| Column | Meaning | Units |
+| --- | --- | --- |
+| `scoring` | Whose presets and normalization the strategy used: `frozen` (the evaluated router) or `fixed` (fixed references, small reliability weight). | text |

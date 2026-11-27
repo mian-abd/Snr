@@ -801,6 +801,53 @@ This records the proposal's work-plan items for the week of December 3 that coul
 - **Recording:** the owner records the complete backup run-through. Until then, `docs/demo/checkpoint-4-backup-demo.webm` is the 2 min 22 s recording of the November 26 features, made before Gemma became unavailable.
 - **Run-through:** organized by the proposal's four promises: the router, the stress test, the complete flow, the research results, the oracle, and robustness on all prompts.
 
+### The scoring fix, tested
+
+The two design flaws found by the [robustness tests](#robustness-results) were first only to be described. They are now tested, without touching the frozen router. Command: `python -m app.learned.scoring_fix`. Report: `data/learned/scoring-fix-study.json`. It is on the Research page ("Fixing the scoring flaw"), at `GET /api/v1/learned/scoring-fix`, in the export table `scoring_fix`, and in the figure `docs/figures/scoring-fix-robustness`.
+
+**Method**
+
+- **Same classifier, same features.** The fixed variant differs from the frozen router in two places only.
+- **Fixed references.** Cost and time are divided by the largest expected cost and time per task group among the frozen pool's estimates, computed once from `cp3-router-model.json`: cost $0.00281 (code), $0.00196 (math), $0.00648 (knowledge); time 44.9 s, 13.1 s, 34.1 s. The frozen router divides by the largest among the *available* models. They are stored in the report, not in the router file, which stays byte-identical.
+- **A reliability weight.** Presets were re-tuned per priority on the Checkpoint 3 validation split only (120 prompts), with the frozen recipe unchanged: the same classifier refit on the training split, the same weight grids, accuracy floors and tie-breaks. The reliability grid was (0, 0.5); the 0 was replaced by a floor of 0.25, fixed before any result was read, so it is (0.25, 0.5).
+- **Check on the recipe.** Rerun with the old normalization and grid, it reproduces the frozen presets exactly. Rerun with fixed references and the old grid, it also gives the frozen presets: in an unchanged pool the reference equals the largest available value, so the references alone change no preset.
+- **What was chosen.** Reliability 0.25 for lowest cost, fastest and balanced; 0.5 for best quality. The lowest-cost preset also moved from cost 1.0 and latency 0 to cost 0.5 and latency 0.05. Validation results: lowest cost 101 right for $0.0082 (frozen presets: 100 for $0.0042), best quality 110 for $0.446 (110 for $0.443), fastest and balanced 106 right for $0.123 (106 for $0.124).
+- **Same scenarios.** Both routers were replayed through every existing scenario, a no-change reference, and the new observed one, on the test split (120) and the fresh prompts (300), told and with old estimates.
+- **Fixed questions.** They are in code (`FIXED_QUESTIONS`, dated 2026-11-26), with the rule that decides each answer. p-values are exact McNemar tests, Holm-adjusted together within each evaluation (12 tests).
+
+**The new observed scenario: Gemma 4 26B and Mercury 3 unavailable.** On 2026-11-26 the live catalog check found Gemma 4 26B A4B no longer served by NextBit, after Mercury 3's retirement on 2026-11-12. Calls to a model that went away are replayed as failures after 0.4 s (Mercury's real 404 time). On the fresh prompts, the router with old estimates still has the 2026-11-13 catalog (Mercury excluded, Gemma repriced).
+
+**The fixed questions and their answers**
+
+1. **With no change, does the fixed scoring keep accuracy?** Yes. On the fresh prompts, right answers fixed against frozen: lowest cost 264 against 265, best quality 282 against 282, fastest and balanced 276 against 276 (Holm p = 1.000 for all). On the test split: 105 against 103, 112 against 112, 104 against 102 (p = 1.000). The price is spend at the lowest-cost setting: $0.0176 against $0.0034 on the fresh prompts (+$0.0142), because the preset's weights change the mix: Gemma 4 26B gets 100 prompts instead of 22 (Nemotron 3 Ultra gets 100 instead of 178).
+2. **"Slowest three models 3x slower": does the fastest setting get faster when told?** No. The fixed variant's median time is 3.84 s told and 3.84 s with old estimates (276 right both ways); on the test split 2.56 s both ways. The frozen router got slower, 7.11 s against 3.84 s (3.17 s against 2.09 s on the test split). So the harm is gone, but the setting does not improve: it never sent a prompt to the three slow models, so there is nothing to avoid.
+3. **"Most expensive model 4x pricier": does the lowest-cost setting stop shifting spend, and does best quality use that model less?** Yes, with a cost. Lowest cost, fresh prompts: 100 prompts to Gemma 4 26B told and 100 with old estimates, $0.0176 both (frozen: 100 against 22, $0.0176 against $0.0034). Best quality: 0 prompts to Gemini 4 Argon when told against 197 (frozen: 196 against 197). That reacts fully to the price: 265 right for $0.024 against 282 for $3.84, a significant loss of 17 right answers (McNemar 0 against 17, Holm p = 0.00017); on the test split 105 against 112 for $0.012 against $1.68 (Holm p = 0.43). Whether $3.81 is worth 17 answers is the user's cost weight to decide.
+4. **"Free remote models fail 50%": does the lowest-cost setting hold its accuracy when told, without a hand-raised weight?** Yes. Fresh prompts: 268 right when told, 172 with old estimates, 264 with no outage (97 against 1 discordant prompts, McNemar p = 6e-28, Holm-adjusted below 1e-9); the frozen router got 137 told and 137 old, against 265 with no outage. Test split: 103 told, 72 old, 105 with no outage (Holm p = 4e-7); frozen 48 and 48 against 103. The default weight matches the hand-raised weight of 1 in the earlier scenario (268).
+
+**The Gemma 4 26B and Mercury 3 scenario** (right answers, billed cost, median time; told / old estimates).
+
+| Prompts | Setting | Frozen scoring | Fixed scoring |
+| --- | --- | --- | --- |
+| Fresh (300) | Best quality | 282, $0.957, 7.28 s / 186, $0.957, 7.22 s | 282, $0.957, 7.28 s / 186, $0.957, 7.22 s |
+| Fresh (300) | Lowest cost | 267, $0, 6.57 s / 247, $0, 5.42 s | 266, $0, 6.60 s / 181, $0, 2.34 s |
+| Fresh (300) | Fastest and balanced | 275, $0.577, 5.63 s / 106, $0.412, 0.13 s | 281, $0.905, 7.28 s / 106, $0.412, 0.13 s |
+| Test (120) | Best quality | 111, $0.418, 6.52 s / 74, $0.418, 4.89 s | 111, $0.418, 6.52 s / 74, $0.418, 4.89 s |
+| Test (120) | Lowest cost | 104, $0, 13.35 s / 102, $0, 12.70 s | 105, $0, 12.44 s / 71, $0, 6.29 s |
+| Test (120) | Fastest and balanced | 109, $0.248, 5.16 s / 29, $0.099, 0.13 s | 111, $0.387, 5.44 s / 31, $0.103, 0.13 s |
+
+Told, both routers leave Gemma and Mercury at once; with old estimates they keep sending prompts to them, and the failures cost 96 right answers at best quality and 169 (frozen) or 175 (fixed) at fastest on the fresh prompts. At lowest cost the old-estimates fixed router is hit hardest (181 right, against 247 frozen) because it sends 100 prompts to Gemma. Told, the fixed router gets 6 more right than the frozen one at fastest, for $0.33 more and 1.65 s more, since it leans on Gemini 4 Argon (188 of 300 prompts).
+
+**Caveats**
+
+- The fresh prompts are read again here. Nothing was tuned on them; the presets come from the validation split.
+- The fixed variant is a tested recommendation. The frozen router remains the evaluated system.
+- The scenarios were chosen after the flaws were found, so they are the cases the fix was built for. They show the fix repairs those cases, not that it is better elsewhere.
+- The reliability floor is a single value chosen before the results, from a two-value grid, so "small" is by construction. The test split and the fresh prompts agree, but neither can say whether 0.25 is the best floor.
+- The Gemma failures use Mercury's 404 time, since no real calls to Gemma 4 26B after it went away were made.
+- The fix is not free at the lowest-cost setting with nothing changed: nearly the same right answers, five times the (tiny) spend.
+
+**Checks.** `final-evaluation.json`, `flagship-study.json`, `wide-study.json`, every router file and every cell table are unchanged: rerunning `final_eval`, `pool_study --study flagship` and `--study wide` leaves `git diff --stat data/` empty. `python -m app.learned.validate` has 36 checks (7 new for this report); backend tests 135, frontend tests 24.
+
 ### Left
 
 - **The final report:**
@@ -810,7 +857,7 @@ This records the proposal's work-plan items for the week of December 3 that coul
   - the robustness results;
   - the pool studies: a fast, accurate flagship helps the faster settings, the expensive flagships are never chosen, and cheap models add small gains at the lowest-cost setting but none that is significant;
   - the limits: benchmarks are not real traffic, they are at the ceiling for strong models, prompt features add little here, and the router only knows the models it was measured on.
-- **Two design fixes, to report rather than evaluate:** score cost and time against fixed reference values (for example the snapshot's own maximum) instead of the current maximum, and give reliability a small default weight. Both change the router, so they cannot be tested on the fresh prompts without spending them; the report should describe them as recommendations, backed by the scenarios above.
+- **The two design fixes were tested, not adopted:** fixed cost and time references and a small default reliability weight, evaluated as a variant next to the frozen router (see [The scoring fix, tested](#the-scoring-fix-tested)). The report should present them as a tested recommendation: the frozen router remains the evaluated system.
 - **Recording** the complete backup run-through.
 - **Rehearsing** the demonstration with the [live demo guide](live-demo-guide.md).
 - **Tagging** the final code version `checkpoint-4` after the rehearsal.
