@@ -1,0 +1,26 @@
+# Secrets and local state never enter the build context.
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+backend/.env
+data/local
+local-only
+.claude
+
+# Large or irrelevant to the image.
+.git
+.github
+**/node_modules
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+frontend/dist
+frontend/playwright-report
+frontend/test-results
+docs/demo
+docs/presentations
+tmp
