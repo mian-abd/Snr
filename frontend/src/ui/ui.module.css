@@ -32,7 +32,7 @@
 /* Chart card: serif title, gray subtitle, tools top-right, footnotes as collapsible rows. */
 .chartCard { min-width: 0; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); padding: 1.6rem 1.75rem 0.75rem; }
 .chartHead { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
-.chartHead h3 { display: flex; align-items: center; gap: 0.6rem; font-size: 1.45rem; }
+.chartHead :is(h2, h3) { display: flex; align-items: center; gap: 0.6rem; font-size: 1.45rem; }
 .chartHead p { max-width: 46rem; margin-top: 0.35rem; color: var(--text-3); font-size: 0.8rem; line-height: 1.5; }
 .chartTools { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0.4rem; }
 .chartBody { margin-top: 1.25rem; }
@@ -148,7 +148,7 @@
 
 /* Form fields */
 .field { display: grid; gap: 0.4rem; color: var(--text-2); font-size: 0.8rem; font-weight: 500; }
-.input, .select, .textarea { width: 100%; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-2); color: var(--text); font-size: 0.875rem; outline: none; transition: border-color 120ms ease, background 120ms ease; }
+.input, .select, .textarea { width: 100%; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-2); color: var(--text); font-size: 0.875rem; transition: border-color 120ms ease, background 120ms ease; }
 .input, .select { height: 2.4rem; padding: 0 0.8rem; }
 .textarea { padding: 0.85rem 0.95rem; line-height: 1.6; resize: vertical; }
 .input:hover, .select:hover, .textarea:hover { border-color: var(--border-strong); }

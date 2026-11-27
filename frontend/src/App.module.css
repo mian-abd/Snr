@@ -62,3 +62,6 @@
 @media (max-width: 370px) {
   .status { display: none; }
 }
+.skip { position: fixed; top: 0.75rem; left: 0.75rem; z-index: 200; padding: 0.6rem 1rem; border-radius: var(--radius-md); background: var(--ink); color: var(--ink-text); font-size: 0.9rem; font-weight: 500; text-decoration: none; transform: translateY(-200%); }
+.skip:focus-visible { transform: none; outline: 2px solid var(--focus); outline-offset: 2px; }
+.main:focus { outline: none; }

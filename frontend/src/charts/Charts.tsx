@@ -83,7 +83,7 @@ export function PathChart({ title, subtitle, points, xLabel, yLabel, formatX, fo
     <figure className={styles.figure}>
       <figcaption><strong>{title}</strong>{subtitle && <span>{subtitle}</span>}</figcaption>
       <div className={styles.frame}>
-        <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`${title}. The values are in the table.`}>
+        <svg viewBox={`0 0 ${width} ${height}`} role="group" aria-label={`${title}. The same values follow as a table.`}>
           {yTicks.map((tick) => (
             <g key={`y${tick}`}>
               <line className={styles.grid} x1={margin.left} x2={width - margin.right} y1={sy(tick)} y2={sy(tick)} />
@@ -104,10 +104,15 @@ export function PathChart({ title, subtitle, points, xLabel, yLabel, formatX, fo
             return <text key={`l${index}`} className={styles.label} x={sx(point.x) + (right ? -8 : 8)} y={sy(point.y) - 9} textAnchor={right ? 'end' : 'start'}>{point.label}</text>
           })}
           {points.map((point, index) => (
-            <circle key={`h${index}`} className={styles.hit} cx={sx(point.x)} cy={sy(point.y)} r={11} tabIndex={0} aria-label={point.detail.join(', ')}
+            <circle key={`h${index}`} className={styles.hit} cx={sx(point.x)} cy={sy(point.y)} r={11} tabIndex={0} role="img" aria-label={point.detail.join(', ')}
               onPointerEnter={() => setActive(index)} onPointerLeave={() => setActive(null)} onFocus={() => setActive(index)} onBlur={() => setActive(null)} />
           ))}
         </svg>
+        <table className={styles.srOnly}>
+          <caption>{title}</caption>
+          <thead><tr><th scope="col">Point</th><th scope="col">Values</th></tr></thead>
+          <tbody>{points.map((point, index) => <tr key={index}><th scope="row">{point.label ?? point.detail[0]}</th><td>{(point.label ? point.detail : point.detail.slice(1)).join(', ')}</td></tr>)}</tbody>
+        </table>
         {current && (
           <div className={styles.tooltip} style={{ left: `${(sx(current.x) / width) * 100}%`, top: `${(sy(current.y) / height) * 100}%` }} role="status">
             <strong>{current.detail[0]}</strong>

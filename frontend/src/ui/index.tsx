@@ -49,8 +49,10 @@ export function MetricKey({ metric }: { metric: Metric }) {
 }
 
 /** A chart in a card: serif title, a gray line on what it measures, tools, and footnotes. */
-export function ChartCard({ id, metric, title, subtitle, tools, footnotes, children }: {
+export function ChartCard({ id, metric, title, subtitle, tools, footnotes, children, level = 3 }: {
   id?: string
+  /** Heading level: 3 under a section heading, 2 when the chart opens the page content. */
+  level?: 2 | 3
   metric?: Metric
   title: ReactNode
   subtitle?: ReactNode
@@ -58,11 +60,12 @@ export function ChartCard({ id, metric, title, subtitle, tools, footnotes, child
   footnotes?: Array<{ title: string; body: ReactNode }>
   children: ReactNode
 }) {
+  const Heading = level === 2 ? 'h2' : 'h3'
   return (
     <section id={id} className={styles.chartCard} aria-label={typeof title === 'string' ? title : undefined}>
       <div className={styles.chartHead}>
         <div>
-          <h3>{metric && <MetricKey metric={metric} />}{title}</h3>
+          <Heading>{metric && <MetricKey metric={metric} />}{title}</Heading>
           {subtitle && <p>{subtitle}</p>}
         </div>
         {tools && <div className={styles.chartTools}>{tools}</div>}
@@ -187,7 +190,7 @@ export function SideNav({ items, label = 'On this page', className }: { items: A
     <nav className={`${styles.sideNav} ${className ?? ''}`} aria-label={label}>
       {items.map((item) => (
         <a key={item.id} href={`#${item.id}`} aria-current={active === item.id ? 'true' : undefined}
-          onClick={(event) => { event.preventDefault(); setActive(item.id); document.getElementById(item.id)?.scrollIntoView({ behavior: 'smooth' }) }}>
+          onClick={(event) => { event.preventDefault(); setActive(item.id); document.getElementById(item.id)?.scrollIntoView({ behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }) }}>
           {item.label}
         </a>
       ))}

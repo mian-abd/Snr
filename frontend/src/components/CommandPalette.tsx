@@ -187,7 +187,7 @@ function Palette({ onClose }: { onClose: () => void }) {
           />
           <button type="button" className={styles.close} onClick={onClose} aria-label="Close search">Esc</button>
         </div>
-        <div className={styles.results}>
+        <div className={styles.results} tabIndex={0} role="group" aria-label="Search results">
           <ul id={listId} role="listbox" aria-label="Results" className={options.list}>
             {groups.map((group) => (
               <li key={group.id} role="presentation" className={options.group}>

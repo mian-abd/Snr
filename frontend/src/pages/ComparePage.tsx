@@ -256,6 +256,7 @@ export function ComparePage() {
         <>
           <ChartCard
             metric="accuracy"
+            level={2}
             title="Accuracy by task"
             subtitle={chartSet === 'fresh' ? `Share of the ${freshPrompts} fresh prompts answered correctly.` : `Share of the ${suitePrompts}-prompt suite answered correctly.`}
             tools={hasSuite ? <Segmented label="Prompt set" value={chartSet} onChange={setChart} options={[{ id: 'fresh', label: 'Fresh prompts' }, { id: 'suite', label: `${suitePrompts}-prompt suite` }]} /> : undefined}

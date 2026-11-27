@@ -123,9 +123,9 @@ export function PrioritySweep({ sweep, prompts, models }: { sweep: PrioritySweep
             <p>Accuracy has weight 1 and the {other} weight is 0.{selected === best && selected > 0 ? ` Most of the ${axis === 'cost' ? 'saving' : 'speed-up'} has arrived by this weight.` : ''}</p>
           </div>
           <dl className={styles.facts}>
-            <div><dt>Right answers</dt><dd>{point.correct}/{prompts}</dd><small>{pct(point.accuracy)} · {versus(point.correct - first.correct, (n) => `${n}`, 'fewer', 'more')}</small></div>
-            <div><dt>Billed cost</dt><dd>{usdOrFree(point.total_cost_usd)}</dd><small>{versus(point.total_cost_usd - first.total_cost_usd, usd, 'less', 'more')}</small></div>
-            <div><dt>Median time</dt><dd>{seconds(point.median_latency_ms)}</dd><small>{versus(timeOf(point) - timeOf(first), (ms) => seconds(ms), 'faster', 'slower')}</small></div>
+            <div><dt>Right answers</dt><dd>{point.correct}/{prompts}</dd><dd className={styles.note}>{pct(point.accuracy)} · {versus(point.correct - first.correct, (n) => `${n}`, 'fewer', 'more')}</dd></div>
+            <div><dt>Billed cost</dt><dd>{usdOrFree(point.total_cost_usd)}</dd><dd className={styles.note}>{versus(point.total_cost_usd - first.total_cost_usd, usd, 'less', 'more')}</dd></div>
+            <div><dt>Median time</dt><dd>{seconds(point.median_latency_ms)}</dd><dd className={styles.note}>{versus(timeOf(point) - timeOf(first), (ms) => seconds(ms), 'faster', 'slower')}</dd></div>
           </dl>
           <div className={styles.picks}>
             <strong>Where the prompts went</strong>

@@ -15,7 +15,7 @@
 
 /* ---------- Fields ---------- */
 .fieldLabel { display: block; margin: 1.35rem 0 0.55rem; color: var(--text); font-size: 0.84rem; font-weight: 600; }
-.prompt { width: 100%; padding: 0.85rem 0.95rem; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-2); color: var(--text); font: 400 0.9rem/1.6 var(--font-sans); outline: none; resize: vertical; transition: border-color 120ms ease, background 120ms ease; }
+.prompt { width: 100%; padding: 0.85rem 0.95rem; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-2); color: var(--text); font: 400 0.9rem/1.6 var(--font-sans); resize: vertical; transition: border-color 120ms ease, background 120ms ease; }
 .prompt:hover { border-color: var(--border-strong); }
 .prompt:focus { border-color: var(--text-3); background: var(--surface); }
 .priorityFieldset { margin: 1.35rem 0 0; padding: 0; border: 0; }
@@ -32,7 +32,7 @@
 .requirementControl .fieldLabel { margin: 0; }
 .requirementControl p { margin: 0.25rem 0 0; color: var(--text-3); font-size: 0.78rem; line-height: 1.5; }
 .requirementControl label { display: grid; gap: 0.4rem; color: var(--text-2); font-size: 0.8rem; font-weight: 500; }
-.requirementControl input, .filterForm input { height: 2.4rem; padding: 0 0.8rem; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); color: var(--text); font: 400 0.875rem var(--font-sans); font-variant-numeric: tabular-nums; outline: none; transition: border-color 120ms ease; }
+.requirementControl input, .filterForm input { height: 2.4rem; padding: 0 0.8rem; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); color: var(--text); font: 400 0.875rem var(--font-sans); font-variant-numeric: tabular-nums; transition: border-color 120ms ease; }
 .requirementControl input { width: 10rem; }
 .requirementControl input:hover, .filterForm input:hover { border-color: var(--border-strong); }
 .requirementControl input:focus, .filterForm input:focus { border-color: var(--text-3); }
@@ -118,7 +118,7 @@
 .replayControls { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1rem; margin: 2rem 0 0.9rem; }
 .replayControls h3 { margin: 0.4rem 0 0; font-size: 1.4rem; }
 .replayControls label { display: grid; gap: 0.4rem; color: var(--text-2); font-size: 0.8rem; font-weight: 500; }
-.replayControls select { min-width: 18rem; height: 2.4rem; padding: 0 0.8rem; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-2); color: var(--text); font: 400 0.875rem var(--font-sans); outline: none; }
+.replayControls select { min-width: 18rem; height: 2.4rem; padding: 0 0.8rem; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-2); color: var(--text); font: 400 0.875rem var(--font-sans); }
 .replayControls select:hover { border-color: var(--border-strong); }
 .replayControls select:focus { border-color: var(--text-3); background: var(--surface); }
 

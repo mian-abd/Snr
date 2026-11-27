@@ -113,7 +113,7 @@ export function TradeoffScatter({ points, xLabel, yLabel, formatX, formatY = (va
   return (
     <div className={styles.scrollX}>
     <div className={`${styles.frame} ${styles.wide}`}>
-      <svg viewBox={`0 0 ${WIDTH} ${height}`} role="img" aria-label={`${label}. The values are listed in the table.`}>
+      <svg viewBox={`0 0 ${WIDTH} ${height}`} role="group" aria-label={`${label}. The same values follow as a table.`}>
         {mx != null && my != null && (
           <rect className={styles.quadrant} x={plot.x0} y={plot.y0} width={Math.max(0, sx(mx) - plot.x0)} height={Math.max(0, sy(my) - plot.y0)} />
         )}
@@ -141,10 +141,15 @@ export function TradeoffScatter({ points, xLabel, yLabel, formatX, formatY = (va
         })}
         {labels.map((item) => <text key={`l-${item.id}`} className={item.strong ? styles.labelStrong : styles.label} x={item.x} y={item.y} textAnchor={item.anchor}>{item.label}</text>)}
         {marks.map(({ point, px, py }) => (
-          <circle key={`hit-${point.id}`} className={styles.hit} cx={px} cy={py} r={12} tabIndex={0} aria-label={[point.label, ...point.details].join(', ')}
+          <circle key={`hit-${point.id}`} className={styles.hit} cx={px} cy={py} r={12} tabIndex={0} role="img" aria-label={[point.label, ...point.details].join(', ')}
             onPointerEnter={() => setActive(point.id)} onPointerLeave={() => setActive(null)} onFocus={() => setActive(point.id)} onBlur={() => setActive(null)} />
         ))}
       </svg>
+      <table className={styles.srOnly}>
+        <caption>{label}</caption>
+        <thead><tr><th scope="col">Point</th><th scope="col">Values</th></tr></thead>
+        <tbody>{points.map((point) => <tr key={point.id}><th scope="row">{point.label}</th><td>{point.details.join(', ')}</td></tr>)}</tbody>
+      </table>
       {current && (
         <div className={styles.tooltip} style={{ left: `${(current.px / WIDTH) * 100}%`, top: `${(current.py / height) * 100}%` }} role="status">
           <strong>{current.point.label}</strong>

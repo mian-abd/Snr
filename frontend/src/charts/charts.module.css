@@ -82,3 +82,4 @@
   .shareRow { grid-template-columns: minmax(0, 1fr); gap: 0.35rem; }
   .barRow { grid-template-columns: minmax(5.5rem, 8rem) 1fr 4rem; }
 }
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }

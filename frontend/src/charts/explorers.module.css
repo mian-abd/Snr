@@ -65,7 +65,7 @@
 .facts div { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 0.15rem 0.75rem; padding: 0.55rem 0; border-top: 1px solid var(--border); }
 .facts dt { color: var(--text-2); font-size: 0.8rem; }
 .facts dd { margin: 0; color: var(--text); font-size: 0.95rem; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
-.facts small { grid-column: 1 / -1; color: var(--text-3); font-size: 0.74rem; text-align: right; }
+.facts .note { grid-column: 1 / -1; color: var(--text-3); font-size: 0.74rem; font-weight: 400; text-align: right; }
 .picks { display: grid; gap: 0.6rem; }
 .picks > strong { color: var(--text); font-size: 0.82rem; font-weight: 600; }
 .picks [role='list'] > [role='listitem'] { grid-template-columns: minmax(0, 1fr); gap: 0.35rem; }

@@ -176,13 +176,13 @@ export function ModelsPage() {
             <table className={`${ui.table} ${styles.table}`}>
               <thead>
                 <tr className={styles.groupHead}>
-                  <th />
-                  <th />
+                  <td />
+                  <td />
                   <th colSpan={4}>Accuracy <small>on {freshPrompts} fresh prompts</small></th>
                   <th colSpan={3}>Price</th>
                   <th>Speed</th>
                   <th>Features</th>
-                  <th />
+                  <td />
                 </tr>
                 <tr>
                   <th className={styles.pickCol}><span className={styles.srOnly}>Pick to compare</span></th>

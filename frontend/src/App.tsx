@@ -1,5 +1,5 @@
 import { Menu, Moon, Search, Sun, Waypoints, X } from 'lucide-react'
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState, type MouseEvent } from 'react'
 import { CommandPalette } from './components/CommandPalette'
 import { useCatalog, useHealth } from './lib/data'
 import { shortTime } from './lib/format'
@@ -64,6 +64,14 @@ function Page({ segments }: { segments: string[] }) {
   }
 }
 
+/** The hash is the route here, so the skip link moves focus instead of following its href. */
+function skipToContent(event: MouseEvent<HTMLAnchorElement>) {
+  event.preventDefault()
+  const main = document.getElementById('main-content')
+  main?.focus({ preventScroll: true })
+  main?.scrollIntoView({ block: 'start' })
+}
+
 export default function App() {
   const { segments, path } = useRoute()
   const { theme, toggle } = useTheme()
@@ -96,6 +104,7 @@ export default function App() {
 
   return (
     <div className={styles.app}>
+      <a href="#main-content" className={styles.skip} onClick={skipToContent}>Skip to content</a>
       <header className={`${styles.header} ${scrolled ? styles.headerScrolled : ''}`}>
         <div className={styles.headerInner}>
           <Link to="/" className={styles.brand}><Waypoints size={17} strokeWidth={2} />Adaptive Router</Link>
@@ -114,18 +123,18 @@ export default function App() {
             <button type="button" className={styles.iconButton} onClick={toggle} aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'} title={theme === 'dark' ? 'Light theme' : 'Dark theme'}>
               {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
             </button>
-            <button type="button" className={`${styles.iconButton} ${styles.menuButton}`} onClick={() => setMenu(!menu)} aria-label="Menu" aria-expanded={menu}>
+            <button type="button" className={`${styles.iconButton} ${styles.menuButton}`} onClick={() => setMenu(!menu)} aria-label="Menu" aria-expanded={menu} aria-controls="mobile-menu">
               {menu ? <X size={16} /> : <Menu size={16} />}
             </button>
           </div>
         </div>
         {menu && (
-          <nav className={styles.mobileNav} aria-label="Main">
+          <nav id="mobile-menu" className={styles.mobileNav} aria-label="Menu">
             {links.map((link) => <Link key={link.to} to={link.to} aria-current={current(link.to)}>{link.label}</Link>)}
           </nav>
         )}
       </header>
-      <main className={styles.main}>
+      <main id="main-content" tabIndex={-1} className={styles.main}>
         {health.isError
           ? <div className={styles.error}><Notice tone="bad" role="alert"><strong>The server could not be reached.</strong> Start it with <code>./scripts/demo.ps1</code> and reload this page.</Notice></div>
           : <Suspense fallback={<div style={{ paddingTop: '3rem' }}><Skeleton height={420} /></div>}><Page segments={segments} /></Suspense>}
