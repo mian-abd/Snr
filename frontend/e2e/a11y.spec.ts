@@ -40,6 +40,10 @@ async function scrollThrough(page: Page) {
 }
 
 async function scan(page: Page, label: string) {
+  // Colors are read mid-fade otherwise: let entrance animations finish first.
+  await page.evaluate(() => Promise.all(document.getAnimations()
+    .filter((animation) => Number.isFinite(animation.effect?.getComputedTiming().endTime))
+    .map((animation) => animation.finished.catch(() => undefined))))
   const { violations } = await new AxeBuilder({ page }).withTags(tags).analyze()
   const describe = (items: typeof violations) =>
     items.map((v) => `${v.id} (${v.impact}) x${v.nodes.length}: ${v.help}\n${v.nodes.slice(0, 4).map((n) => `    ${n.target.join(' ')}`).join('\n')}`)

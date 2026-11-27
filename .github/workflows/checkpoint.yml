@@ -46,6 +46,43 @@ jobs:
       - run: git diff --exit-code src/api/schema.d.ts
         working-directory: frontend
 
+  accessibility:
+    runs-on: ubuntu-latest
+    env:
+      LIVE_CATALOG_CHECK: "false"
+      PW_BUNDLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "latest"
+          enable-cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: uv sync --project backend --frozen
+      - run: npm ci
+        working-directory: frontend
+      - run: npm run build
+        working-directory: frontend
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      # The built site, served by the backend with no provider keys: the checks only read.
+      - name: Start the backend
+        run: |
+          nohup uv run --project backend uvicorn app.main:app --app-dir backend --port 8012 > backend.log 2>&1 &
+          for attempt in $(seq 1 40); do
+            curl -fsS http://127.0.0.1:8012/api/v1/health > /dev/null && exit 0
+            sleep 1
+          done
+          cat backend.log
+          exit 1
+      - name: Accessibility and keyboard checks
+        run: npx playwright test --project=a11y
+        working-directory: frontend
+
   secrets:
     runs-on: ubuntu-latest
     steps:
