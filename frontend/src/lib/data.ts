@@ -21,6 +21,7 @@ export const useHealth = () => useQuery({ queryKey: ['health'], queryFn: client.
 export const useFinalReport = () => useQuery({ queryKey: ['final-report'], queryFn: client.finalReport, staleTime: Infinity })
 export const useLearnedReport = () => useQuery({ queryKey: ['learned-report'], queryFn: client.learnedReport, staleTime: Infinity })
 export const useStudies = () => useQuery({ queryKey: ['studies'], queryFn: client.studies, staleTime: Infinity })
+export const useScoringFix = () => useQuery({ queryKey: ['scoring-fix'], queryFn: client.scoringFix, staleTime: Infinity })
 export const useStudy = (id: string) => useQuery({ queryKey: ['study', id], queryFn: () => client.study(id), staleTime: Infinity })
 
 /** Every pool study that has been run, narrowest first (flagships, then every model). */

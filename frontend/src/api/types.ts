@@ -647,7 +647,75 @@ export type PoolStudyReport = {
 
 export type StudySummary = { study_id: string; title: string; question: string; added: number; pool: LearnedPool }
 
-export type ExportTable = 'strategies' | 'comparisons' | 'errors' | 'robustness' | 'sweep' | 'decisions' | 'cells' | 'study_strategies' | 'study_comparisons' | 'study_models' | 'added_cells'
+export type ExportTable = 'strategies' | 'comparisons' | 'errors' | 'robustness' | 'sweep' | 'decisions' | 'cells' | 'study_strategies' | 'study_comparisons' | 'study_models' | 'added_cells' | 'scoring_fix'
+
+/** The tested scoring fix (GET /api/v1/learned/scoring-fix): frozen and fixed scoring side by side. */
+export type ScoringReference = { cost_usd: Record<string, number>; latency_ms: Record<string, number> }
+
+export type ScoringFixTuning = {
+  classifier: string
+  validation_prompts: number
+  reliability_floor: number
+  reliability_grid: number[]
+  tuning_reference: ScoringReference
+  frozen_recipe_reproduced: boolean
+  recipe_check_presets: WeightTuningResult[]
+  reference_only_presets: WeightTuningResult[]
+  fixed_presets: WeightTuningResult[]
+  note: string
+}
+
+export type EvidenceRow = {
+  evaluation_id: string
+  scenario_id: string
+  priority: RoutingPriority
+  router: 'frozen' | 'fixed'
+  told: ScenarioStrategy
+  old: ScenarioStrategy
+  unchanged: ScenarioStrategy
+  told_vs_old_p: number | null
+}
+
+export type QuestionAnswer = {
+  question_id: string
+  question: string
+  rule: string
+  holds_fresh: boolean
+  holds_test: boolean
+  answer_fresh: string
+  answer_test: string
+  evidence: EvidenceRow[]
+}
+
+export type ScoringFixEvaluation = {
+  evaluation_id: 'cp3_test' | 'final'
+  title: string
+  description: string
+  prompts: number
+  models: string[]
+  matrix: LearnedMatrixRow[]
+  comparisons: PairedComparison[]
+  frozen: RobustnessReport
+  fixed: RobustnessReport
+}
+
+export type ScoringFixReport = {
+  study_id: string
+  title: string
+  artifact_id: string
+  artifact_sha256: string
+  final_set_sha256: string
+  pool_snapshot_id: string
+  reference: ScoringReference
+  frozen_weights: Record<RoutingPriority, RoutingWeights>
+  fixed_weights: Record<RoutingPriority, RoutingWeights>
+  tuning: ScoringFixTuning
+  protocol: string[]
+  caveats: string[]
+  questions: QuestionAnswer[]
+  evaluations: ScoringFixEvaluation[]
+  cell_tables: string[]
+}
 
 /** The prompt explorer (GET /api/v1/learned/prompts): every prompt, every model, every choice. */
 export type ExplorerEvaluation = 'cp3_test' | 'final'

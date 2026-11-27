@@ -1,7 +1,7 @@
 import { BookOpen, CircleHelp, Columns3, CornerDownLeft, FlaskConical, Hash, House, MessageSquareText, Rows3, Search, Waypoints } from 'lucide-react'
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { accessLabel, addedLabel, modelViews, useFinalReport, useLearnedReport, usePool, useStudyReports } from '../lib/data'
+import { accessLabel, addedLabel, modelViews, useFinalReport, useLearnedReport, usePool, useScoringFix, useStudyReports } from '../lib/data'
 import { makerOf } from '../lib/makers'
 import { freshShare, plainName } from '../lib/measures'
 import { navigate } from '../lib/router'
@@ -59,6 +59,7 @@ function Palette({ onClose }: { onClose: () => void }) {
   const optionId = (index: number) => `${listId}-option-${index}`
 
   const studyIds = studies.map((study) => study.study_id).join(',')
+  const hasScoringFix = Boolean(useScoringFix().data)
   const items = useMemo<Item[]>(() => {
     const pages: Item[] = sitePages.map((page) => ({ key: `page:${page.path}`, group: 'pages', title: page.label, sub: page.about, keywords: page.keywords, path: page.path, icon: pageIcons[page.path] }))
     const views = modelViews(pool.data, null, learned.data, final.data, studies)
@@ -79,13 +80,14 @@ function Palette({ onClose }: { onClose: () => void }) {
       }
     })
     const present = new Set(studyIds.split(',').filter(Boolean).map((id) => `study-${id}`))
+    if (hasScoringFix) present.add('scoring-fix')
     const research: Item[] = researchSections
-      .filter((section) => !section.id.startsWith('study-') || present.has(section.id))
+      .filter((section) => !(section.id.startsWith('study-') || section.id === 'scoring-fix') || present.has(section.id))
       .map((section) => ({ key: `research:${section.id}`, group: 'research', title: section.label, sub: 'Research', keywords: section.keywords, path: `/research?section=${section.id}`, icon: <Hash size={16} /> }))
     return [...pages, ...models, ...research]
     // The study reports are a new array each render; their IDs say when they changed.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pool.data, learned.data, final.data, studyIds])
+  }, [pool.data, learned.data, final.data, studyIds, hasScoringFix])
 
   const groups = useMemo(() => {
     const order: GroupId[] = ['pages', 'models', 'research']

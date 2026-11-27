@@ -81,7 +81,8 @@ export const sitePages = [
 
 /**
  * The research page's sections (its side navigation), for the search palette. Sections whose ID
- * starts with "study-" exist only once that pool study has been run.
+ * starts with "study-" exist only once that pool study has been run, and "scoring-fix" only once
+ * the scoring-fix study has.
  */
 export const researchSections = [
   { id: 'highlights', label: 'Highlights', keywords: 'summary findings' },
@@ -92,6 +93,7 @@ export const researchSections = [
   { id: 'study-wide', label: 'With every model', keywords: 'wide study pool budget' },
   { id: 'errors', label: 'Where it goes wrong', keywords: 'routing errors mistakes oracle regret' },
   { id: 'robustness', label: 'When things change', keywords: 'robustness drift scenarios outage price' },
+  { id: 'scoring-fix', label: 'Fixing the scoring flaw', keywords: 'scoring fix normalization reference reliability weight gemma mercury unavailable' },
   { id: 'priorities', label: 'Your priorities', keywords: 'weights sweep cost latency' },
   { id: 'training', label: 'How it was built', keywords: 'training classifier logistic features' },
   { id: 'method', label: 'Method and limits', keywords: 'methodology limitations protocol' },

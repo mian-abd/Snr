@@ -177,23 +177,47 @@ const explorer = {
   ],
 }
 
+const fixStrategy = (id: string, correct: number, cost: number, latency: number, models: Record<string, number> = {}) => ({ strategy_id: id, correct, accuracy: correct / 120, total_cost_usd: cost, median_latency_ms: latency, changed_decisions: 0, selected_models: models })
+const fixScenario = (id: string, title: string, observed: boolean, unavailable: string[], told: number, old: number) => ({
+  scenario: { scenario_id: id, title, condition: 'availability', observed, description: `${title} on 2026-11-26.`, price_multipliers: {}, latency_multipliers: {}, failure_shares: {}, unavailable, reliability_weight: null, world_already_changed: false },
+  prompts: 120,
+  strategies: ['quality', 'cost', 'latency'].flatMap((priority) => [fixStrategy(`learned:${priority}`, told, 0.2, 5000), fixStrategy(`learned_frozen:${priority}`, old, 0.1, 3000)]),
+})
+const fixRobustness = (id: string) => ({ evaluation_id: id, prompts: 120, priority_sweep: [], notes: [], scenarios: [
+  fixScenario('no_change', 'No change', false, [], 110, 110),
+  fixScenario('observed_drift', 'Observed drift (Nov 12-13)', true, ['mercury-3'], 110, 29),
+  fixScenario('gemma_mercury_unavailable', 'Gemma 4 26B and Mercury 3 unavailable', true, ['gemma-4-26b', 'mercury-3'], 109, 31),
+] })
+const fixEvidence = (router: 'frozen' | 'fixed') => ({ evaluation_id: 'final', scenario_id: 'gemma_mercury_unavailable', priority: 'latency', router, told: fixStrategy('learned:latency', 109, 0.2, 5000), old: fixStrategy('learned_frozen:latency', 31, 0.1, 3000), unchanged: fixStrategy('learned:latency', 110, 0.2, 5000), told_vs_old_p: 0.01 })
+const fixWeights = { quality: { quality: 1, cost: 0.05, latency: 0.02, reliability: 0.5 }, cost: { quality: 1, cost: 0.5, latency: 0.05, reliability: 0.25 }, latency: { quality: 1, cost: 0.05, latency: 1, reliability: 0.25 }, balanced: { quality: 1, cost: 0.05, latency: 1, reliability: 0.25 } }
+const scoringFixReport = {
+  study_id: 'scoring-fix', title: 'The scoring fix, tested', artifact_id: 'router-test', artifact_sha256: 'a'.repeat(64), final_set_sha256: 'b'.repeat(64), pool_snapshot_id: 'pool-test',
+  reference: { cost_usd: { math: 0.002 }, latency_ms: { math: 13000 } }, frozen_weights: fixWeights, fixed_weights: fixWeights,
+  tuning: { classifier: 'router-test', validation_prompts: 120, reliability_floor: 0.25, reliability_grid: [0.25, 0.5], tuning_reference: { cost_usd: {}, latency_ms: {} }, frozen_recipe_reproduced: true, recipe_check_presets: [], reference_only_presets: [], fixed_presets: [], note: 'Tuned on validation.' },
+  protocol: ['Offline replay.'], caveats: ['The references live in the report, not the router.'],
+  questions: [{ question_id: 'keeps_accuracy', question: 'With no change, does the fixed scoring keep accuracy on the fresh prompts?', rule: 'Yes if no priority is significantly worse.', holds_fresh: true, holds_test: false, answer_fresh: 'Fixed against frozen: cost 264 against 265.', answer_test: 'Test split numbers.', evidence: [fixEvidence('frozen'), fixEvidence('fixed')] }],
+  evaluations: ['cp3_test', 'final'].map((id) => ({ evaluation_id: id, title: id === 'final' ? 'Fresh prompts' : 'Original test split', description: 'd', prompts: 120, models: [], matrix: [], comparisons: [], frozen: fixRobustness(id), fixed: fixRobustness(id) })),
+  cell_tables: ['data/learned/cells.jsonl'],
+}
+
 type Requested = Array<{ url: string; body?: string }>
 
 /** A server with or without a trained router; every response is local. */
-function stub(requested: Requested, { trained = true, keyed = false, final = finalReport as unknown, flagships = null as unknown } = {}) {
+function stub(requested: Requested, { trained = true, keyed = false, final = finalReport as unknown, flagships = null as unknown, scoringFix = null as unknown } = {}) {
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input)
     requested.push({ url, body: init?.body ? String(init.body) : undefined })
     if (url.endsWith('/health')) return json({ ...health, credential_configured: keyed })
     if (url.includes('/learned/')) {
       if (!trained) {
-        return url.endsWith('/learned/report') || url.endsWith('/learned/final') || url.includes('/learned/studies')
+        return url.endsWith('/learned/report') || url.endsWith('/learned/final') || url.includes('/learned/studies') || url.endsWith('/learned/scoring-fix')
           ? json({ detail: 'No report has been generated yet' }, 404)
           : json({ detail: 'The learned router has not been trained yet' }, 503)
       }
       if (url.includes('/learned/prompts')) return json(url.endsWith('evaluation=final') ? explorer : { ...explorer, evaluation: 'cp3_test', prompts: explorer.prompts.slice(0, 1) })
       if (url.endsWith('/learned/report')) return json(report)
       if (url.endsWith('/learned/final')) return json(final)
+      if (url.endsWith('/learned/scoring-fix')) return scoringFix ? json(scoringFix) : json({ detail: 'The scoring-fix study has not been run yet' }, 404)
       if (url.endsWith('/learned/studies')) return json(flagships ? [{ study_id: 'flagship', title: 'With flagship models', question: 'Q', added: 1, pool: 'flagships' }] : [])
       if (url.endsWith('/learned/studies/flagship') && flagships) return json(flagships)
       if (url.includes('/learned/studies/')) return json({ detail: 'No study has been run' }, 404)
@@ -304,6 +328,26 @@ test('shows the research: leaderboard, significance, errors, robustness, trainin
   expect(screen.getByText(/The held-out fifth of the 600-prompt suite/)).toBeInTheDocument()
   expect(screen.queryByText('What the live catalog check is worth')).toBeNull()
   expect(requested.some(({ url }) => url.includes('/routes') || url.includes('/refresh'))).toBe(false)
+})
+
+test('adds the scoring fix to the research, its sections and the search, once the study exists', async () => {
+  stub([], { scoringFix: scoringFixReport })
+  renderAt('/research')
+  expect(await screen.findByRole('heading', { name: 'Fixing the scoring flaw' })).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: 'Fixing the scoring flaw' })).toBeInTheDocument()
+  const questions = screen.getByRole('table', { name: 'The fixed questions and their answers' })
+  expect(within(questions).getByText('Fixed against frozen: cost 264 against 265.')).toBeInTheDocument()
+  expect(within(questions).getAllByText('Yes').length).toBe(1)
+  const drift = screen.getByRole('table', { name: /Mercury 3 retired next to Gemma 4 26B and Mercury 3 unavailable/ })
+  expect(within(drift).getAllByText('109/120').length).toBeGreaterThan(0)
+  expect(within(drift).getAllByText('31/120').length).toBeGreaterThan(0)
+  expect(screen.getByText('Scoring fix: scenarios')).toBeInTheDocument()
+  expect(screen.getAllByRole('link', { name: /CSV/ }).map((link) => link.getAttribute('href'))).toContain('/api/v1/learned/export/scoring_fix?format=csv')
+  cleanup()
+  stub([])
+  renderAt('/research')
+  expect(await screen.findByRole('heading', { name: 'Does routing pay off?' })).toBeInTheDocument()
+  expect(screen.queryByRole('heading', { name: 'Fixing the scoring flaw' })).toBeNull()
 })
 
 test('adds the flagship study to the research, the catalog, and the router', async () => {

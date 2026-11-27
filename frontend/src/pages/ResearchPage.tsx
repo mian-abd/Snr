@@ -1,4 +1,4 @@
-import { AlertTriangle, BarChart3, BookOpen, Download, FlaskConical, Gauge, GraduationCap, ListOrdered, Scale, Search, Sigma, SlidersHorizontal } from 'lucide-react'
+import { AlertTriangle, BarChart3, BookOpen, Download, FlaskConical, Gauge, GraduationCap, ListOrdered, Scale, Search, Sigma, SlidersHorizontal, Wrench } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { client } from '../api/client'
 import type { EvaluationSet, ExportTable, LearnedStrategyOutcome, PairedComparison, RoutingPriority } from '../api/types'
@@ -6,13 +6,14 @@ import { IntervalRow } from '../charts/Charts'
 import { ScatterLegend, TradeoffScatter, type TradeoffPoint } from '../charts/TradeoffScatter'
 import { PrioritySweep } from '../components/PrioritySweep'
 import { RobustnessExplorer } from '../components/RobustnessExplorer'
-import { evaluationLabel, evaluationOf, priorityLabel, priorityOrder, strategyFamily, strategyLabel, useFinalReport, useLearnedReport, useStudyReports } from '../lib/data'
+import { evaluationLabel, evaluationOf, priorityLabel, priorityOrder, strategyFamily, strategyLabel, useFinalReport, useLearnedReport, useScoringFix, useStudyReports } from '../lib/data'
 import { pct, pValue, seconds, signed, span, usd } from '../lib/format'
 import { costLine, timeLine, verdict } from '../lib/comparisons'
 import { highlights } from '../lib/insights'
 import { useRoute } from '../lib/router'
 import { Badge, Card, ChartCard, Empty, Meter, ModelLogo, PageHeader, Section, Segmented, SideNav, Skeleton, Stat } from '../ui'
 import ui from '../ui/ui.module.css'
+import { ScoringFixSection } from './ScoringFixSection'
 import { StudySection } from './StudySection'
 import styles from './pages.module.css'
 
@@ -31,6 +32,7 @@ const nav = [
   { id: 'study-wide', label: 'With every model', icon: Gauge },
   { id: 'errors', label: 'Where it goes wrong', icon: Search },
   { id: 'robustness', label: 'When things change', icon: FlaskConical },
+  { id: 'scoring-fix', label: 'Fixing the scoring flaw', icon: Wrench },
   { id: 'priorities', label: 'Your priorities', icon: SlidersHorizontal },
   { id: 'training', label: 'How it was built', icon: GraduationCap },
   { id: 'method', label: 'Method and limits', icon: Scale },
@@ -48,6 +50,7 @@ const exportTables: Array<{ id: ExportTable; label: string; about: string }> = [
   { id: 'study_comparisons', label: 'Pool studies: significance tests', about: 'Each study\'s fixed questions, with McNemar and Holm-adjusted p-values' },
   { id: 'study_models', label: 'Pool studies: models', about: 'Every model in each study, per prompt set and task, with cost and time' },
   { id: 'added_cells', label: 'Added models: every answer', about: 'Each added model\'s graded outcome on every prompt (no response text)' },
+  { id: 'scoring_fix', label: 'Scoring fix: scenarios', about: 'Every scenario and strategy for the frozen and the fixed scoring, on both prompt sets' },
 ]
 const groups: Array<{ title: string; match: (id: string) => boolean }> = [
   { title: 'Adaptive router', match: (id) => strategyFamily(id) === 'learned' },
@@ -149,7 +152,11 @@ export function ResearchPage() {
   const studies = useStudyReports()
   const studyIds = studies.map((study) => `study-${study.study_id}`).join(',')
   const { query } = useRoute()
-  const navItems = useMemo(() => nav.filter((item) => !item.id.startsWith('study-') || studyIds.split(',').includes(item.id)).map(({ id, label }) => ({ id, label })), [studyIds])
+  const scoringFix = useScoringFix().data ?? null
+  const hasScoringFix = scoringFix !== null
+  const navItems = useMemo(() => nav
+    .filter((item) => (!item.id.startsWith('study-') || studyIds.split(',').includes(item.id)) && (item.id !== 'scoring-fix' || hasScoringFix))
+    .map(({ id, label }) => ({ id, label })), [studyIds, hasScoringFix])
   const [evaluationId, setEvaluationId] = useState<EvaluationSet['evaluation_id']>('final')
   const [view, setView] = useState('all')
   const [preset, setPreset] = useState<RoutingPriority>('quality')
@@ -325,6 +332,8 @@ export function ResearchPage() {
               <p className={styles.small} style={{ marginTop: '0.6rem' }}>Injected failures return an error after 2 seconds. Choices changed counts prompts routed differently from the unchanged conditions.</p>
             </Section>
           )}
+
+          {scoringFix && <ScoringFixSection report={scoringFix} evaluationId={evaluation.evaluation_id} />}
 
           {sweep.length > 0 && (
             <Section id="priorities" icon={<SlidersHorizontal size={18} />} title="What your priority costs you" description="The router with accuracy weighted 1 and one other weight turned up step by step, from 0 to 5. Pick a weight on the slider, or click a point, to see what it costs and where the prompts went.">

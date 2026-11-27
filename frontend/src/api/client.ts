@@ -24,6 +24,7 @@ import type {
   RoutingPool,
   RoutingPriority,
   RoutingValidationReport,
+  ScoringFixReport,
   WhatIfChanges,
   WhatIfResponse,
 } from './types'
@@ -140,6 +141,14 @@ export const client = {
   study: async (id: string) => {
     try {
       return await api<PoolStudyReport>(`/api/v1/learned/studies/${encodeURIComponent(id)}`)
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 404) return null
+      throw error
+    }
+  },
+  scoringFix: async () => {
+    try {
+      return await api<ScoringFixReport>('/api/v1/learned/scoring-fix')
     } catch (error) {
       if (error instanceof ApiError && error.status === 404) return null
       throw error
