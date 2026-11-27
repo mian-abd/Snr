@@ -742,6 +742,8 @@ export interface components {
              * Format: date-time
              */
             created_at_utc?: string;
+            /** Note */
+            note?: string | null;
             /** @default baseline */
             pool: components["schemas"]["RoutingPool"];
             /** Prompt */
@@ -1036,8 +1038,17 @@ export interface components {
         HealthResponse: {
             /** Active Benchmark Run Id */
             active_benchmark_run_id: string | null;
+            /** Client Live Calls Left */
+            client_live_calls_left?: number | null;
             /** Credential Configured */
             credential_configured: boolean;
+            /** Live Calls Left */
+            live_calls_left?: number | null;
+            /**
+             * Public Mode
+             * @default false
+             */
+            public_mode: boolean;
             /** Registry Loaded */
             registry_loaded: boolean;
             /** Registry Snapshot Id */

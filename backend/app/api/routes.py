@@ -33,6 +33,7 @@ from app.domain.models import (
     LearnedRouterReport,
     LearnedRoutingDecision,
     LiveCatalogStatus,
+    ModelSpec,
     PaginatedRecords,
     RegistrySnapshot,
     RouteFallback,
@@ -50,6 +51,7 @@ from app.learned.explorer import ExplorerError, build_explorer
 from app.learned.export import TABLES, ExportError, load_report, render
 from app.learned.router import LearnedRouter, NoEligibleModelError
 from app.learned.studies import POOL_STUDY, STUDIES
+from app.public import LiveCall
 from app.registry.filtering import evaluate_eligibility
 from app.registry.loader import ModelDriftError, ModelRegistry
 from app.registry.pool import PoolSnapshot
@@ -107,12 +109,51 @@ async def _preflight(services: AppServices, registry: ModelRegistry) -> None:
         ) from exc
 
 
+def _client_host(request: Request) -> str:
+    """The caller's address; behind Railway's proxy, uvicorn's --proxy-headers makes it real."""
+    return request.client.host if request.client else "unknown"
+
+
+def _learned_call(
+    services: AppServices, router: LearnedRouter, model_id: str, prompt: str, max_tokens: int
+) -> LiveCall:
+    """A pool model's call, priced at the higher of the snapshot and the live catalog price."""
+    model = router.models[model_id]
+    prompt_price, completion_price = model.prompt_price_per_token, model.completion_price_per_token
+    live = next(
+        (item for item in services.catalog.models if item.model_id == model_id), None
+    ) if services.catalog else None
+    if live and live.live_prompt_price_per_million is not None:
+        prompt_price = max(prompt_price, Decimal(str(live.live_prompt_price_per_million)) / 10**6)
+    if live and live.live_completion_price_per_million is not None:
+        completion_price = max(
+            completion_price, Decimal(str(live.live_completion_price_per_million)) / 10**6
+        )
+    return LiveCall(model.display_name, prompt, max_tokens, prompt_price, completion_price)
+
+
+def _registry_call(model: ModelSpec, request: GenerationRequest) -> LiveCall:
+    return LiveCall(
+        model.display_name,
+        request.prompt,
+        request.max_tokens,
+        model.pricing.prompt_per_token,
+        model.pricing.completion_per_token,
+    )
+
+
 @router.get("/health", response_model=HealthResponse)
-async def health(services: Services) -> HealthResponse:
+async def health(services: Services, request: Request) -> HealthResponse:
     active = next(
         (item.active_run_id for item in services.coordinators if item.active_run_id), None
     )
+    public = services.public
     return HealthResponse(
+        public_mode=public.enabled,
+        live_calls_left=public.shared_left() if public.enabled else None,
+        client_live_calls_left=(
+            public.client_left(_client_host(request)) if public.enabled else None
+        ),
         status="ok",
         version=__version__,
         registry_loaded=True,
@@ -158,7 +199,9 @@ async def eligibility(payload: EligibilityRequest, services: Services) -> Eligib
 
 
 @router.post("/comparisons", response_model=ComparisonResponse)
-async def compare(payload: ComparisonRequest, services: Services) -> ComparisonResponse:
+async def compare(
+    payload: ComparisonRequest, services: Services, request: Request
+) -> ComparisonResponse:
     _require_live_services(services)
     registry = _registry_for(services, payload.pool)
     generation_service = services.pool_generation_service(payload.pool)
@@ -173,19 +216,28 @@ async def compare(payload: ComparisonRequest, services: Services) -> ComparisonR
         GenerationRequest(model_id=model.id, prompt=payload.prompt)
         for model in registry.models
     ]
+    # One live call per model; public mode never stores a visitor's prompt.
+    calls = [
+        _registry_call(model, item) for model, item in zip(registry.models, requests, strict=True)
+    ]
+    services.public.admit(_client_host(request), calls)
+    save = payload.save and not services.public.enabled
     outcomes = await asyncio.gather(
         *(generation_service.generate_with_retries(item) for item in requests)
     )
     response = ComparisonResponse(
         prompt=payload.prompt,
         pool=payload.pool,
-        saved=payload.save,
+        saved=save,
+        note="Saving is turned off on the public demo, so this prompt was not stored."
+        if payload.save and not save
+        else None,
         results=[
             outcome.final.model_copy(update={"provider_request_id": None})
             for outcome in outcomes
         ],
     )
-    if payload.save:
+    if save:
         append_jsonl(
             services.settings.data_dir / "local" / "manual" / "comparisons.jsonl",
             response,
@@ -194,7 +246,9 @@ async def compare(payload: ComparisonRequest, services: Services) -> ComparisonR
 
 
 @router.post("/routes", response_model=RouteResponse)
-async def route_prompt(payload: RouteRequest, services: Services) -> RouteResponse:
+async def route_prompt(
+    payload: RouteRequest, services: Services, request: Request
+) -> RouteResponse:
     """Select exactly one pinned model using the explicit CP2 rule policy."""
     _require_live_services(services)
     assert services.settings.openrouter_api_key is not None
@@ -236,9 +290,10 @@ async def route_prompt(payload: RouteRequest, services: Services) -> RouteRespon
             detail=f"OpenRouter catalog preflight failed: {type(exc).__name__}",
         ) from exc
 
-    outcome = await generation_service.generate_with_retries(
-        GenerationRequest(model_id=decision.selected_model_id, prompt=payload.prompt)
-    )
+    generation = GenerationRequest(model_id=decision.selected_model_id, prompt=payload.prompt)
+    chosen = next(model for model in registry.models if model.id == decision.selected_model_id)
+    services.public.admit(_client_host(request), [_registry_call(chosen, generation)])
+    outcome = await generation_service.generate_with_retries(generation)
     return RouteResponse(
         decision=decision,
         result=outcome.final.model_copy(update={"provider_request_id": None}),
@@ -353,6 +408,8 @@ async def learned_catalog(services: Services) -> LiveCatalogStatus:
 @router.post("/learned/catalog/refresh", response_model=LiveCatalogStatus)
 async def refresh_learned_catalog(services: Services) -> LiveCatalogStatus:
     """Re-check the live catalogs now (public catalog endpoints only; no prompt is sent)."""
+    if not services.catalog_refresh_allowed() and services.catalog is not None:
+        return services.catalog  # public mode: checked within the last ten minutes
     return _catalog_or_503(await services.refresh_catalog())
 
 
@@ -488,26 +545,35 @@ async def preview_learned_decision(
 
 
 @router.post("/learned/routes", response_model=LearnedRouteResponse)
-async def learned_route(payload: LearnedRouteRequest, services: Services) -> LearnedRouteResponse:
+async def learned_route(
+    payload: LearnedRouteRequest, services: Services, request: Request
+) -> LearnedRouteResponse:
     """Route with the learned router and send one generation request (with one retry).
 
     If the chosen model still fails, the next-best eligible model answers instead, once, and the
     response says so; nothing else is tried.
     """
-    _, decision = _learned_decision(services, payload)
+    learned, decision = _learned_decision(services, payload)
     service = services.generation_for(payload.pool)
     if service is None:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="The learned router's model pool is not configured",
         )
+    max_tokens = MAX_TOKENS[decision.task_group]
+    client = _client_host(request)
+
+    def live_call(model_id: str) -> LiveCall:
+        return _learned_call(services, learned, model_id, payload.prompt, max_tokens)
+
+    services.public.admit(client, [live_call(decision.selected_model_id)])
 
     async def call(model_id: str) -> GenerationResult:
         outcome = await service.generate_with_retries(
             GenerationRequest(
                 model_id=model_id,
                 prompt=payload.prompt,
-                max_tokens=MAX_TOKENS[decision.task_group],
+                max_tokens=max_tokens,
                 timeout_seconds=LEARNED_TIMEOUT_SECONDS,
             )
         )
@@ -523,6 +589,11 @@ async def learned_route(payload: LearnedRouteRequest, services: Services) -> Lea
             key=lambda item: item.score or 0.0,
             reverse=True,
         )
+        try:
+            if ranked:  # the fallback is a second live call, so it needs its own allowance
+                services.public.admit(client, [live_call(ranked[0].model_id)])
+        except HTTPException:
+            ranked = []  # over a limit or too costly: the failed answer stands
         if ranked:
             fallback = RouteFallback(
                 failed_model_id=decision.selected_model_id,
@@ -574,6 +645,12 @@ async def benchmark_estimate(
 async def start_benchmark(
     payload: BenchmarkStartRequest, services: Services
 ) -> BenchmarkRunView:
+    if services.settings.public_mode:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Benchmark runs are turned off on the public demo. "
+            "The saved results are still open to browse.",
+        )
     _require_live_services(services)
     coordinator = services.pool_benchmark_coordinator(payload.pool)
     runner = services.pool_benchmark_runner(payload.pool)

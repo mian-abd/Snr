@@ -139,6 +139,7 @@ class ComparisonResponse(StrictModel):
     prompt: str
     pool: RoutingPool = RoutingPool.BASELINE
     saved: bool
+    note: str | None = None  # why a requested save did not happen
     created_at_utc: datetime = Field(default_factory=utc_now)
     results: list[GenerationResult]
 
@@ -756,6 +757,10 @@ class HealthResponse(StrictModel):
     routing_registry_snapshot_id: str | None = None
     credential_configured: bool
     active_benchmark_run_id: str | None
+    public_mode: bool = False
+    # Live provider calls left today, only in public mode: shared by everyone, and this client's.
+    live_calls_left: int | None = None
+    client_live_calls_left: int | None = None
 
 
 class BenchmarkMode(StrEnum):

@@ -590,6 +590,17 @@
             "title": "Created At Utc",
             "type": "string"
           },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
           "pool": {
             "$ref": "#/components/schemas/RoutingPool",
             "default": "baseline"
@@ -1457,8 +1468,35 @@
             ],
             "title": "Active Benchmark Run Id"
           },
+          "client_live_calls_left": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Live Calls Left"
+          },
           "credential_configured": {
             "title": "Credential Configured",
+            "type": "boolean"
+          },
+          "live_calls_left": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Live Calls Left"
+          },
+          "public_mode": {
+            "default": false,
+            "title": "Public Mode",
             "type": "boolean"
           },
           "registry_loaded": {

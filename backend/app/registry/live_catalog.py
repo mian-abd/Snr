@@ -35,7 +35,7 @@ from app.domain.models import CatalogSource, LiveCatalogStatus, LiveModelStatus
 from app.registry.pool import PoolModel, PoolSnapshot, load_pool
 
 OPENROUTER_ENDPOINTS = "https://openrouter.ai/api/v1/models/{model}/endpoints"
-REQUEST_TIMEOUT_SECONDS = 6.0
+REQUEST_TIMEOUT_SECONDS = 4.0
 PROVIDER_NAMES = {"ovhcloud": "OVHcloud endpoint", "ollama": "local Ollama server"}
 
 

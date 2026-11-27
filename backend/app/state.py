@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -26,13 +27,15 @@ from app.learned.router import ROUTER_MODEL_FILE, ROUTER_POOL_FILE, LearnedRoute
 from app.learned.studies import POOL_STUDY, STUDIES
 from app.providers import GenerationService
 from app.providers.openai_compatible import OpenAICompatibleAdapter
+from app.public import PublicGuard
 from app.registry import ModelRegistry
 from app.registry.live_catalog import check_live_catalog, snapshot_status
 from app.registry.pool import combine_pools, endpoint_for, load_pool
 
 REGISTRY_PATH = REPOSITORY_ROOT / "data" / "registry" / "openrouter-2026-09-30.json"
 PAID_REGISTRY_PATH = REPOSITORY_ROOT / "data" / "registry" / "openrouter-paid-2026-10-23.json"
-CATALOG_TIMEOUT_SECONDS = 12.0  # startup waits at most this long, then uses the snapshot
+CATALOG_TIMEOUT_SECONDS = 6.0  # startup waits at most this long, then uses the snapshot
+PUBLIC_REFRESH_SECONDS = 600
 PAID_MODEL_IDS = (
     "google/gemma-4-26b-a4b-it",
     "inception/mercury-3",
@@ -58,12 +61,24 @@ class AppServices:
     study_generation_services: dict[str, GenerationService] = field(default_factory=dict)
     catalog: LiveCatalogStatus | None = None
     catalog_transport: httpx.AsyncBaseTransport | None = None  # tests inject a mock
+    catalog_refreshed_at: float | None = None  # time.monotonic() of the last check
+    public: PublicGuard = field(init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        self.public = PublicGuard(self.settings)
+
+    def catalog_refresh_allowed(self) -> bool:
+        """Public mode re-checks the live catalogs at most once every ten minutes."""
+        if not self.settings.public_mode or self.catalog_refreshed_at is None:
+            return True
+        return time.monotonic() - self.catalog_refreshed_at >= PUBLIC_REFRESH_SECONDS
 
     async def refresh_catalog(self) -> LiveCatalogStatus | None:
         """Check the learned router's pool against the live catalogs; never raises."""
         router = self.learned_router
         if router is None:
             return None
+        self.catalog_refreshed_at = time.monotonic()
         snapshot = router.pool
         if not self.settings.live_catalog_check:
             self.catalog = snapshot_status(snapshot)

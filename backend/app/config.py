@@ -1,3 +1,4 @@
+from decimal import Decimal
 from functools import lru_cache
 from pathlib import Path
 
@@ -20,6 +21,12 @@ class Settings(BaseSettings):
     max_daily_provider_requests: int = Field(default=40, ge=1, le=1000)
     # Week of Nov 19: compare the learned router's pool with the providers' live catalogs.
     live_catalog_check: bool = True
+    # Public mode: a hosted demo where strangers can use the server's keys, so live calls are
+    # limited and the Lab's paid tools are off. Previews and saved results stay open.
+    public_mode: bool = False
+    public_daily_live_calls: int = Field(default=60, ge=0)  # shared by everyone, per UTC day
+    public_client_daily_live_calls: int = Field(default=6, ge=0)  # per client address
+    public_max_call_usd: Decimal = Field(default=Decimal("0.02"), ge=0)  # worst case, one call
     data_dir: Path = REPOSITORY_ROOT / "data"
     frontend_dist_dir: Path = REPOSITORY_ROOT / "frontend" / "dist"
 
