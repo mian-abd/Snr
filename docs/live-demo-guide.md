@@ -1,44 +1,60 @@
 # Live demo guide
 
-The current site (since 2026-11-14) comes first. The Checkpoint 2 and 3 walkthroughs below it describe the earlier tabbed console and are kept as a record; their tab names no longer exist.
+The current site (Checkpoint 4 run-through) comes first. The Checkpoint 2 and 3 walkthroughs below it describe the earlier tabbed console and are kept as a record; their tab names no longer exist. The Gemma and Mercury steps in those older sections describe what the site did then: both models are unavailable now.
 
-## The current site (rehearsal for Checkpoint 4)
+## The current site (Checkpoint 4 run-through)
 
-Start it as before (`./scripts/demo.ps1`, then `http://127.0.0.1:8000`). The pages are **Router**, **Models**, **Compare**, **Research**, **Prompts**, **FAQ**, and **Lab**, and **Ctrl+K** searches all of them; the sun / moon button switches between light and dark. The pill at the top right shows the live catalog check ("1 model unavailable": Mercury 3).
+Start it with `./scripts/demo.ps1`, then open `http://127.0.0.1:8000`. The pages are **Router**, **Models**, **Compare**, **Research**, **Prompts**, **FAQ**, and **Lab**. **Ctrl+K** searches all of them, and the sun / moon button switches between light and dark. The deck is `docs/presentations/Adaptive_LLM_Router_Checkpoint_4.pptx`.
 
-### Robustness, live (about two minutes; no provider call)
+The run-through follows the four things the proposal promised for Checkpoint 4:
 
-1. Open **Router**. The demo prompt is already filled in ("A train travels 180 km in 2.5 hours…").
-2. Pick **Fastest**, then **Preview decision**. The router picks **Gemma 4 26B A4B**. The reason ends: "Without the live catalog check it would have chosen Mercury 3, which is no longer served." In **How every model scored**, Mercury 3 is faded with "Unavailable now: OpenRouter lists inception/mercury-3 but no host serves it any more (retired)", and Gemma shows its new, lower price.
-3. In **Stress-test this decision**, keep **Gemma 4 26B A4B** and **Gets slower**, set **3**, and press **Simulate**. The choice moves from Gemma to **Qwen 3.5 9B (local)**.
-4. Say: "I changed one condition, the response time of one model, and the router chose differently. Nothing was sent anywhere and nothing was retrained."
+1. Demonstrate the final routing system, including the multi-objective router that balances quality, cost and response time by the user's priority (steps 1 and 7).
+2. Present the final held-out evaluation across coding, math and general question-answering (step 4).
+3. Show an oracle comparison on the final evaluation set, with a few examples of better or worse choices (step 5).
+4. Demonstrate one robustness test by changing one routing condition and showing the decision change, and demonstrate the complete flow from entering a prompt to receiving a routed model response (steps 2, 3 and 6).
 
-### One real call
+### Before class
 
-Keep **Fastest** and press **Run prompt** only if Gemma is chosen and the OpenRouter key works; the notice above the result names where the prompt goes (OpenRouter, pinned to NextBit). If the key fails, use **Lowest cost**: it picks the free gpt-oss-120b on OVHcloud, which needs no key (it is still a third-party API, and the notice says so).
+1. Run `./scripts/demo.ps1` from the repository root and wait for the server. Open `http://127.0.0.1:8000`.
+2. Confirm Ollama is running and has the local model (the Fastest pick runs on the laptop). If it is not running, the Models page shows the local model as unavailable.
+3. Check the pill at the top right: it should say 2 models are unavailable (Mercury 3 and Gemma 4 26B A4B).
+4. Warm up for free: on **Router**, pick **Lowest cost** and press **Run prompt** once. It should return gpt-oss-120b and 72 km/h. This wakes the free OVHcloud endpoint for the fallback.
+5. Keep the deck and the backup recording open. Never show `backend/.env`.
 
-### Results
+### Steps
 
-Open **Research**: the highlights, the leaderboard (press **Show** under References for the hindsight oracle), **Is the difference real?**, **Where the router goes wrong** (worked examples), and **When prices, speed, or providers change** (pick **Fastest** to see 'Router, old estimates' collapse when Mercury was retired). **Download the data** offers every table as CSV or JSON.
+The only provider call is in step 3, and it runs on the laptop. Everything else reads saved data.
 
-### What is new since November 19 (about three minutes; no provider call)
+1. **Router: three priorities (promise 1).** Open **Router**. The standard pool is selected and the demo prompt is already filled in ("A train travels 180 km in 2.5 hours. What is its average speed in km/h?").
+   - Pick **Best quality**, then **Preview decision**: gpt-oss-120b.
+   - Pick **Lowest cost**: gpt-oss-120b again, and it is free.
+   - Pick **Fastest**: Qwen 3.5 9B (local). Point at the score bars in **How every model scored**: each is split into accuracy, cost, time and reliability terms. Read the end of the reason: "Without the live catalog check it would have chosen Mercury 3, which is no longer served." Point at Gemma 4 26B A4B and Mercury 3, faded as "Unavailable now".
+   - Say: "One prompt, three priorities. The router balances predicted accuracy, cost and time by what the user asks for, and it only picks models that are actually served today."
+2. **Stress test (promise 4, first part).** In **Stress-test this decision**, keep **Qwen 3.5 9B (local)**, pick **Gets slower**, set **×3**, and press **Simulate**. The choice moves to **DeepSeek V4 Flash**.
+   - Say: "I changed one condition, the response time of one model, and the router chose differently. Nothing was sent anywhere and nothing was retrained."
+3. **Complete flow (promise 4, second part).** With **Fastest** selected, press **Run prompt**. The local Qwen answers 72 km/h, and the page shows time, tokens and $0.
+   - Say: "This is the whole path: the prompt, the routing decision, one real call, and the answer. It ran on my laptop through Ollama, so it was free and the prompt never left the machine."
+4. **Research: the final evaluation (promise 2).** Open **Research**. Show the highlights and the leaderboard on the 300 fresh prompts (coding, math and general questions), then **Is the difference real?**.
+   - Say: "The router matches the strongest model within noise, for less. Most differences here are not significant."
+5. **Oracle (promise 3).**
+   - On the leaderboard, press **Show** under References to show the hindsight oracle.
+   - Open **Where the router goes wrong** and read the worked examples.
+   - Open **Prompts**, pick **Router wrong, another model right** (4 fresh prompts), and open one to show the expected answer and every model's result, time and cost. (The **No model right** filter shows the 9 prompts nobody answered.)
+   - Say: "The oracle knows the right answer in advance. It is the ceiling, and these are the prompts where my router chose worse."
+6. **Robustness on all prompts (promise 4).** On **Research**, open **When prices, speed, or providers change** and pick **Fastest**: the router told about the change keeps 276 right; with its old estimates it gets 83. Then open **What your priority costs you** and move the slider to a cost weight of 0.2: 265 right for $0.0176.
+   - Say: "Updating the router's facts is what saves it. And most of the cost saving arrives by a cost weight of 0.2."
+7. **If time allows (promise 1).**
+   - **Router**, **Model pool** → **Every model** (17 models): Best quality picks MiMo-V2.6 Flash, Fastest picks Muse Ember. More models moved the picks without a significant gain.
+   - **Models**: tick **GPT-6.1 Sol** and **Gemini 4 Argon** and press **Compare**.
 
-The backup recording `docs/demo/checkpoint-4-backup-demo.webm` (2 min 22 s) shows these steps.
-
-1. Press **Ctrl+K**, type `robust`, and press Enter: the search palette opens **When prices, speed, or providers change** on Research.
-2. Pick **Fastest**. In the observed-drift row, the router told about the change keeps 276 right; the same router with its old estimates gets 83, because it kept choosing the retired Mercury 3. **Billed cost** switches the measure.
-3. Scroll to **What your priority costs you** and move the slider to a cost weight of 0.2: 265 right for $0.0176 instead of 284 for $1.17 at weight 0. Most of the saving arrives by then; the bar shows where the prompts went.
-4. Open **Models**, tick **GPT-6.1 Sol** and **Gemini 4 Argon**, and press **Compare**: same accuracy on the fresh prompts, for less than half the cost and a third of the time.
-5. Open **Router** and switch **Model pool** to **Every model**. The router now scores 16 models. With **Fastest**, the demo prompt goes to **Muse Ember**, a budget model; with **Best quality**, to **MiMo-V2.6 Flash**. Say: "More models did not make it more accurate. On the fresh prompts, the fastest setting in this pool got 278 right, against 284 with only the flagships added, for about half the cost. None of these differences is significant."
-6. Open **Prompts** and pick **Router wrong, another model right**: the 4 fresh prompts where the router's best-quality pick was wrong but a model it could have chosen was right. Open one to show the expected answer and every model's result, time, and cost.
-
-If someone asks what happens when a provider fails mid-demo: the chosen model gets one retry, then the next-best eligible model answers once, and the page says which model failed and which answered. The tests cover this; it cannot be shown on demand.
+If someone asks what happens when a provider fails mid-run: the chosen model gets one retry, then the next-best eligible model answers once, and the page says which model failed and which answered. The tests cover this; it cannot be shown on demand.
 
 ### If something fails
 
-- **OpenRouter unreachable:** the pill says "Live check failed"; previews still work from the dated snapshot.
-- **Ollama not running:** the local model is shown as unavailable; start Ollama and press **Check again** on the Models page.
-- **Server down:** rerun `./scripts/demo.ps1`.
+- **Ollama not running (step 3):** do not run the Fastest call. Start Ollama if there is time. Otherwise, in step 2 pick **Goes offline** for Qwen 3.5 9B (local) instead of **Gets slower**: Fastest then picks DeepSeek V4 Flash. For the live call, use **Lowest cost**: it picks gpt-oss-120b on OVHcloud's free endpoint, which needs no key. It is still a third-party API, and the notice says so.
+- **OpenRouter unreachable:** the pill says "Live check failed". Previews still work from the dated snapshot, and Lowest cost still works because it does not use OpenRouter.
+- **Server down:** rerun `./scripts/demo.ps1` and reload.
+- **The app cannot be restarted:** play `docs/demo/checkpoint-4-backup-demo.webm`.
 
 ## Checkpoint 2 walkthrough (earlier console)
 

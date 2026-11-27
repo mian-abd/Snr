@@ -76,6 +76,16 @@ See the [week of November 19](docs/checkpoint-4-progress.md).
 
 See the [week of November 26](docs/checkpoint-4-progress.md#week-of-november-26-robustness-figures-data-validation-failure-handling-more-models-interface).
 
+## Checkpoint 4 (week of Dec 3)
+
+- Deck: `docs/presentations/Adaptive_LLM_Router_Checkpoint_4.pptx` (10 slides, about 6 minutes).
+- Demo guide: [docs/live-demo-guide.md](docs/live-demo-guide.md), organized by the four things the proposal promised for Checkpoint 4.
+- ERNIE 5.5 Flash is complete: 254 of 300 fresh prompts right, never chosen. The wide study was rebuilt with 17 models and every headline number is unchanged.
+- Scorer fix: EvalPlus reused an old `*_eval_results.json` when a run was resumed, so `app/benchmarks/code_scoring.py` now deletes it before every evaluation. An audit of all 66 results files found no earlier result affected.
+- Gemma 4 26B A4B is now unavailable (its pinned host, NextBit, no longer serves it; found on 2026-11-26), the second real provider change after Mercury 3. The live catalog check handles it. On the standard pool, Fastest now picks Qwen 3.5 9B (local), and the stress test moves it to DeepSeek V4 Flash.
+
+See the [week of December 3](docs/checkpoint-4-progress.md#week-of-december-3).
+
 ## Prerequisites
 
 - Python 3.12 managed by [uv](https://docs.astral.sh/uv/)

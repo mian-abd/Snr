@@ -1119,6 +1119,15 @@ The full record is `docs/checkpoint-3-progress.md`. Key facts:
 - **Site:** a search palette (Ctrl+K), a comparison page, a prompt explorer, interactive robustness and priority charts, score bars on Router, a three-way pool switch, three new makers, and a restyled Lab; checked in both themes at 1,440 and 390 pixels.
 - **Details:** [docs/checkpoint-4-progress.md](docs/checkpoint-4-progress.md), "Week of November 26".
 
+**Week of December 3 (done 2026-11-24 to 26).** Full record: `docs/checkpoint-4-progress.md`, "Week of December 3".
+- **ERNIE 5.5 Flash completed:** its 16 missing fresh prompts (all MBPP+) ran free on 2026-11-24. It got 254 of 300 fresh prompts right (507 of 600 on the suite) and is never chosen. The wide study was rebuilt with 17 models (8,160 training rows, C = 0.003); every headline number is unchanged (lowest cost 270 for $0.022, best quality 282, fastest 278 for $0.26, nothing significant after Holm, oracle 291).
+- **Scorer bug, fixed in 4953bbc:** EvalPlus reuses an existing `*_eval_results.json`, so resuming ERNIE's run first scored its 16 new answers against earlier stubs. `app/benchmarks/code_scoring.py` now deletes the file before every evaluation, with a regression test. An audit of all 66 results files found every other one matched, so no earlier result changed.
+- **Gemma's host change (2026-11-26):** the live catalog check found Gemma 4 26B A4B unavailable, because its pinned host NextBit no longer serves it. Second real provider change after Mercury 3. Standard pool now: Best quality and Lowest cost pick gpt-oss-120b; Fastest and Balanced pick Qwen 3.5 9B (local). The stress test (Qwen, "Gets slower", ×2 or ×3) moves Fastest to DeepSeek V4 Flash. The real demo call goes to the local Qwen through Ollama; the fallback is Lowest cost on OVHcloud's free endpoint. With flagships: GPT-6.1 Sol for Best quality and Fastest. Every model (17): MiMo-V2.6 Flash for Best quality, Muse Ember for Fastest and Balanced.
+- **Demo guide:** `docs/live-demo-guide.md` now has a Checkpoint 4 run-through organized by the proposal's four promises (router, stress test, complete flow, research, oracle, robustness), with a "Before class" list and failure cases.
+- **Deck:** `docs/presentations/Adaptive_LLM_Router_Checkpoint_4.pptx` (10 slides, about 6 minutes). The owner records the complete backup run-through; `docs/demo/checkpoint-4-backup-demo.webm` is still the 2 min 22 s recording of the November 26 features.
+- **Tests:** backend 124 pass, validation 29 of 29; frontend and end-to-end unchanged (23 and 2).
+- **Left:** the final report (owner), rehearsal, tag `checkpoint-4` after it, presenting on December 3.
+
 **Local environment.**
 - mypy must run as `python -m mypy --config-file backend/pyproject.toml`: Application Control blocks `mypy.exe`, and without `--config-file` strict mode was silently not applied. The check script and CI are fixed.
 - Ollama v0.40.12 was installed from the signed official installer (Ollama Inc. / DigiCert, SHA-256 `9A6A44DD…`) in the owner's terminal, so it lands in the real profile, not the sandboxed one.

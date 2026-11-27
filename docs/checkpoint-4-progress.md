@@ -1,6 +1,6 @@
 # Week of November 19: final evaluation, error analysis, robustness, export, flagship models
 
-This records the proposal's work-plan items for the week of November 19. The week of November 26 (final robustness runs and plots, finished export and data validation, the final report) is not started; see [what is left](#left-for-the-week-of-november-26).
+This records the proposal's work-plan items for the week of November 19. The [week of November 26](#week-of-november-26-robustness-figures-data-validation-failure-handling-more-models-interface) and the [week of December 3](#week-of-december-3) are recorded below.
 
 | Proposal item | Status |
 | --- | --- |
@@ -761,7 +761,47 @@ The site shows the same data as interactive charts on the Research page.
 - **End to end:** the 2 Playwright tests pass in Chrome.
 - **Data:** the flagship and wide studies rebuild byte for byte from committed files.
 
-## Left for the week of December 3
+## Week of December 3
+
+This records the proposal's work-plan items for the week of December 3 that could be done ahead of the presentation, on 2026-11-24 to 26. The final report is left to the owner.
+
+| Proposal item (week of Dec 3) | Status |
+| --- | --- |
+| Finalize the report and project documentation | Documentation done (this file, the README, the context file, the demo guide); the report is left to the owner |
+| Create Checkpoint 4 slides and a complete backup recording | Slides done: `docs/presentations/Adaptive_LLM_Router_Checkpoint_4.pptx`. The owner records the complete backup run-through |
+| Practice the full demonstration and tag the final code version | Run-through written ([live demo guide](live-demo-guide.md)) with a timed class script; tag `checkpoint-4` after the rehearsal |
+| Present and submit | The owner's |
+
+### ERNIE 5.5 Flash completed
+
+- **The missing prompts:** its 16 missing fresh prompts (all MBPP+) ran free on 2026-11-24.
+- **Its result:** 254 of 300 fresh prompts right (507 of 600 on the suite). It is never chosen.
+- **The wide study:** rebuilt with 17 models (8,160 training rows, logistic regression, C = 0.003).
+- **Headline numbers:** unchanged. Lowest cost gets 270 right for $0.022, best quality 282, fastest 278 for $0.26. Nothing is significant after Holm. The oracle is 291.
+
+### The scoring bug and the audit
+
+- **The bug:** EvalPlus reuses an existing `*_eval_results.json` instead of evaluating again. When ERNIE's fresh run was resumed, its 16 new answers were first scored against the stubs from the earlier attempt.
+- **The fix** (commit 4953bbc): `app/benchmarks/code_scoring.py` now deletes the file before every evaluation, and a regression test covers it.
+- **The audit:** all 66 EvalPlus results files were checked against their answers. Every other one matched, so no earlier result was affected.
+- **Tests now:** backend 124 pass and validation 29 of 29 pass. The frontend and end-to-end tests are unchanged (23 and 2).
+
+### Gemma's host change and the demo
+
+- **What happened:** at startup the site compares the pool with the providers' live catalogs. On 2026-11-26 Gemma 4 26B A4B was found unavailable: its pinned host, NextBit, no longer serves it. This is the second real provider change in the project, after Mercury 3 (retired by OpenRouter on Nov 12).
+- **Effect on the router page (standard pool):** Best quality and Lowest cost pick gpt-oss-120b; Fastest and Balanced pick Qwen 3.5 9B (local). The Fastest reason ends: "Without the live catalog check it would have chosen Mercury 3, which is no longer served." Gemma and Mercury are faded in "How every model scored".
+- **The stress test:** keep Qwen 3.5 9B (local), pick "Gets slower", factor 2 or 3, and the choice moves to DeepSeek V4 Flash.
+- **The real call:** Fastest, then Run prompt, goes to Qwen 3.5 9B on the laptop through Ollama (free, and the prompt stays on the machine). The fallback is Lowest cost, which uses the free gpt-oss-120b endpoint on OVHcloud.
+- **Other pools:** with flagships, Best quality and Fastest pick GPT-6.1 Sol. With every model (17), Best quality picks MiMo-V2.6 Flash, Fastest and Balanced pick Muse Ember, and Lowest cost picks gpt-oss-120b.
+- **The old guide:** it relied on Gemma being chosen and called through NextBit. The [live demo guide](live-demo-guide.md) now uses the picks above.
+
+### The deck and the run-through
+
+- **Deck:** `docs/presentations/Adaptive_LLM_Router_Checkpoint_4.pptx`, 10 slides, about 6 minutes: title, what Checkpoint 4 promised, how the final router decides, the final held-out evaluation, the oracle and where the router goes wrong, robustness, more models, live demo, limits and what I learned, questions.
+- **Recording:** the owner records the complete backup run-through. Until then, `docs/demo/checkpoint-4-backup-demo.webm` is the 2 min 22 s recording of the November 26 features, made before Gemma became unavailable.
+- **Run-through:** organized by the proposal's four promises: the router, the stress test, the complete flow, the research results, the oracle, and robustness on all prompts.
+
+### Left
 
 - **The final report:**
   - the method;
@@ -771,5 +811,7 @@ The site shows the same data as interactive charts on the Research page.
   - the pool studies: a fast, accurate flagship helps the faster settings, the expensive flagships are never chosen, and cheap models add small gains at the lowest-cost setting but none that is significant;
   - the limits: benchmarks are not real traffic, they are at the ceiling for strong models, prompt features add little here, and the router only knows the models it was measured on.
 - **Two design fixes, to report rather than evaluate:** score cost and time against fixed reference values (for example the snapshot's own maximum) instead of the current maximum, and give reliability a small default weight. Both change the router, so they cannot be tested on the fresh prompts without spending them; the report should describe them as recommendations, backed by the scenarios above.
-- **Optional:** run ERNIE 5.5 Flash's 16 unsent fresh prompts after the free quota resets, and rebuild the wide study with it (`--study wide --from-runs`).
-- **The final presentation and live demonstration**, rehearsed with the [live demo guide](live-demo-guide.md).
+- **Recording** the complete backup run-through.
+- **Rehearsing** the demonstration with the [live demo guide](live-demo-guide.md).
+- **Tagging** the final code version `checkpoint-4` after the rehearsal.
+- **Presenting** on December 3.

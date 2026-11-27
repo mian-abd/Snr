@@ -38,7 +38,7 @@ function CatalogPill() {
   const gone = status.models.filter((item) => !item.available).length
   const tone = status.source !== 'live' ? 'off' : gone ? 'warn' : 'good'
   const text = status.source === 'live'
-    ? gone ? `${gone} model unavailable` : 'All models available'
+    ? gone ? `${gone} ${gone === 1 ? 'model' : 'models'} unavailable` : 'All models available'
     : status.source === 'snapshot' ? 'Live check failed' : 'Live check off'
   return (
     <Link to="/models" className={styles.status} data-tone={tone} title={`Provider catalogs checked ${shortTime(status.checked_at_utc)}`}>
