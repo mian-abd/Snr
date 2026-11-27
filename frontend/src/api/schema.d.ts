@@ -328,6 +328,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/learned/scoring-fix": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Scoring Fix
+         * @description The tested scoring fix: fixed cost and time references and a small reliability weight,
+         *     next to the frozen router, on the same prompts and scenarios (offline replay).
+         */
+        get: operations["scoring_fix_api_v1_learned_scoring_fix_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/learned/studies": {
         parameters: {
             query?: never;
@@ -886,6 +907,24 @@ export interface components {
             title: string;
             /** Uncertainty */
             uncertainty: components["schemas"]["StrategyUncertainty"][];
+        };
+        /**
+         * EvidenceRow
+         * @description One router and priority in one scenario: told about the change, then with old estimates.
+         */
+        EvidenceRow: {
+            /** Evaluation Id */
+            evaluation_id: string;
+            old: components["schemas"]["ScenarioStrategy"];
+            priority: components["schemas"]["RoutingPriority"];
+            /** Router */
+            router: string;
+            /** Scenario Id */
+            scenario_id: string;
+            told: components["schemas"]["ScenarioStrategy"];
+            /** Told Vs Old P */
+            told_vs_old_p?: number | null;
+            unchanged: components["schemas"]["ScenarioStrategy"];
         };
         /**
          * ExcludedModel
@@ -1611,6 +1650,25 @@ export interface components {
             latency_ms: number;
             status: components["schemas"]["GenerationStatus"];
         };
+        /** QuestionAnswer */
+        QuestionAnswer: {
+            /** Answer Fresh */
+            answer_fresh: string;
+            /** Answer Test */
+            answer_test: string;
+            /** Evidence */
+            evidence: components["schemas"]["EvidenceRow"][];
+            /** Holds Fresh */
+            holds_fresh: boolean;
+            /** Holds Test */
+            holds_test: boolean;
+            /** Question */
+            question: string;
+            /** Question Id */
+            question_id: string;
+            /** Rule */
+            rule: string;
+        };
         /** RegistrySnapshot */
         RegistrySnapshot: {
             /**
@@ -1952,6 +2010,111 @@ export interface components {
             strategy_id: string;
             /** Total Cost Usd */
             total_cost_usd: number;
+        };
+        /** ScoringFixEvaluation */
+        ScoringFixEvaluation: {
+            /** Comparisons */
+            comparisons: components["schemas"]["PairedComparison"][];
+            /** Description */
+            description: string;
+            /** Evaluation Id */
+            evaluation_id: string;
+            fixed: components["schemas"]["RobustnessReport"];
+            frozen: components["schemas"]["RobustnessReport"];
+            /** Matrix */
+            matrix: components["schemas"]["LearnedMatrixRow"][];
+            /** Models */
+            models: string[];
+            /** Prompts */
+            prompts: number;
+            /** Title */
+            title: string;
+        };
+        /**
+         * ScoringFixReport
+         * @description The frozen router and a variant with fixed cost and time references and a small default
+         *     reliability weight, on the same prompts and scenarios.
+         */
+        ScoringFixReport: {
+            /** Artifact Id */
+            artifact_id: string;
+            /** Artifact Sha256 */
+            artifact_sha256: string;
+            /** Caveats */
+            caveats: string[];
+            /** Cell Tables */
+            cell_tables?: string[];
+            /** Evaluations */
+            evaluations: components["schemas"]["ScoringFixEvaluation"][];
+            /** Final Set Sha256 */
+            final_set_sha256: string;
+            /** Fixed Weights */
+            fixed_weights: {
+                [key: string]: {
+                    [key: string]: number;
+                };
+            };
+            /** Frozen Weights */
+            frozen_weights: {
+                [key: string]: {
+                    [key: string]: number;
+                };
+            };
+            /** Pool Snapshot Id */
+            pool_snapshot_id: string;
+            /** Protocol */
+            protocol: string[];
+            /** Questions */
+            questions: components["schemas"]["QuestionAnswer"][];
+            reference: components["schemas"]["ScoringReference"];
+            /** Study Id */
+            study_id: string;
+            /** Title */
+            title: string;
+            tuning: components["schemas"]["ScoringFixTuning"];
+        };
+        /**
+         * ScoringFixTuning
+         * @description How the fixed variant's presets were chosen: on the Checkpoint 3 validation split only.
+         */
+        ScoringFixTuning: {
+            /** Classifier */
+            classifier: string;
+            /** Fixed Presets */
+            fixed_presets: components["schemas"]["WeightTuningResult"][];
+            /** Frozen Recipe Reproduced */
+            frozen_recipe_reproduced: boolean;
+            /** Note */
+            note: string;
+            /** Recipe Check Presets */
+            recipe_check_presets: components["schemas"]["WeightTuningResult"][];
+            /** Reference Only Presets */
+            reference_only_presets: components["schemas"]["WeightTuningResult"][];
+            /** Reliability Floor */
+            reliability_floor: number;
+            /** Reliability Grid */
+            reliability_grid: number[];
+            tuning_reference: components["schemas"]["ScoringReference"];
+            /** Validation Prompts */
+            validation_prompts: number;
+        };
+        /**
+         * ScoringReference
+         * @description Fixed divisors for the cost and time terms, per task group.
+         *
+         *     The frozen router divides each by the largest value among the models available for the
+         *     request, so one model's price or speed changes every other model's score. With a reference,
+         *     the divisor is the pool's own largest expected cost and time, computed once.
+         */
+        ScoringReference: {
+            /** Cost Usd */
+            cost_usd: {
+                [key: string]: number;
+            };
+            /** Latency Ms */
+            latency_ms: {
+                [key: string]: number;
+            };
         };
         /** StrategyTaskOutcome */
         StrategyTaskOutcome: {
@@ -2570,6 +2733,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    scoring_fix_api_v1_learned_scoring_fix_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScoringFixReport"];
                 };
             };
         };

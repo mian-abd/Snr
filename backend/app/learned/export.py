@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any
 
 from app.domain.models import EvaluationSet, FinalEvaluationReport, Interval
+from app.domain.scoring_fix import ScoringFixReport
 from app.domain.study import PoolStudyReport
 from app.learned.studies import ADDED_POOLS, STUDIES
 from app.storage import read_jsonl
@@ -24,6 +25,7 @@ from app.storage import read_jsonl
 REPORT_FILE = Path("learned") / "final-evaluation.json"  # relative to the data directory
 DECISIONS_FILE = Path("learned") / "final-decisions.jsonl"
 CELLS_FILE = Path("learned") / "cells.jsonl"
+SCORING_FIX_FILE = Path("learned") / "scoring-fix-study.json"
 TABLES = {
     "strategies": "Every strategy and oracle on both evaluations, with 95% intervals",
     "comparisons": "The fixed paired comparisons with McNemar and Holm-adjusted p-values",
@@ -36,6 +38,7 @@ TABLES = {
     "study_comparisons": "Each pool study's fixed paired comparisons",
     "study_models": "Every model's results in each pool study, per prompt set and task",
     "added_cells": "The added models' scored outcome on every prompt (no response text)",
+    "scoring_fix": "The scoring fix: every scenario and strategy for the frozen and fixed scoring",
 }
 STUDY_TABLES = {"study_strategies", "study_comparisons", "study_models"}
 
@@ -144,9 +147,40 @@ def _study_rows(table: str, data_dir: Path) -> list[dict[str, Any]]:
     return rows
 
 
+def _scoring_fix_rows(data_dir: Path) -> list[dict[str, Any]]:
+    path = data_dir / SCORING_FIX_FILE
+    if not path.exists():
+        raise ExportError("The scoring-fix study has not been run yet")
+    report = ScoringFixReport.model_validate_json(path.read_text(encoding="utf-8"))
+    rows = []
+    for evaluation in report.evaluations:
+        for scoring, robustness in (("frozen", evaluation.frozen), ("fixed", evaluation.fixed)):
+            for scenario in robustness.scenarios:
+                for entry in scenario.strategies:
+                    rows.append({
+                        "evaluation": evaluation.evaluation_id,
+                        "scoring": scoring,
+                        "scenario": scenario.scenario.scenario_id,
+                        "title": scenario.scenario.title,
+                        "observed": scenario.scenario.observed,
+                        "strategy": entry.strategy_id,
+                        "prompts": scenario.prompts,
+                        "correct": entry.correct,
+                        "total_cost_usd": entry.total_cost_usd,
+                        "median_latency_ms": entry.median_latency_ms,
+                        "changed_decisions": entry.changed_decisions,
+                        "selected_models": "; ".join(
+                            f"{model} x{count}" for model, count in entry.selected_models.items()
+                        ),
+                    })
+    return rows
+
+
 def table_rows(table: str, data_dir: Path) -> list[dict[str, Any]]:
     if table not in TABLES:
         raise ExportError(f"Unknown table {table!r}; choose one of {', '.join(TABLES)}")
+    if table == "scoring_fix":
+        return _scoring_fix_rows(data_dir)
     if table == "decisions":
         return list(read_jsonl(data_dir / DECISIONS_FILE))
     if table == "cells":

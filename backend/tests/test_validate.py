@@ -75,6 +75,7 @@ def test_a_changed_cell_fails_the_command(
         "learned/final-evaluation.json final matrix",
         "learned/flagship-study.json final matrix",
         "learned/wide-study.json final matrix",
+        "learned/scoring-fix-study.json final matrix",
     ]
 
 

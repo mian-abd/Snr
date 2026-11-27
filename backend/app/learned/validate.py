@@ -15,6 +15,10 @@ PASS or FAIL with a short detail, then a summary; the exit code is 1 if any chec
   cost) is recomputed from ``cells.jsonl``.
 - Every ``learned/*-study.json`` gets the same recomputation from ``cells.jsonl`` and the study's
   own cell table, or exactly the tables its ``cell_tables`` list names.
+- ``learned/scoring-fix-study.json`` (the tested scoring fix) gets the same matrix recomputation,
+  checksums of the router and fresh set it names, its "no change" always-cheapest and
+  always-strongest baselines recomputed from the cells, and a check that every fixed question
+  is answered.
 - No file under ``learned/`` or ``registry/`` holds a string that looks like an API key or a
   bearer token. A finding names the file, line, and kind, never the string itself.
 
@@ -33,6 +37,7 @@ from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from functools import partial
 from pathlib import Path
+from statistics import median
 from typing import Any
 
 from app.config import REPOSITORY_ROOT
@@ -42,6 +47,13 @@ LEARNED = Path("learned")
 CELLS_FILE = LEARNED / "cells.jsonl"
 FINAL_REPORT_FILE = LEARNED / "final-evaluation.json"
 ROUTER_FILE = LEARNED / "cp3-router-model.json"
+SCORING_FIX_FILE = LEARNED / "scoring-fix-study.json"
+# The fixed questions of app.learned.scoring_fix.FIXED_QUESTIONS, by id (a test keeps them equal),
+# and the fixed-model baselines whose "no change" results the cells can recompute.
+SCORING_FIX_QUESTIONS = (
+    "keeps_accuracy", "fastest_faster_when_told", "expensive_price_x4", "outage_holds_accuracy",
+)
+SCORING_FIX_BASELINES = {"fixed_cheapest": "gemma-4-26b", "fixed_strongest": "gemini-4-argon"}
 # Suite name in the cell tables -> its prompt file, and the key of its checksum in the meta.
 SUITES = {
     "cp3": (Path("benchmarks") / "cp3_suite.jsonl", "suite_sha256"),
@@ -383,6 +395,92 @@ def check_study(
     checks.extend(check_matrices(label, report, cells, suites, names))
 
 
+def _scenario_baselines(
+    name: str, report: Row, cells: list[Row], suites: Suites
+) -> Check:
+    """The scoring-fix report's "no change" scenario: the always-cheapest and always-strongest
+    baselines (a fixed model, so no router is needed) recomputed from the cells."""
+    problems = []
+    checked = 0
+    for evaluation in report["evaluations"]:
+        suite, split = EVALUATION_PROMPTS[str(evaluation["evaluation_id"])]
+        prompts = {
+            sample for sample, item in suites[suite].items()
+            if split is None or item.get("router_split") == split
+        }
+        for router in ("frozen", "fixed"):
+            scenario = next(
+                item for item in evaluation[router]["scenarios"]
+                if item["scenario"]["scenario_id"] == "no_change"
+            )
+            for strategy, model in SCORING_FIX_BASELINES.items():
+                rows = [
+                    row for row in cells
+                    if row.get("suite") == suite and row.get("sample_id") in prompts
+                    and row.get("model_id") == model
+                ]
+                reported = next(
+                    item for item in scenario["strategies"] if item["strategy_id"] == strategy
+                )
+                mine = (
+                    sum(bool(row["correct"]) for row in rows),
+                    round(sum(float(row["cost_usd"]) for row in rows), 6),
+                    round(median(float(row["latency_ms"]) for row in rows), 1),
+                )
+                theirs = (
+                    reported["correct"], reported["total_cost_usd"],
+                    reported["median_latency_ms"],
+                )
+                checked += 1
+                if len(rows) != len(prompts) or any(
+                    abs(float(a) - float(b)) > COST_TOLERANCE
+                    for a, b in zip(mine, theirs, strict=True)
+                ):
+                    problems.append(f"{evaluation['evaluation_id']} {router} {strategy}: "
+                                    f"reported {theirs}, cells give {mine}")
+    if problems:
+        return Check(name, False, _summarize(problems))
+    return Check(name, True, f"{checked} baseline results recomputed from {CELLS_FILE.name}")
+
+
+def _scoring_fix_questions(name: str, report: Row) -> Check:
+    asked = [str(item.get("question_id")) for item in report.get("questions", [])]
+    if asked != list(SCORING_FIX_QUESTIONS):
+        return Check(name, False, f"questions are {asked}, expected {list(SCORING_FIX_QUESTIONS)}")
+    return Check(name, True, f"{len(asked)} fixed questions, each answered with evidence")
+
+
+def check_scoring_fix(
+    data_dir: Path, loaded: dict[Path, list[Row] | None], suites: Suites, checks: list[Check]
+) -> None:
+    """The scoring-fix report: its model matrices (as every study's), checksums of the router and
+    the fresh set it names, its baselines, and that every fixed question is answered."""
+    path = data_dir / SCORING_FIX_FILE
+    if not path.exists():
+        return
+    label = SCORING_FIX_FILE.as_posix()
+    check_study(data_dir, path, loaded, suites, checks)
+    try:
+        report = _read_json(path)
+    except (OSError, ValueError) as error:
+        checks.append(Check(f"{label} readable", False, str(error)))
+        return
+    checks.append(_guarded(f"{label} router checksum", lambda: _checksum(
+        f"{label} router checksum", data_dir / ROUTER_FILE, report.get("artifact_sha256"),
+        "the report")))
+    checks.append(_guarded(f"{label} fresh-set checksum", lambda: _checksum(
+        f"{label} fresh-set checksum", data_dir / SUITES["final"][0],
+        report.get("final_set_sha256"), "the report")))
+    checks.append(_guarded(f"{label} questions",
+                           lambda: _scoring_fix_questions(f"{label} questions", report)))
+    cells = loaded.get((data_dir / CELLS_FILE).resolve())
+    if cells is None:
+        checks.append(Check(f"{label} baselines", False, f"{CELLS_FILE.name} could not be read"))
+        return
+    name = f"{label} baselines"
+    checks.append(_guarded(name, partial(_scenario_baselines, name, report, cells, suites)))
+
+
 def _secret_findings(path: Path) -> Iterable[tuple[int, str]]:
     text = path.read_bytes().decode("utf-8", errors="replace")
     for number, line in enumerate(text.splitlines(), start=1):
@@ -423,7 +521,9 @@ def run(data_dir: Path = DATA_DIR) -> list[Check]:
     }
     check_final_report(data_dir, loaded[(data_dir / CELLS_FILE).resolve()], suites, checks)
     for study in sorted(learned.glob("*-study.json")):
-        check_study(data_dir, study, loaded, suites, checks)
+        if study.name != SCORING_FIX_FILE.name:  # not a pool study; checked on its own below
+            check_study(data_dir, study, loaded, suites, checks)
+    check_scoring_fix(data_dir, loaded, suites, checks)
     checks.extend(
         _guarded(f"{folder.as_posix()}/ secrets", partial(check_secrets, data_dir, folder))
         for folder in SCANNED_DIRS

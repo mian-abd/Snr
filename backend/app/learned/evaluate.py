@@ -33,11 +33,10 @@ from app.domain.models import (
     WeightTuningResult,
 )
 from app.learned.features import Cell
-from app.learned.router import TaskEstimate, policy_weights
+from app.learned.router import ScoringReference, TaskEstimate, policy_weights
 from app.routing.multi_objective import (
     CandidateEstimate,
     PolicyWeights,
-    choose,
     score_candidates,
 )
 from app.routing.policy import effort_score, prompt_signals
@@ -160,7 +159,11 @@ def score_chooser(
     models: list[str],
     items: dict[str, SuiteItem],
     weights: PolicyWeights,
+    reference: ScoringReference | None = None,
 ) -> Chooser:
+    """Pick the best-scoring model; ``reference`` fixes the cost and time divisors (the default
+    divides by the largest among ``models``, as the frozen router does)."""
+
     def pick(sample_id: str) -> str:
         group = items[sample_id].task_group
         candidates = [
@@ -173,7 +176,11 @@ def score_chooser(
             )
             for model_id in sorted(models)
         ]
-        return choose(candidates, weights).model_id
+        return score_candidates(
+            candidates, weights,
+            cost_scale=None if reference is None else reference.cost_usd[group],
+            latency_scale=None if reference is None else reference.latency_ms[group],
+        )[0].model_id
 
     return pick
 
@@ -257,9 +264,11 @@ def routing_errors(
     )
 
 
-def weight_grid(priority: RoutingPriority) -> list[RoutingWeights]:
+def weight_grid(
+    priority: RoutingPriority, reliability_grid: tuple[float, ...] = RELIABILITY_GRID
+) -> list[RoutingWeights]:
     grid: list[RoutingWeights] = []
-    for reliability in RELIABILITY_GRID:
+    for reliability in reliability_grid:
         if priority == RoutingPriority.QUALITY:
             grid += [
                 RoutingWeights(cost=cost, latency=latency, reliability=reliability)
@@ -294,18 +303,28 @@ def tune_weights(
     models: list[str],
     cells: list[Cell],
     items: dict[str, SuiteItem],
+    reference: ScoringReference | None = None,
+    reliability_grid: tuple[float, ...] = RELIABILITY_GRID,
 ) -> list[WeightTuningResult]:
-    """Choose one preset per priority on the given (validation) prompts."""
+    """Choose one preset per priority on the given (validation) prompts.
+
+    The defaults are the frozen router's recipe; ``reference`` and ``reliability_grid`` change
+    only the cost and time divisors and the reliability weights tried.
+    """
 
     def evaluate(weights: RoutingWeights) -> LearnedStrategyOutcome:
-        chooser = score_chooser(probability, estimates, models, items, policy_weights(weights))
+        chooser = score_chooser(
+            probability, estimates, models, items, policy_weights(weights), reference
+        )
         return replay(prompts, {"trial": chooser}, cells, items)[0]
 
     def key(weights: RoutingWeights) -> tuple[float, ...]:
         return (weights.cost, weights.latency, weights.reliability)
 
     trials = {
-        priority: [(weights, evaluate(weights)) for weights in weight_grid(priority)]
+        priority: [
+            (weights, evaluate(weights)) for weights in weight_grid(priority, reliability_grid)
+        ]
         for priority in RoutingPriority
     }
     quality_weights, quality = min(

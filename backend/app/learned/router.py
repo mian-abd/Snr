@@ -71,6 +71,36 @@ class TaskEstimate(StrictModel):
     failure_rate: float
 
 
+class ScoringReference(StrictModel):
+    """Fixed divisors for the cost and time terms, per task group.
+
+    The frozen router divides each by the largest value among the models available for the
+    request, so one model's price or speed changes every other model's score. With a reference,
+    the divisor is the pool's own largest expected cost and time, computed once.
+    """
+
+    cost_usd: dict[TaskGroup, float]
+    latency_ms: dict[TaskGroup, float]
+
+    @classmethod
+    def from_estimates(
+        cls, estimates: dict[str, dict[TaskGroup, TaskEstimate]]
+    ) -> ScoringReference:
+        groups = {group for per_group in estimates.values() for group in per_group}
+        return cls(
+            cost_usd={
+                group: max(per[group].expected_cost_usd for per in estimates.values()
+                           if group in per)
+                for group in sorted(groups)
+            },
+            latency_ms={
+                group: max(per[group].expected_latency_ms for per in estimates.values()
+                           if group in per)
+                for group in sorted(groups)
+            },
+        )
+
+
 class RouterArtifact(StrictModel):
     """A trained linear router: standardized features, coefficients, and its routing inputs."""
 

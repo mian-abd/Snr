@@ -36,7 +36,7 @@ from app.domain.models import (
 )
 from app.learned.evaluate import CHEAPEST, FASTEST, STRONGEST
 from app.learned.features import Cell
-from app.learned.router import LearnedRouter, policy_weights
+from app.learned.router import LearnedRouter, ScoringReference, policy_weights
 from app.routing.multi_objective import CandidateEstimate, score_candidates
 from app.routing.policy import effort_score, prompt_signals
 
@@ -162,7 +162,15 @@ class RouterView:
             for model_id in router.pool_ids
         }
 
-    def choose(self, sample: str, weights: RoutingWeights, knowledge: Knowledge) -> str:
+    def choose(
+        self,
+        sample: str,
+        weights: RoutingWeights,
+        knowledge: Knowledge,
+        reference: ScoringReference | None = None,
+    ) -> str:
+        """The router's pick; ``reference`` swaps the max-among-available cost and time divisors
+        for fixed ones (the tested scoring fix). The default is the frozen behavior."""
         group = self.items[sample].task_group
         candidates = []
         for model_id in self.router.pool_ids:
@@ -181,7 +189,11 @@ class RouterView:
                     failure_rate=1 - (1 - estimate.failure_rate) * (1 - injected),
                 )
             )
-        return score_candidates(candidates, policy_weights(weights))[0].model_id
+        return score_candidates(
+            candidates, policy_weights(weights),
+            cost_scale=None if reference is None else reference.cost_usd[group],
+            latency_scale=None if reference is None else reference.latency_ms[group],
+        )[0].model_id
 
 
 def _unit_hash(model_id: str, sample_id: str) -> float:
@@ -295,10 +307,17 @@ def run_scenarios(
     scenarios: list[ScenarioSpec],
     base: Knowledge,
     notes: list[str],
+    presets: dict[RoutingPriority, RoutingWeights] | None = None,
+    scoring_reference: ScoringReference | None = None,
 ) -> RobustnessReport:
-    presets = view.router.artifact.weights
+    """Every scenario for one router. ``presets`` and ``scoring_reference`` default to the
+    frozen router's tuned weights and its max-among-available normalization."""
+    presets = presets or view.router.artifact.weights
     reference = {
-        priority: {sample: view.choose(sample, presets[priority], base) for sample in prompts}
+        priority: {
+            sample: view.choose(sample, presets[priority], base, scoring_reference)
+            for sample in prompts
+        }
         for priority in RoutingPriority
     }
     baseline_reference = {
@@ -324,9 +343,15 @@ def run_scenarios(
         for priority in RoutingPriority:
             weights = _weights(presets[priority], spec)
             label = priority.value
-            adapted_picks = {sample: view.choose(sample, weights, adapted) for sample in prompts}
+            adapted_picks = {
+                sample: view.choose(sample, weights, adapted, scoring_reference)
+                for sample in prompts
+            }
             # The user's weights apply to both; only what the router knows differs.
-            frozen_picks = {sample: view.choose(sample, weights, frozen) for sample in prompts}
+            frozen_picks = {
+                sample: view.choose(sample, weights, frozen, scoring_reference)
+                for sample in prompts
+            }
             oracle_picks = {
                 sample: _oracle_choice(world, sample, models, weights, spec, adapted.unavailable)
                 for sample in prompts
@@ -343,13 +368,17 @@ def run_scenarios(
         evaluation_id=evaluation_id,
         prompts=len(prompts),
         scenarios=results,
-        priority_sweep=priority_sweep(view, world, prompts, base),
+        priority_sweep=priority_sweep(view, world, prompts, base, scoring_reference),
         notes=notes,
     )
 
 
 def priority_sweep(
-    view: RouterView, world: World, prompts: list[str], base: Knowledge
+    view: RouterView,
+    world: World,
+    prompts: list[str],
+    base: Knowledge,
+    scoring_reference: ScoringReference | None = None,
 ) -> list[PrioritySweepPoint]:
     """Quality weight 1, one other weight varied, everything else 0 (user-priority robustness)."""
     points = []
@@ -360,7 +389,10 @@ def priority_sweep(
                 latency=weight if axis == "latency" else 0.0,
                 reliability=0.0,
             )
-            picks = {sample: view.choose(sample, weights, base) for sample in prompts}
+            picks = {
+                sample: view.choose(sample, weights, base, scoring_reference)
+                for sample in prompts
+            }
             summary = _summarize("sweep", picks, world, None, None)
             points.append(PrioritySweepPoint(
                 axis=axis, weight=weight, correct=summary.correct, accuracy=summary.accuracy,

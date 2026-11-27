@@ -16,6 +16,9 @@ axis pair (no dual axes).
   billed cost on a log scale with free ($0) at the left.
 - ``final-priority-sweep``: accuracy against billed cost as the cost weight rises, and against
   median time as the latency weight rises, each point labeled with its weight where it fits.
+- ``scoring-fix-robustness``: the four scenarios the scoring fix targets, as dumbbells for the
+  frozen and the fixed scoring, told and with old estimates: right answers, then median time or
+  billed cost.
 
 Series use categorical slots 1 and 2 of a colorblind-validated palette; where two share a
 panel they also differ in marker shape and have a legend. ``--slides`` writes the all-prompts
@@ -60,9 +63,11 @@ from app.domain.models import (  # noqa: E402
     RobustnessReport,
     ScenarioStrategy,
 )
+from app.domain.scoring_fix import ScoringFixEvaluation, ScoringFixReport  # noqa: E402
 
 REPORT_PATH = REPOSITORY_ROOT / "data" / "learned" / "cp3-full-router-comparison.json"
 FINAL_REPORT_PATH = REPOSITORY_ROOT / "data" / "learned" / "final-evaluation.json"
+SCORING_FIX_PATH = REPOSITORY_ROOT / "data" / "learned" / "scoring-fix-study.json"
 FIGURE_DIR = REPOSITORY_ROOT / "docs" / "figures"
 
 
@@ -680,6 +685,116 @@ def sweep_figure(
     return _save(fig, out, style, slide)
 
 
+# The scenarios the scoring fix was built for: (scenario, priority, extra measure, panel title).
+FIX_SCENARIOS = [
+    ("ovh_latency_x3", "latency", "time", "Slowest three models 3x slower, fastest setting"),
+    ("gemini_price_x4", "cost", "cost", "Most expensive model 4x pricier, lowest-cost setting"),
+    ("free_outage_50", "cost", "cost", "Free remote models fail 50%, lowest-cost setting"),
+    ("gemma_mercury_unavailable", "latency", "time",
+     "Gemma 4 26B and Mercury 3 unavailable, fastest setting"),
+]
+FIX_ROWS = ("Frozen scoring", "Fixed scoring")
+
+
+def _fix_dumbbells(
+    evaluation: ScoringFixEvaluation, scenario_id: str, priority: str,
+    value: Callable[[ScenarioStrategy], float],
+) -> list[Dumbbell]:
+    rows = []
+    for report in (evaluation.frozen, evaluation.fixed):
+        result = next(item for item in report.scenarios
+                      if item.scenario.scenario_id == scenario_id)
+        found = {item.strategy_id: value(item) for item in result.strategies}
+        rows.append(Dumbbell(
+            result.scenario.title, result.scenario.observed, found[f"learned:{priority}"],
+            found[f"learned_frozen:{priority}"], None,
+        ))
+    return rows
+
+
+def scoring_fix_figure(
+    evaluation: ScoringFixEvaluation, title: str, subtitle: str, out: Path, theme: Theme = LIGHT
+) -> list[Path]:
+    """Frozen and fixed scoring, told and with old estimates, in each scenario the fix targets:
+    right answers on the left, then median time or billed cost on the right."""
+    slide = theme is SLIDE
+    style = replace(theme, scale=SLIDE_PANEL_SCALE) if slide else theme
+    size = style.scale
+    count = len(FIX_SCENARIOS)
+    height = 1.45 * count + 2.0 if slide else 1.15 * count + 1.9
+    fig, grid = plt.subplots(count, 2, sharey=True, squeeze=False,
+                             figsize=(15.5 if slide else 13, height), facecolor=style.surface)
+    for row_index, (scenario_id, priority, extra, panel_title) in enumerate(FIX_SCENARIOS):
+        measures: list[tuple[str, Callable[[ScenarioStrategy], float]]] = [
+            ("correct", lambda item: float(item.correct)),
+            (extra, (lambda item: item.total_cost_usd) if extra == "cost"
+             else (lambda item: (item.median_latency_ms or 0.0) / 1000)),
+        ]
+        for column, (measure, value) in enumerate(measures):
+            ax = grid[row_index][column]
+            rows = _fix_dumbbells(evaluation, scenario_id, priority, value)
+            numbers = [point for row in rows for point in (row.told, row.old)
+                       if point is not None]
+            _frame(ax, style, "x", left_spine=False)
+            position: Callable[[float], float] = _same
+            if measure == "cost":
+                position = _cost_axis(ax, numbers, style)
+                label = f"Billed cost for {evaluation.prompts} prompts (USD, log scale)"
+            elif measure == "time":
+                ax.set_xlim(0, max(numbers) * 1.2)
+                ax.xaxis.set_major_locator(MaxNLocator(nbins=6, steps=[1, 2, 2.5, 5, 10]))
+                ax.xaxis.set_major_formatter(FuncFormatter(
+                    lambda tick, _: "" if tick < 0 else f"{tick:g} s"
+                ))
+                label = "Median time (seconds)"
+            else:
+                low, high = min(numbers), max(numbers)
+                pad = max(2.0, 0.08 * (high - low))
+                ax.set_xlim(low - pad, min(float(evaluation.prompts), high + pad))
+                ax.xaxis.set_major_locator(MaxNLocator(nbins=6, steps=[1, 2, 2.5, 5, 10],
+                                                       integer=True))
+                label = f"Right answers (of {evaluation.prompts})"
+            _dumbbell_panel(ax, rows, position, style)
+            if column == 0:
+                ax.set_title(panel_title, loc="left", fontsize=10 * size, color=style.ink,
+                             fontweight="semibold", pad=6)
+            ax.set_xlabel(label, fontsize=8.5 * size, color=style.ink_secondary)
+    axes = [grid[index][0] for index in range(count)]
+    axes[0].set_ylim(1.5, -0.5)
+    axes[0].set_yticks(range(len(FIX_ROWS)))
+    for ax in axes:
+        ax.set_yticklabels(FIX_ROWS, fontsize=9 * size, color=style.ink_secondary)
+    handles = [handle for handle in _legend_handles(style)
+               if handle.get_label() != "Always strongest model"]
+    legend_top = 0.15 if slide else 0.68
+    fig.legend(handles=handles, loc="upper left", frameon=False, fontsize=9.5 * size, ncol=3,
+               labelcolor=style.ink_secondary,
+               bbox_to_anchor=(0.008, 1 - legend_top / height), columnspacing=2.0)
+    fig.tight_layout(rect=(0, 0, 1, 1 - (legend_top + 0.4 * size) / height), w_pad=2.5,
+                     h_pad=1.2)
+    if not slide:
+        _heading(fig, title, subtitle, style)
+    return _save(fig, out, style, slide)
+
+
+def write_scoring_fix(
+    report: ScoringFixReport, out_dir: Path, theme: Theme = LIGHT
+) -> list[Path]:
+    """The scoring-fix figure for the fresh prompts."""
+    fresh = next(item for item in report.evaluations if item.evaluation_id == "final")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    plt.rcParams["svg.fonttype"] = "none"
+    plt.rcParams["svg.hashsalt"] = "scoring-fix-robustness"
+    subtitle = (
+        f"{fresh.prompts} fresh prompts, replayed under each change. The fixed scoring divides "
+        "cost and time by fixed references and weighs reliability; the frozen router does not."
+    )
+    return scoring_fix_figure(
+        fresh, "Fixing the scoring flaw: right answers, time and cost under change", subtitle,
+        out_dir / "scoring-fix-robustness", theme,
+    )
+
+
 def write_robustness(
     report: FinalEvaluationReport, out_dir: Path, theme: Theme = LIGHT
 ) -> list[Path]:
@@ -720,6 +835,7 @@ def write_all(
     theme: Theme = LIGHT,
     report_path: Path = REPORT_PATH,
     final_report_path: Path = FINAL_REPORT_PATH,
+    scoring_fix_path: Path = SCORING_FIX_PATH,
 ) -> list[Path]:
     """Every figure this module draws, from the committed reports."""
     report = LearnedRouterReport.model_validate_json(report_path.read_text(encoding="utf-8"))
@@ -735,17 +851,22 @@ def write_all(
     final = FinalEvaluationReport.model_validate_json(
         final_report_path.read_text(encoding="utf-8")
     )
-    return written + write_robustness(final, out_dir, theme)
+    fix = ScoringFixReport.model_validate_json(scoring_fix_path.read_text(encoding="utf-8"))
+    return written + write_robustness(final, out_dir, theme) + write_scoring_fix(
+        fix, out_dir, theme
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--report", type=Path, default=REPORT_PATH)
     parser.add_argument("--final-report", type=Path, default=FINAL_REPORT_PATH)
+    parser.add_argument("--scoring-fix-report", type=Path, default=SCORING_FIX_PATH)
     parser.add_argument("--slides", type=Path, help="Write the dark slide versions here")
     args = parser.parse_args(argv)
     theme, out_dir = (SLIDE, args.slides) if args.slides else (LIGHT, FIGURE_DIR)
-    for path in write_all(out_dir, theme, args.report, args.final_report):
+    for path in write_all(out_dir, theme, args.report, args.final_report,
+                          args.scoring_fix_report):
         print(f"wrote {path}")
     return 0
 

@@ -13,6 +13,7 @@ STEMS = {
     "final-robustness",
     "final-robustness-cost",
     "final-priority-sweep",
+    "scoring-fix-robustness",
 }
 
 

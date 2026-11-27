@@ -1012,6 +1012,58 @@
         "title": "EvaluationSet",
         "type": "object"
       },
+      "EvidenceRow": {
+        "additionalProperties": false,
+        "description": "One router and priority in one scenario: told about the change, then with old estimates.",
+        "properties": {
+          "evaluation_id": {
+            "title": "Evaluation Id",
+            "type": "string"
+          },
+          "old": {
+            "$ref": "#/components/schemas/ScenarioStrategy"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/RoutingPriority"
+          },
+          "router": {
+            "title": "Router",
+            "type": "string"
+          },
+          "scenario_id": {
+            "title": "Scenario Id",
+            "type": "string"
+          },
+          "told": {
+            "$ref": "#/components/schemas/ScenarioStrategy"
+          },
+          "told_vs_old_p": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Told Vs Old P"
+          },
+          "unchanged": {
+            "$ref": "#/components/schemas/ScenarioStrategy"
+          }
+        },
+        "required": [
+          "evaluation_id",
+          "scenario_id",
+          "priority",
+          "router",
+          "told",
+          "old",
+          "unchanged"
+        ],
+        "title": "EvidenceRow",
+        "type": "object"
+      },
       "ExcludedModel": {
         "additionalProperties": false,
         "description": "A listed model that did not answer every prompt, so no router can be fit with it.",
@@ -3129,6 +3181,58 @@
         "title": "PromptOutcome",
         "type": "object"
       },
+      "QuestionAnswer": {
+        "additionalProperties": false,
+        "properties": {
+          "answer_fresh": {
+            "title": "Answer Fresh",
+            "type": "string"
+          },
+          "answer_test": {
+            "title": "Answer Test",
+            "type": "string"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceRow"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "holds_fresh": {
+            "title": "Holds Fresh",
+            "type": "boolean"
+          },
+          "holds_test": {
+            "title": "Holds Test",
+            "type": "boolean"
+          },
+          "question": {
+            "title": "Question",
+            "type": "string"
+          },
+          "question_id": {
+            "title": "Question Id",
+            "type": "string"
+          },
+          "rule": {
+            "title": "Rule",
+            "type": "string"
+          }
+        },
+        "required": [
+          "question_id",
+          "question",
+          "rule",
+          "holds_fresh",
+          "holds_test",
+          "answer_fresh",
+          "answer_test",
+          "evidence"
+        ],
+        "title": "QuestionAnswer",
+        "type": "object"
+      },
       "RegistrySnapshot": {
         "additionalProperties": false,
         "properties": {
@@ -4066,6 +4170,285 @@
           "selected_models"
         ],
         "title": "ScenarioStrategy",
+        "type": "object"
+      },
+      "ScoringFixEvaluation": {
+        "additionalProperties": false,
+        "properties": {
+          "comparisons": {
+            "items": {
+              "$ref": "#/components/schemas/PairedComparison"
+            },
+            "title": "Comparisons",
+            "type": "array"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "evaluation_id": {
+            "title": "Evaluation Id",
+            "type": "string"
+          },
+          "fixed": {
+            "$ref": "#/components/schemas/RobustnessReport"
+          },
+          "frozen": {
+            "$ref": "#/components/schemas/RobustnessReport"
+          },
+          "matrix": {
+            "items": {
+              "$ref": "#/components/schemas/LearnedMatrixRow"
+            },
+            "title": "Matrix",
+            "type": "array"
+          },
+          "models": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Models",
+            "type": "array"
+          },
+          "prompts": {
+            "title": "Prompts",
+            "type": "integer"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "evaluation_id",
+          "title",
+          "description",
+          "prompts",
+          "models",
+          "matrix",
+          "comparisons",
+          "frozen",
+          "fixed"
+        ],
+        "title": "ScoringFixEvaluation",
+        "type": "object"
+      },
+      "ScoringFixReport": {
+        "additionalProperties": false,
+        "description": "The frozen router and a variant with fixed cost and time references and a small default\nreliability weight, on the same prompts and scenarios.",
+        "properties": {
+          "artifact_id": {
+            "title": "Artifact Id",
+            "type": "string"
+          },
+          "artifact_sha256": {
+            "title": "Artifact Sha256",
+            "type": "string"
+          },
+          "caveats": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Caveats",
+            "type": "array"
+          },
+          "cell_tables": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Cell Tables",
+            "type": "array"
+          },
+          "evaluations": {
+            "items": {
+              "$ref": "#/components/schemas/ScoringFixEvaluation"
+            },
+            "title": "Evaluations",
+            "type": "array"
+          },
+          "final_set_sha256": {
+            "title": "Final Set Sha256",
+            "type": "string"
+          },
+          "fixed_weights": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "type": "object"
+            },
+            "propertyNames": {
+              "$ref": "#/components/schemas/RoutingPriority"
+            },
+            "title": "Fixed Weights",
+            "type": "object"
+          },
+          "frozen_weights": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "type": "object"
+            },
+            "propertyNames": {
+              "$ref": "#/components/schemas/RoutingPriority"
+            },
+            "title": "Frozen Weights",
+            "type": "object"
+          },
+          "pool_snapshot_id": {
+            "title": "Pool Snapshot Id",
+            "type": "string"
+          },
+          "protocol": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Protocol",
+            "type": "array"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/QuestionAnswer"
+            },
+            "title": "Questions",
+            "type": "array"
+          },
+          "reference": {
+            "$ref": "#/components/schemas/ScoringReference"
+          },
+          "study_id": {
+            "title": "Study Id",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "tuning": {
+            "$ref": "#/components/schemas/ScoringFixTuning"
+          }
+        },
+        "required": [
+          "study_id",
+          "title",
+          "artifact_id",
+          "artifact_sha256",
+          "final_set_sha256",
+          "pool_snapshot_id",
+          "reference",
+          "frozen_weights",
+          "fixed_weights",
+          "tuning",
+          "protocol",
+          "caveats",
+          "questions",
+          "evaluations"
+        ],
+        "title": "ScoringFixReport",
+        "type": "object"
+      },
+      "ScoringFixTuning": {
+        "additionalProperties": false,
+        "description": "How the fixed variant's presets were chosen: on the Checkpoint 3 validation split only.",
+        "properties": {
+          "classifier": {
+            "title": "Classifier",
+            "type": "string"
+          },
+          "fixed_presets": {
+            "items": {
+              "$ref": "#/components/schemas/WeightTuningResult"
+            },
+            "title": "Fixed Presets",
+            "type": "array"
+          },
+          "frozen_recipe_reproduced": {
+            "title": "Frozen Recipe Reproduced",
+            "type": "boolean"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "recipe_check_presets": {
+            "items": {
+              "$ref": "#/components/schemas/WeightTuningResult"
+            },
+            "title": "Recipe Check Presets",
+            "type": "array"
+          },
+          "reference_only_presets": {
+            "items": {
+              "$ref": "#/components/schemas/WeightTuningResult"
+            },
+            "title": "Reference Only Presets",
+            "type": "array"
+          },
+          "reliability_floor": {
+            "title": "Reliability Floor",
+            "type": "number"
+          },
+          "reliability_grid": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Reliability Grid",
+            "type": "array"
+          },
+          "tuning_reference": {
+            "$ref": "#/components/schemas/ScoringReference"
+          },
+          "validation_prompts": {
+            "title": "Validation Prompts",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "classifier",
+          "validation_prompts",
+          "reliability_floor",
+          "reliability_grid",
+          "tuning_reference",
+          "frozen_recipe_reproduced",
+          "recipe_check_presets",
+          "reference_only_presets",
+          "fixed_presets",
+          "note"
+        ],
+        "title": "ScoringFixTuning",
+        "type": "object"
+      },
+      "ScoringReference": {
+        "additionalProperties": false,
+        "description": "Fixed divisors for the cost and time terms, per task group.\n\nThe frozen router divides each by the largest value among the models available for the\nrequest, so one model's price or speed changes every other model's score. With a reference,\nthe divisor is the pool's own largest expected cost and time, computed once.",
+        "properties": {
+          "cost_usd": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "propertyNames": {
+              "$ref": "#/components/schemas/TaskGroup"
+            },
+            "title": "Cost Usd",
+            "type": "object"
+          },
+          "latency_ms": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "propertyNames": {
+              "$ref": "#/components/schemas/TaskGroup"
+            },
+            "title": "Latency Ms",
+            "type": "object"
+          }
+        },
+        "required": [
+          "cost_usd",
+          "latency_ms"
+        ],
+        "title": "ScoringReference",
         "type": "object"
       },
       "StrategyTaskOutcome": {
@@ -5012,6 +5395,25 @@
           }
         },
         "summary": "Learned Route"
+      }
+    },
+    "/api/v1/learned/scoring-fix": {
+      "get": {
+        "description": "The tested scoring fix: fixed cost and time references and a small reliability weight,\nnext to the frozen router, on the same prompts and scenarios (offline replay).",
+        "operationId": "scoring_fix_api_v1_learned_scoring_fix_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScoringFixReport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Scoring Fix"
       }
     },
     "/api/v1/learned/studies": {

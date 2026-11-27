@@ -75,17 +75,40 @@ def _scale_to_max(values: list[float]) -> list[float]:
     return [max(value, 0.0) / largest for value in values]
 
 
+def _scale_by(values: list[float], scale: float) -> list[float]:
+    """Divide by a fixed reference, so one model's price cannot change the others' scores."""
+    if scale <= 0:
+        return [0.0 for _ in values]
+    return [max(value, 0.0) / scale for value in values]
+
+
 def score_candidates(
-    candidates: list[CandidateEstimate], weights: PolicyWeights
+    candidates: list[CandidateEstimate],
+    weights: PolicyWeights,
+    cost_scale: float | None = None,
+    latency_scale: float | None = None,
 ) -> list[ScoredCandidate]:
-    """Score eligible candidates, best first. Ties go to the cheaper model, then the model ID."""
+    """Score eligible candidates, best first. Ties go to the cheaper model, then the model ID.
+
+    By default cost and latency are divided by the largest eligible value, as the frozen router
+    does. ``cost_scale`` and ``latency_scale`` replace that divisor with a fixed reference (a
+    value can then exceed 1), which is how the tested scoring fix normalizes.
+    """
     if not candidates:
         raise ValueError("No eligible candidates to score")
     for candidate in candidates:
         if not 0.0 <= candidate.p_success <= 1.0:
             raise ValueError(f"p_success out of range for {candidate.model_id}")
-    costs = _scale_to_max([item.expected_cost_usd for item in candidates])
-    latencies = _scale_to_max([item.expected_latency_ms for item in candidates])
+    expected_costs = [item.expected_cost_usd for item in candidates]
+    expected_latencies = [item.expected_latency_ms for item in candidates]
+    costs = (
+        _scale_to_max(expected_costs) if cost_scale is None
+        else _scale_by(expected_costs, cost_scale)
+    )
+    latencies = (
+        _scale_to_max(expected_latencies) if latency_scale is None
+        else _scale_by(expected_latencies, latency_scale)
+    )
     scored = []
     for item, cost, latency in zip(candidates, costs, latencies, strict=True):
         terms = (

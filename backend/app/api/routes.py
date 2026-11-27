@@ -46,6 +46,7 @@ from app.domain.models import (
     WhatIfRequest,
     WhatIfResponse,
 )
+from app.domain.scoring_fix import ScoringFixReport
 from app.domain.study import PoolStudyReport, StudySummary
 from app.learned.explorer import ExplorerError, build_explorer
 from app.learned.export import TABLES, ExportError, load_report, render
@@ -81,6 +82,8 @@ def _require_live_services(services: AppServices) -> None:
 DEMO_DIRS = {RoutingPool.BASELINE: "checkpoint-1", RoutingPool.PAID: PAID_DEMO_NAME}
 # Written by `python -m app.learned.train --run-id cp3-full` and committed.
 LEARNED_REPORT = Path("learned") / "cp3-full-router-comparison.json"
+# Written by `python -m app.learned.scoring_fix` and committed.
+SCORING_FIX_FILE = "scoring-fix-study.json"
 LEARNED_TIMEOUT_SECONDS = 180  # the anonymous OVHcloud endpoints can take minutes
 
 
@@ -420,6 +423,19 @@ async def final_evaluation(services: Services) -> FinalEvaluationReport:
         return load_report(services.settings.data_dir)
     except ExportError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+
+@router.get("/learned/scoring-fix", response_model=ScoringFixReport)
+async def scoring_fix(services: Services) -> ScoringFixReport:
+    """The tested scoring fix: fixed cost and time references and a small reliability weight,
+    next to the frozen router, on the same prompts and scenarios (offline replay)."""
+    path = services.settings.data_dir / "learned" / SCORING_FIX_FILE
+    if not path.exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="The scoring-fix study has not been run yet",
+        )
+    return ScoringFixReport.model_validate_json(path.read_text(encoding="utf-8"))
 
 
 def _study_report(services: AppServices, study_id: str) -> PoolStudyReport | None:
