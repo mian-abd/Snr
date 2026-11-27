@@ -1,6 +1,7 @@
 import type { EvaluationSet, LearnedStrategyOutcome, PoolStudyReport, RoutingPriority } from '../api/types'
 import { IntervalRow } from '../charts/Charts'
-import { ModelBars, type ModelBar } from '../charts/ModelBars'
+import { ModelBars } from '../charts/LazyCharts'
+import type { ModelBar } from '../charts/ModelBars'
 import { costLine, timeLine, verdict } from '../lib/comparisons'
 import { priorityLabel, priorityOrder, studyRouterName } from '../lib/data'
 import { detailLines, fleetRows } from '../lib/fleet'

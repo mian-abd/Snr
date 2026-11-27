@@ -1,7 +1,7 @@
 import { Check, Columns3, Link2, X } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import type { LearnedMatrixRow } from '../api/types'
-import { CompareBars } from '../charts/CompareBars'
+import { CompareBars } from '../charts/LazyCharts'
 import { ModelPicker } from '../components/ModelPicker'
 import { accessLabel, addedLabel, evaluationOf, modelViews, priorityLabel, priorityOrder, providerLabel, studyRouterName, useCatalog, useFinalReport, useLearnedReport, usePool, useStudyReports, type ModelView } from '../lib/data'
 import { perMillion, pct, seconds, usd } from '../lib/format'
