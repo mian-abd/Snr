@@ -1,26 +1,20 @@
-# Secrets and local state never enter the build context.
-.env
-.env.*
+# Only what the image needs enters the build context; secrets and local state stay out.
+*
+!backend/
+!data/
+!frontend/
+
+backend/.venv
+backend/.env
 **/.env
 **/.env.*
-!.env.example
-backend/.env
-data/local
-local-only
-.claude
-
-# Large or irrelevant to the image.
-.git
-.github
-**/node_modules
-**/.venv
 **/__pycache__
 **/.pytest_cache
 **/.mypy_cache
 **/.ruff_cache
+data/local
+frontend/node_modules
 frontend/dist
 frontend/playwright-report
 frontend/test-results
-docs/demo
-docs/presentations
-tmp
+frontend/*.local.mjs
