@@ -626,7 +626,7 @@ This records the proposal's work-plan items for the week of November 26, done on
 ### Results in brief
 
 - **Best budget model:** GPT-6 Luna got 274 of the 300 fresh prompts right for $0.047. Gemma 4 26B, the cheapest paid model before, got 268 for $0.035.
-- **A router fit on all 16 models:**
+- **A router fit on every model that answered all 900 prompts** (16 models; 17 since ERNIE 5.5 Flash was completed on 2026-11-24, with the same results):
   - at lowest cost, 270 right for $0.022, against 265 for $0.0034 for the frozen router;
   - at best quality, 282, the same as the frozen router;
   - at fastest and balanced, 278 right for $0.26 at 2.3 s; the frozen router got 276 for $0.43 at 3.8 s, and the flagship router 284 for $0.50 at 2.6 s.
@@ -653,15 +653,16 @@ Registry: `data/registry/budget-pool-2026-11-20.json`. Prompts, token limits, re
 | MiMo-V2.6 Flash | 511 | 262 | 25, 13 | $0.181 | 8.2 s |
 | Muse Ember | 495 | 266 | 47, 19 | $0.601 | 2.0 s |
 | Ministral 8B | 472 | 232 | 0, 0 | $0.088 | 3.1 s |
-| ERNIE 5.5 Flash (free) | 507 | 242 of 284 | 38, 27 | $0 | 2.1 s |
+| ERNIE 5.5 Flash (free) | 507 | 254 | 38, 27 | $0 | 2.1 s |
 
 A failed call is an unparseable or empty answer after the retry, or a rate-limited free call. Each counts as wrong.
 
-**ERNIE 5.5 Flash is excluded.**
+**ERNIE 5.5 Flash was completed later.**
 
 - **What happened:** the runner keeps free requests under 950 a day, below the account's 1,000. ERNIE made 961 requests on 2026-11-21 (UTC), counting retries and the smoke test, so the runner stopped it 16 fresh prompts short.
-- **The rule:** the rule set for Grok 4.7 applies. Only a model that answered every prompt joins the pool; the rest are reported with how far they got.
-- **The commitment:** the reason was written into `studies.py` before the wide study was first built, with a commitment. If the 16 prompts are run after the quota resets, the study is rebuilt with ERNIE, whatever the result.
+- **The rule:** the rule set for Grok 4.7 applies. Only a model that answered every prompt joins the pool; the rest are reported with how far they got. ERNIE was first excluded.
+- **The commitment:** the reason was written into `studies.py` before the wide study was first built: if the 16 prompts were run after the quota reset, the study would be rebuilt with ERNIE, whatever the result.
+- **Kept (2026-11-24):** the 16 prompts (all MBPP+) ran on the free tier, and the study was rebuilt with 17 models. ERNIE got 254 of 300 fresh prompts right and is never chosen, so every number in the table below is unchanged. The [week of December 3](#week-of-december-3) has the details, including a scoring bug this exposed.
 
 **Pool studies.** The flagship study is now one of two pool studies (`app/learned/studies.py`, `app/learned/pool_study.py`). A study adds one or more dated registries to the frozen pool, refits the Checkpoint 3 recipe unchanged, and evaluates the new router next to the frozen one and any earlier study's router.
 
@@ -671,7 +672,7 @@ A failed call is an unparseable or empty answer after the retry, or a rate-limit
 
 Command: `python -m app.learned.pool_study --study wide --from-runs`. Report: `data/learned/wide-study.json`; router: `data/learned/wide-router-model.json`.
 
-**Wide study results on the 300 fresh prompts.** The study router was fit on 7,680 (prompt, model) rows from the suite's training split. Logistic regression was selected again (C = 0.003).
+**Wide study results on the 300 fresh prompts.** The study router was fit on 8,160 (prompt, model) rows (7,680 before ERNIE joined) from the suite's training split. Logistic regression was selected again (C = 0.003).
 
 | Setting | Wide router | Frozen router | Flagship router |
 | --- | --- | --- | --- |
@@ -683,7 +684,7 @@ Command: `python -m app.learned.pool_study --study wide --from-runs`. Report: `d
 Each cell gives right answers, billed cost for all 300 prompts, and median time.
 
 - **Where the prompts went:**
-  - at lowest cost, 110 went to GPT-6 Luna (mostly knowledge questions) and the rest to the free gpt-oss-120b and Nemotron 3 Ultra;
+  - at lowest cost, 109 went to GPT-6 Luna (mostly knowledge questions) and the rest to the free gpt-oss-120b and Nemotron 3 Ultra;
   - at best quality, MiMo-V2.6 Flash took 98 math prompts;
   - at fastest, Muse Ember took the math prompts, GPT-6 Luna most knowledge questions, and GPT-6.1 Sol the code.
 - **The fixed questions:** none is significant; every adjusted p is 1.00. The largest raw difference is lowest cost against the frozen router: 5 more right (95% interval 2 fewer to 12 more), p = 0.27 before adjustment.

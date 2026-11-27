@@ -1,5 +1,6 @@
 import json
 
+from app.benchmarks import code_scoring
 from app.benchmarks.code_scoring import SANDBOX_FLAGS, STUB, parse_results, write_samples
 from app.benchmarks.suite import Benchmark
 from app.storage import read_jsonl
@@ -28,6 +29,25 @@ def test_a_task_passes_only_when_base_and_extra_tests_pass(tmp_path) -> None:
     }}), encoding="utf-8")
     parsed = parse_results(results)
     assert [parsed[task]["passed"] for task in sorted(parsed)] == [True, False, False]
+
+
+def test_a_rerun_never_reuses_the_previous_results_file(tmp_path, monkeypatch) -> None:
+    # EvalPlus skips evaluation when its results file exists; a resumed run must not inherit it.
+    old = tmp_path / "mbpp-sanitized_eval_results.json"
+    old.write_text(json.dumps({"eval": {"Mbpp/2": [
+        {"base_status": "fail", "plus_status": "fail"}]}}), encoding="utf-8")
+    calls: list[tuple[str, bool]] = []
+
+    def fake_docker(workdir, benchmark, *command: str) -> None:
+        calls.append((command[0], old.exists()))
+        if command[0] == "evalplus.evaluate":
+            old.write_text(json.dumps({"eval": {"Mbpp/2": [
+                {"base_status": "pass", "plus_status": "pass"}]}}), encoding="utf-8")
+
+    monkeypatch.setattr(code_scoring, "docker", fake_docker)
+    parsed = code_scoring.evaluate(tmp_path, Benchmark.MBPP_PLUS, "mbpp")
+    assert calls == [("evalplus.sanitize", False), ("evalplus.evaluate", False)]
+    assert parsed["Mbpp/2"]["passed"] is True
 
 
 def test_sandbox_has_no_network_and_drops_privileges() -> None:

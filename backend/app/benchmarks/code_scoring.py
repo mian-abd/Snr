@@ -87,6 +87,22 @@ def parse_results(path: Path) -> dict[str, dict[str, Any]]:
     return parsed
 
 
+def evaluate(workdir: Path, benchmark: Benchmark, dataset: str) -> dict[str, dict[str, Any]]:
+    """Sanitize and evaluate one samples file, always from scratch.
+
+    EvalPlus reuses an existing results file instead of evaluating again, so without the unlink a
+    resumed run would be scored against the answers (or stubs) of the earlier attempt.
+    """
+    results_path = workdir / f"{dataset}-sanitized_eval_results.json"
+    results_path.unlink(missing_ok=True)
+    docker(workdir, benchmark, "evalplus.sanitize", "--samples", f"/app/{dataset}.jsonl")
+    docker(
+        workdir, benchmark, "evalplus.evaluate", "--dataset", dataset,
+        "--samples", f"/app/{dataset}-sanitized.jsonl", "--parallel", "4",
+    )
+    return parse_results(results_path)
+
+
 def score_model(
     model_dir: Path, items: dict[str, SuiteItem], task_ids: dict[Benchmark, list[str]]
 ) -> int:
@@ -110,12 +126,7 @@ def score_model(
             task_ids[benchmark],
             samples,
         )
-        docker(workdir, benchmark, "evalplus.sanitize", "--samples", f"/app/{dataset}.jsonl")
-        docker(
-            workdir, benchmark, "evalplus.evaluate", "--dataset", dataset,
-            "--samples", f"/app/{dataset}-sanitized.jsonl", "--parallel", "4",
-        )
-        results = parse_results(workdir / f"{dataset}-sanitized_eval_results.json")
+        results = evaluate(workdir, benchmark, dataset)
         for task_id, (sample_id, _) in answers.items():
             scored.append({"model_id": model_dir.name, "sample_id": sample_id, "task_id": task_id,
                            "evalplus_image": IMAGE, **results[task_id]})

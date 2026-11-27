@@ -84,7 +84,7 @@ The 12 GSM8K test questions of the Checkpoint 1 pilot. Columns: `dataset`, `conf
 
 ### cells.jsonl, flagship-cells.jsonl, and budget-cells.jsonl
 
-One scored call per line: one model's outcome on one prompt. Sorted by `suite`, `sample_id`, `model_id`; each (suite, sample_id, model_id) appears once. `cells.jsonl` holds the 9 pool models on all 900 prompts (8,100 rows); `flagship-cells.jsonl` holds the flagship models (3,075 rows: three complete flagships, and the 375 prompts Grok 4.7 answered before it was stopped); `budget-cells.jsonl` holds the five budget models added on 2026-11-20 (4,484 rows: four complete models, and the 884 prompts ERNIE 5.5 Flash answered before the runner's free-request ceiling stopped it). No prompt text, response text, or request id is stored. The `cells` export table serves `cells.jsonl`.
+One scored call per line: one model's outcome on one prompt. Sorted by `suite`, `sample_id`, `model_id`; each (suite, sample_id, model_id) appears once. `cells.jsonl` holds the 9 pool models on all 900 prompts (8,100 rows); `flagship-cells.jsonl` holds the flagship models (3,075 rows: three complete flagships, and the 375 prompts Grok 4.7 answered before it was stopped); `budget-cells.jsonl` holds the five budget models added on 2026-11-20 (4,500 rows: ERNIE 5.5 Flash's last 16 fresh prompts ran on 2026-11-24, after the runner's free-request ceiling had stopped it). No prompt text, response text, or request id is stored. The `cells` export table serves `cells.jsonl`.
 
 | Column | Meaning | Units |
 | --- | --- | --- |

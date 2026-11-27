@@ -1,5 +1,5 @@
 {
-  "cells_sha256": "42cbfadd1251b503c14f945710c65048f9b4e95f78bf1f7b3d60681874ca106d",
+  "cells_sha256": "621cf48a6171a0df2c1284b6cb29e631ccf79095f8d0eec8571ab0f63bed5c82",
   "note": "Scored outcomes only: no prompts, responses, or request IDs. Same format as cells.jsonl; failed calls count as wrong.",
   "provider_billed_spend_by_model_usd": {
     "ernie-5.5-flash-free": 0.0,
@@ -12,9 +12,9 @@
     "cp3": 0.67082,
     "final": 0.331967
   },
-  "rows": 4484,
+  "rows": 4500,
   "rows_by_model": {
-    "ernie-5.5-flash-free": 884,
+    "ernie-5.5-flash-free": 900,
     "gpt-6-luna": 900,
     "mimo-v2.6-flash": 900,
     "ministral-8b": 900,
@@ -22,6 +22,6 @@
   },
   "rows_by_suite": {
     "cp3": 3000,
-    "final": 1484
+    "final": 1500
   }
 }

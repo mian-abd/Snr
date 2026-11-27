@@ -11,7 +11,9 @@ from app.storage import read_jsonl
 
 BASE_MODELS = 9
 FLAGSHIPS = {"gpt-6.1-sol", "gemini-4-carbon", "kimi-k3.1-pro"}
-BUDGET = {"gpt-6-luna", "mimo-v2.6-flash", "muse-ember", "ministral-8b"}
+BUDGET = {
+    "gpt-6-luna", "mimo-v2.6-flash", "muse-ember", "ministral-8b", "ernie-5.5-flash-free",
+}
 
 
 def _copy_data(data_dir) -> None:
@@ -47,9 +49,7 @@ def test_explorer_joins_each_prompt_with_every_model_and_choice(registry, tmp_pa
         assert models["qwen-3.5-9b-local"]["access"] == "local"
         assert models["gemini-4-argon"]["display_name"] == "Gemini 4 Argon"
         # Models stopped part-way are listed as left out, never as a column.
-        assert [model["model_id"] for model in body["excluded"]] == [
-            "grok-4.7", "ernie-5.5-flash-free",
-        ]
+        assert [model["model_id"] for model in body["excluded"]] == ["grok-4.7"]
         assert len(body["strategies"]) == 20 and "learned:quality" in body["strategies"]
 
         decisions = {
